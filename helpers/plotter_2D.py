@@ -5,7 +5,7 @@
 
 __authors__ = ['Sampreet Kalita']
 __created__ = '2019-11-22'
-__updated__ = '2020-02-26'
+__updated__ = '2020-05-01'
 
 # dependencies
 import numpy as np
@@ -21,7 +21,7 @@ def set_params(plot_params):
     """
 
     # default font sizes
-    plt.rcParams.update({'font.size': 16})
+    plt.rcParams.update({'font.size': 12})
     plt.xticks(fontsize=12)
     plt.yticks(fontsize=12)
 
@@ -50,7 +50,40 @@ def set_params(plot_params):
         plt.ylim(plot_params['y_lim'][0], plot_params['y_lim'][1])
 
     # ticks
-    plt.ticklabel_format(style='sci', axis='both', scilimits=(0,0))
+    plt.ticklabel_format(axis='both', style='sci', scilimits=(-2,3), useMathText=True)
+
+def plot_colormap(X, Y, Z, plot_params):
+    """Function to plot color map.
+    
+    Parameters
+    ----------
+    X : list
+        Lists of points in x-axis.
+    Y : list
+        Lists of points in y-axis.
+    Z : list
+        Lists of points in z-axis.
+    plot_params : list
+        Parameters of the plot.
+    """
+
+    # create mesh
+    X, Y = np.meshgrid(X, Y)
+
+    # rearrange array
+    Z = np.array(Z).T
+
+    # plot 
+    plt.pcolor(X, Y, Z, cmap='jet')
+
+    # display color bar
+    plt.colorbar()
+
+    # set parameters
+    set_params(plot_params)
+
+    # display plot
+    plt.show()
 
 def plot_line(X, Y, plot_params):
     """Function to plot single line.
@@ -114,7 +147,7 @@ def plot_lines(X, Y, plot_params):
     # display plot
     plt.show()
 
-def plot_colormap(X, Y, Z, plot_params):
+def plot_scatter(X, Y, plot_params):
     """Function to plot color map.
     
     Parameters
@@ -123,23 +156,20 @@ def plot_colormap(X, Y, Z, plot_params):
         Lists of points in x-axis.
     Y : list
         Lists of points in y-axis.
-    Z : list
-        Lists of points in z-axis.
     plot_params : list
         Parameters of the plot.
     """
 
-    # create mesh
-    X, Y = np.meshgrid(X, Y)
+    # plot line
+    scatter = plt.scatter(X, Y)
 
-    # rearrange array
-    Z = np.array(Z).T
+    # set color
+    if 'color' in plot_params:
+        plt.setp(scatter, color=plot_params['color'])
 
-    # plot 
-    plt.pcolor(X, Y, Z, cmap='jet')
-
-    # display color bar
-    plt.colorbar()
+    # set linestyle
+    if 'linestyle' in plot_params:
+        plt.setp(scatter, linestyle=plot_params['linestyle'])
 
     # set parameters
     set_params(plot_params)

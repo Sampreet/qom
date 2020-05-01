@@ -42,13 +42,18 @@ The repository follows the following structure:
 
 ```
 ROOT_DIR/
+|
+│───controllers/
+│   │───__init__.py
+│   └───...
+|
 │───helpers/
 │   ├───__init__.py
 │   └───...
 |
 │───modules/
 │   │
-│   ├───properties/
+│   ├───measures/
 │   │   ├───__init__.py
 │   │   └───...
 │   │
