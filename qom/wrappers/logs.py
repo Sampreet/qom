@@ -1,23 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Modules to output log to console."""
+"""Wrapper module to output logs."""
 
+__name__    = 'qom.wrappers.logs'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-02-05'
-__updated__ = '2020-02-26'
+__updated__ = '2020-06-09'
 
 # dependencies
 import logging
+    
+# module logger    
+logger = logging.getLogger(__name__)
 
-def get_logger(module_name, log_format='short', debug=False):
-    """Function to obtain the logger for output to console.
+def init(log_format='default', debug=False):
+    """Function to initialize the logger for the package.
     
     Parameters
-    ----------
-    module_name : str
-        Name of the module calling the logger.
-    
+    ----------    
     log_format : str
         Format type for output to console.
 
@@ -31,22 +32,19 @@ def get_logger(module_name, log_format='short', debug=False):
     """
 
     # get logger
-    logger = logging.getLogger(module_name)
-    logger.setLevel(logging.INFO)
+    main_logger = logging.getLogger('qom')
+    main_logger.setLevel(logging.INFO)
     if debug:
-        logger.setLevel(logging.DEBUG)
+        main_logger.setLevel(logging.DEBUG)
     logging.captureWarnings(True)
-
-    # if logger for module exists
-    if len(logger.handlers) != 0:
-        return logger
 
     # set stream handler
     formatter = get_formatter(log_format)
     handler = get_handler(formatter)
-    logger.addHandler(handler)
+    main_logger.addHandler(handler)
 
-    return logger
+    # test
+    logger.info('--------------------Logger Initialized------------------\n')
     
 def get_formatter(log_format='short'):
     """Function to obtain the formatter for stream handler.
