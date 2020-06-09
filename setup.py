@@ -5,7 +5,7 @@ with open('README.md', 'r') as file_readme:
 
 setup(
     name='qom-sampreet',
-    version='0.1.4',
+    version='0.1.5',
     author='Sampreet Kalita',
     author_email='sampreet.kalita@hotmail.com',
     desctiption='Toolbox for Quantum Optomechanics',

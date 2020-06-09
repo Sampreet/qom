@@ -5,9 +5,10 @@
 * Restructured modules based on ```PyPI``` package documentation.
 * Renamed ```modules/measures/quantum_correlations``` to ```qom/measures/corr``` and removed object-oriented implementation.
 * Renamed ```controllers/solver_dynamics``` to ```qom/wrappers/dyna``` and added .
-* Renamed ```helpers/logger_console``` to ```qom/ui/log``` with steam handling initialization.
-* Renamed ```helpers/plotter_2D``` to ```qom/ui/plot```.
+* Renamed ```helpers/logger_console``` to ```qom/wrappers/logs``` with steam handling initialization.
+* Renamed ```helpers/plotter_2D``` to ```qom/wrappers/plot```.
 * Created ```setup``` for installation.
+* Created ```requirements``` file.
 * Added MIT license.
 
 ## 20200609 - 00 - v0.1.4

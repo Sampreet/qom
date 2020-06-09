@@ -44,7 +44,7 @@ def init(log_format='default', debug=False):
     main_logger.addHandler(handler)
 
     # test
-    logger.info('--------------------Logger Initialized------------------\n')
+    logger.info('-------------------Logger Initialized-------------------\n')
     
 def get_formatter(log_format='short'):
     """Function to obtain the formatter for stream handler.

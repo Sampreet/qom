@@ -10,7 +10,8 @@ __updated__ = '2020-06-09'
 
 # dependencies
 import logging
-from matplotlib import pyplot as mp, colors as mc
+import matplotlib.pyplot as mp
+from matplotlib.colors import LinearSegmentedColormap
 from numpy import array, meshgrid
 
 # module logger
@@ -46,7 +47,7 @@ def contourf(X, Y, Z, plot_params):
         colors = [(1, 1, 1), (0, 0, 0)]
         if 'colors' in cmap_params:
             colors = int(cmap_params['colors'])
-        cmap = mc.LinearSegmentedColormap.from_list('custom', colors, n_bins)
+        cmap = LinearSegmentedColormap.from_list('custom', colors, n_bins)
 
     # plot 
     mp.contourf(X, Y, Z, cmap=cmap, alpha=1)
