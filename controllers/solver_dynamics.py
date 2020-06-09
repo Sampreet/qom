@@ -12,6 +12,7 @@ import numpy as np
 import os
 import scipy.integrate as si
 
+# dev dependencies
 from helpers import logger_console
 from modules.measures import quantum_correlations
 
@@ -55,7 +56,7 @@ def get_quantum_correlation_measure_dynamics(V, measure_code, measure_data, debu
         # calculate progress
         progress = float(i)/float(len(V)) * 100
         # display progress
-        clh.info('Calculating the measure dynamics: Progress={progress:3.2f}'.format(progress=progress))
+        clh.info('Calculating the measure dynamics: Progress = {progress:3.2f}'.format(progress=progress))
 
         mat_Corr = np.real(V[i][num_modes:]).reshape([2*num_modes, 2*num_modes])
 
@@ -67,18 +68,22 @@ def get_quantum_correlation_measure_dynamics(V, measure_code, measure_data, debu
         pos_j = 2*measure_params['mode_j']
 
         # complete synchronization measure between ith and jth quadratures
-        if measure_code == 'quant_sync_comp':
+        if measure_code == 'quant_corr_sync_comp':
             prop = quantum_correlations.QuantumSynchronization().calculate_comp_sync(mat_Corr, pos_i, pos_j)
         # phase synchronization measure between ith and jth cavity
-        if measure_code == 'quant_sync_phase':
-            arg_i = np.angle(V[i][measure_params['mode_i']])
-            arg_j = np.angle(V[i][measure_params['mode_j']])
-            prop = quantum_correlations.QuantumSynchronization().calculate_phase_sync(mat_Corr, pos_i, pos_j, arg_i, arg_j)
+        if measure_code == 'quant_corr_sync_phase':
+            mode_i = V[i][measure_params['mode_i']]
+            mode_j = V[i][measure_params['mode_j']]
+            prop = quantum_correlations.QuantumSynchronization().calculate_phase_sync(mat_Corr, pos_i, pos_j, mode_i, mode_j)
+        if measure_code == 'quant_corr_phase_rot':
+            mode_i = V[i][measure_params['mode_i']]
+            mode_j = V[i][measure_params['mode_j']]
+            prop = quantum_correlations.QuantumSynchronization().calculate_rotated_phase_diff(mat_Corr, pos_i, pos_j, mode_i, mode_j)
         # quantum discord measure between ith and jth cavity
-        if measure_code == 'quant_disc':
+        if measure_code == 'quant_corr_disc':
             prop = quantum_correlations.QuantumDiscord().calculate(mat_Corr, pos_i, pos_j)
         # entanglement measure between ith and jth cavity
-        if measure_code == 'quant_entan':
+        if measure_code == 'quant_corr_entan':
             prop = quantum_correlations.QuantumEntanglement().calculate_log_neg(mat_Corr, pos_i, pos_j)
         
         # append to list
@@ -90,7 +95,7 @@ def get_quantum_correlation_measure_dynamics(V, measure_code, measure_data, debu
     # return list
     return M
 
-def get_system_dynamics(model, t_max, t_steps, solver_type='complex', debug=False):
+def get_system_dynamics(model, t_max, t_steps, solver_type='complex', debug=False, cache=True):
     """Function to obtain the dynamics of variables for a given model.
 
     Parameters
@@ -105,6 +110,9 @@ def get_system_dynamics(model, t_max, t_steps, solver_type='complex', debug=Fals
 
     debug : boolean
         Option to enable DEBUG log level.
+
+    cache : boolean
+        Option to cache dynamics.
 
     Returns
     -------
@@ -127,26 +135,28 @@ def get_system_dynamics(model, t_max, t_steps, solver_type='complex', debug=Fals
     for key in model.p:
         file_name += '_' + str(model.p[key])
 
-    # create directories
-    try:
-        os.makedirs(dir_name)
-    except FileExistsError:
-        # update log
-        clh.debug('Directory {dir_name} already exists\n'.format(dir_name=dir_name))
-    
-    # try loading data
-    try:
-        T = np.linspace(0, t_max, t_steps + 1)
-        V = np.load(dir_name + file_name + '.npy')
-    except IOError:
-        # update log
-        clh.debug('File {file_name} does not exist inside directory {dir_name}\n'.format(file_name=file_name, dir_name=dir_name))
-    else:
-        # update log
-        clh.info('----------------System Dynamics Obtained----------------\n')
+    # if caching is enabled
+    if (cache):
+        # create directories
+        try:
+            os.makedirs(dir_name)
+        except FileExistsError:
+            # update log
+            clh.debug('Directory {dir_name} already exists\n'.format(dir_name=dir_name))
+        
+        # try loading data
+        try:
+            T = np.linspace(0, t_max, t_steps + 1)
+            V = np.load(dir_name + file_name + '.npy')
+        except IOError:
+            # update log
+            clh.debug('File {file_name} does not exist inside directory {dir_name}\n'.format(file_name=file_name, dir_name=dir_name))
+        else:
+            # update log
+            clh.info('----------------System Dynamics Obtained----------------\n')
 
-        # return lists
-        return T.tolist(), V.tolist()
+            # return lists
+            return T.tolist(), V.tolist()
 
     # update log
     clh.debug('Obtaining the System Dynamics with initial values {model_variables} and constants {model_constants} and time parameters {time_params}\n'.format(model_variables=model.v, model_constants=model.c, time_params=[t_max, t_steps]))
@@ -195,8 +205,10 @@ def get_system_dynamics(model, t_max, t_steps, solver_type='complex', debug=Fals
     # display completion
     clh.info('----------------System Dynamics Obtained----------------\n')
 
-    # save data to file
-    np.save(dir_name + file_name, np.array(V))
+    # if caching is enabled
+    if (cache):
+        # save data to file
+        np.save(dir_name + file_name, np.array(V))
 
     # return list
     return T, V

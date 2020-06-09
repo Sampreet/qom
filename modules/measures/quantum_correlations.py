@@ -226,7 +226,7 @@ class QuantumSynchronization(object):
         # Complete Synchronization value
         return 1/(q_minus_2 + p_minus_2)
 
-    def calculate_phase_sync(self, Corr_mat, pos_i, pos_j, arg_i, arg_j):
+    def calculate_phase_sync(self, Corr_mat, pos_i, pos_j, mode_i, mode_j):
         """Function to calculate Quantum Phase Synchronization between two modes given the correlation matrix of their quadratures.
 
         Parameters
@@ -240,29 +240,77 @@ class QuantumSynchronization(object):
         pos_j : *int*
             Position of jth mode in the correlation matrix.
 
-        arg_i : *int*
-            Complex argument of the ith mode.
+        mode_i : np.complex
+            Value of the ith mode.
 
-        arg_j : *int*
-            Complex argument of the jth mode.
+        mode_j : np.complex
+            Value of the jth mode.
 
         Returns
         -------
         qs_p : float
             Quantum Phase Synchronization value.
         """
+
+        # amplitudes
+        amp_i = np.abs(mode_i)
+        amp_j = np.abs(mode_j)
+
+        # arguments
+        arg_i = np.angle(mode_i)
+        arg_j = np.angle(mode_j)
         
         # transformation for ith mode momentum quadrature
-        p_L_prime_2 = (np.sin(arg_i))**2*Corr_mat[pos_i][pos_i] - (np.sin(arg_i))*(np.cos(arg_i))*Corr_mat[pos_i][pos_i + 1] - (np.cos(arg_i))*(np.sin(arg_i))*Corr_mat[pos_i + 1][pos_i] + (np.cos(arg_i))**2*Corr_mat[pos_i + 1][pos_i + 1] 
+        p_i_prime_2 = (np.sin(arg_i))**2*Corr_mat[pos_i][pos_i] - (np.sin(arg_i))*(np.cos(arg_i))*Corr_mat[pos_i][pos_i + 1] - (np.cos(arg_i))*(np.sin(arg_i))*Corr_mat[pos_i + 1][pos_i] + (np.cos(arg_i))**2*Corr_mat[pos_i + 1][pos_i + 1] 
 
         # transformation for jth mode momentum quadrature
-        p_R_prime_2 = (np.sin(arg_j))**2*Corr_mat[pos_j][pos_j] - (np.sin(arg_j))*(np.cos(arg_j))*Corr_mat[pos_j][pos_j + 1] - (np.cos(arg_j))*(np.sin(arg_j))*Corr_mat[pos_j + 1][pos_j] + (np.cos(arg_j))**2*Corr_mat[pos_j + 1][pos_j + 1]
+        p_j_prime_2 = (np.sin(arg_j))**2*Corr_mat[pos_j][pos_j] - (np.sin(arg_j))*(np.cos(arg_j))*Corr_mat[pos_j][pos_j + 1] - (np.cos(arg_j))*(np.sin(arg_j))*Corr_mat[pos_j + 1][pos_j] + (np.cos(arg_j))**2*Corr_mat[pos_j + 1][pos_j + 1]
 
         # transformation for intermode momentum quadratures
-        p_L_p_R_prime = (np.sin(arg_i))*(np.sin(arg_j))*Corr_mat[pos_i][pos_j] - (np.sin(arg_i))*(np.cos(arg_j))*Corr_mat[pos_i][pos_j + 1] - (np.cos(arg_i))*(np.sin(arg_j))*Corr_mat[pos_i + 1][pos_j] + (np.cos(arg_i))*(np.cos(arg_j))*Corr_mat[pos_i + 1][pos_j + 1]
+        p_i_p_j_prime = (np.sin(arg_i))*(np.sin(arg_j))*Corr_mat[pos_i][pos_j] - (np.sin(arg_i))*(np.cos(arg_j))*Corr_mat[pos_i][pos_j + 1] - (np.cos(arg_i))*(np.sin(arg_j))*Corr_mat[pos_i + 1][pos_j] + (np.cos(arg_i))*(np.cos(arg_j))*Corr_mat[pos_i + 1][pos_j + 1]
 
         # square difference between momentum quadratures
-        p_minus_prime_2 = 1/2*(p_L_prime_2 + p_R_prime_2 - 2*p_L_p_R_prime)
+        p_minus_prime_2 = 1/2*(p_i_prime_2 + p_j_prime_2 - 2*p_i_p_j_prime)
 
         # Quantum Phase Synchronization value
         return 1/2/p_minus_prime_2
+
+    def calculate_rotated_phase_diff(self, mat_Corr, pos_i, pos_j, mode_i, mode_j):
+        """Function to calculate Quantum Phase Synchronization between two modes given the correlation matrix of their quadratures.
+
+        Parameters
+        ----------
+        mat_Corr : list
+            Matrix containing all correlations between quadratures.
+
+        pos_i : *int*
+            Position of ith mode in the correlation matrix.
+
+        pos_j : *int*
+            Position of jth mode in the correlation matrix.
+
+        mode_i : np.complex
+            Value of the ith mode.
+
+        mode_j : np.complex
+            Value of the jth mode.
+
+        Returns
+        -------
+        qs_p : float
+            Quantum Phase Synchronization value.
+        """
+
+        # amplitudes
+        amp_i = np.abs(mode_i)
+        amp_j = np.abs(mode_j)
+
+        # arguments
+        arg_i = np.angle(mode_i)
+        arg_j = np.angle(mode_j)
+
+        # calculate rotated quadratures
+        corr = np.cos(arg_i)*np.cos(arg_j)*mat_Corr[pos_i + 1][pos_j + 1] - np.cos(arg_i)*np.sin(arg_j)*mat_Corr[pos_i + 1][pos_j] - np.sin(arg_i)*np.cos(arg_j)*mat_Corr[pos_i][pos_j + 1] + np.sin(arg_i)*np.sin(arg_j)*mat_Corr[pos_i][pos_j]
+
+        # Quantum Phase Synchronization value
+        return corr
