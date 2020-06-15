@@ -6,7 +6,7 @@
 __name__    = 'qom.wrappers.dyna'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-05-01'
-__updated__ = '2020-06-09'
+__updated__ = '2020-06-15'
 
 # dependencies
 import logging
@@ -20,7 +20,7 @@ from qom.measures import corr
 # module logger
 logger = logging.getLogger(__name__)
 
-def measure(V, measure_code, measure_data, debug=False):
+def measure(V, measure_code, measure_data):
     """Function to obtain the dynamics of a quantum correlation measure.
 
     Parameters
@@ -33,9 +33,6 @@ def measure(V, measure_code, measure_data, debug=False):
     
     measure_data : dict
         Data for the measure.
-
-    debug : boolean
-        Option to enable DEBUG log level.
 
     Returns
     -------
@@ -52,17 +49,17 @@ def measure(V, measure_code, measure_data, debug=False):
 
     # initialize list
     M = []
-    # for each time step, calculate the complete synchronization values
+    # for each time step, calculate the measure
     for i in range(len(V)):
         # calculate progress
-        progress = float(i)/float(len(V)) * 100
+        progress = float(i) / float(len(V)) * 100
         # display progress
         logger.info('Calculating the measure dynamics: Progress = {progress:3.2f}'.format(progress=progress))
 
         mat_Corr = real(V[i][num_modes:]).reshape([2*num_modes, 2*num_modes])
 
-        # calculate property
-        prop = 0
+        # initialize measure
+        m = 0
         # position of ith mode in the correlation matrix
         pos_i = 2*measure_params['mode_i']
         # position of jth mode in the correlation matrix 
@@ -70,25 +67,25 @@ def measure(V, measure_code, measure_data, debug=False):
 
         # quantum discord measure between ith and jth cavity
         if measure_code == 'corr_disc':
-            prop = corr.disc(mat_Corr, pos_i, pos_j)
+            m = corr.disc(mat_Corr, pos_i, pos_j)
         # entanglement measure between ith and jth cavity
         if measure_code == 'corr_entan_bi_log_neg':
-            prop = corr.entan_bi_log_neg(mat_Corr, pos_i, pos_j)
+            m = corr.entan_bi_log_neg(mat_Corr, pos_i, pos_j)
         # complete synchronization measure between ith and jth quadratures
         if measure_code == 'corr_sync_comp':
-            prop = corr.sync_comp(mat_Corr, pos_i, pos_j)
+            m = corr.sync_comp(mat_Corr, pos_i, pos_j)
         # phase synchronization measure between ith and jth cavity
         if measure_code == 'corr_sync_phase':
             mode_i = V[i][measure_params['mode_i']]
             mode_j = V[i][measure_params['mode_j']]
-            prop = corr.sync_phase(mat_Corr, pos_i, pos_j, mode_i, mode_j)
+            m = corr.sync_phase(mat_Corr, pos_i, pos_j, mode_i, mode_j)
         if measure_code == 'corr_sync_phase_rot':
             mode_i = V[i][measure_params['mode_i']]
             mode_j = V[i][measure_params['mode_j']]
-            prop = corr.sync_phase_rot(mat_Corr, pos_i, pos_j, mode_i, mode_j)
+            m = corr.sync_phase_rot(mat_Corr, pos_i, pos_j, mode_i, mode_j)
         
         # update list
-        M.append(prop)
+        M.append(m)
     
     # display completion
     logger.info('----------------Measure Dynamics Obtained---------------\n')
@@ -96,27 +93,28 @@ def measure(V, measure_code, measure_data, debug=False):
     # values of the measure
     return M
 
-def system(model, t_max, t_steps, solver_type='complex', debug=False, cache=True, dir_name='data'):
+def system(model, t_max, t_steps, solver_type='complex', cache=True, dir_name='data'):
     """Function to obtain the dynamics of variables for a given model.
 
     Parameters
     ----------
     model : :class:`Model`
+        Model of the system.
 
-    time_params : dict
-        Time parameters for integration.
+    t_max : float
+        Maximum value of time.
+
+    t_steps : *int*
+        Number of steps to maximum value.
 
     solver_type : str
         Type of solver ('real' or 'complex').
 
-    debug : boolean
-        Option to enable DEBUG log level.
-
     cache : boolean
-        Option to cache dynamics.
+        Option to cache data.
 
     dir_name: str
-        Directory name to cache dynamics.
+        Directory name to cache data.
 
     Returns
     -------
@@ -131,8 +129,8 @@ def system(model, t_max, t_steps, solver_type='complex', debug=False, cache=True
     logger.info('Intializing {model_name} model with parameters {model_params}\n'.format(model_name=model.NAME, model_params=model.p))
 
     # directory and file names for storing data
-    dir_name += '\\' + model.CODE + '\\' + str(t_max) + '_' + str(t_steps) + '\\'
-    file_name = 'dynamics'
+    dir_name += '\\' + model.CODE + '\\dyna\\' + str(t_max) + '_' + str(t_steps) + '\\'
+    file_name = 'system'
     for key in model.p:
         file_name += '_' + str(model.p[key])
 
@@ -159,8 +157,11 @@ def system(model, t_max, t_steps, solver_type='complex', debug=False, cache=True
             # return lists
             return T.tolist(), V.tolist()
 
+    # get initial values and constants for the model
+    v, c = model.get_initial_values_and_constants()
+
     # update log
-    logger.debug('Obtaining the System Dynamics with initial values {model_variables} and constants {model_constants} and time parameters {time_params}\n'.format(model_variables=model.v, model_constants=model.c, time_params=[t_max, t_steps]))
+    logger.debug('Obtaining the System Dynamics with initial values {model_variables} and constants {model_constants} and time parameters {time_params}\n'.format(model_variables=v, model_constants=c, time_params=[t_max, t_steps]))
 
     # initialize integrator
     integrator = None
@@ -178,12 +179,12 @@ def system(model, t_max, t_steps, solver_type='complex', debug=False, cache=True
         integrator = ode(model.modelReal)
         
     # set initial values and constants
-    integrator.set_initial_value(model.v, t)
-    integrator.set_f_params(model.c)
+    integrator.set_initial_value(v, t)
+    integrator.set_f_params(c)
 
     # initialize lists
     T = [t]
-    V = [model.v]
+    V = [v]
 
     # for each time step, calculate the integration values
     for i in range(1, t_steps + 1):

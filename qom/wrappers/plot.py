@@ -6,7 +6,7 @@
 __name__    = 'qom.wrappers.plot'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2019-11-22'
-__updated__ = '2020-06-09'
+__updated__ = '2020-06-15'
 
 # dependencies
 import logging
@@ -35,9 +35,7 @@ def contourf(X, Y, Z, plot_params):
     # create mesh
     X, Y = meshgrid(X, Y)
 
-    # rearrange array
-    Z = array(Z).T
-
+    cmap = 'RdBu_r'
     # check colormap
     if 'cmap' in plot_params:
         cmap_params = plot_params['cmap']
@@ -50,7 +48,7 @@ def contourf(X, Y, Z, plot_params):
         cmap = LinearSegmentedColormap.from_list('custom', colors, n_bins)
 
     # plot 
-    mp.contourf(X, Y, Z, cmap=cmap, alpha=1)
+    mp.contourf(X, Y, Z, cmap=cmap, alpha=0.75)
 
     # display color bar
     mp.colorbar()
@@ -100,7 +98,7 @@ def set_params(plot_params):
         mp.ylim(plot_params['y_lim'][0], plot_params['y_lim'][1])
 
     # ticks
-    mp.ticklabel_format(axis='both', style='sci', scilimits=(-2,3), useMathText=True)
+    mp.ticklabel_format(axis='both', style='plain')
 
 def line(X, Y, plot_params):
     """Function for single line plot.
@@ -182,15 +180,13 @@ def pcolormesh(X, Y, Z, plot_params):
     # create mesh
     X, Y = meshgrid(X, Y)
 
-    # rearrange array
-    Z = array(Z).T
-
+    cmap = 'RdBu_r'
     # check colormap
     if 'cmap' in plot_params:
         cmap = plot_params['cmap']
 
     # plot color
-    mp.pcolormesh(X, Y, Z, cmap=cmap)
+    mp.pcolormesh(X, Y, Z, cmap=cmap, alpha=0.75)
 
     # display color bar
     mp.colorbar()

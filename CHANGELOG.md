@@ -1,23 +1,36 @@
 # Changelog
 
-## 20200609 - 01 - v0.1.5
+## v0.2.1 - 2020/06/15 - 00
+
+* Added ```qom/wrappers/cvar``` for continuous variable calculations.
+* Updated ```qom/wrappers/dyna``` to calculate initial values on function call.
+* Minor fixes to ```qom/wrappers/plot```. 
+
+## v0.2.0 - 2020/06/09 - 01
 
 * Restructured modules based on ```PyPI``` package documentation.
-* Renamed ```modules/measures/quantum_correlations``` to ```qom/measures/corr``` and removed object-oriented implementation.
-* Renamed ```controllers/solver_dynamics``` to ```qom/wrappers/dyna``` and added .
-* Renamed ```helpers/logger_console``` to ```qom/wrappers/logs``` with steam handling initialization.
+    * Created ```setup``` for installation.
+    * Created ```requirements``` file.
+    * Added MIT license.
+* Renamed ```modules/measures/quantum_correlations``` to ```qom/measures/corr```.
+    * Removed object-oriented implementation.
+    * Shortened module functions.
+    * Implemented module logger.
+* Renamed ```controllers/solver_dynamics``` to ```qom/wrappers/dyna```.
+    * Updated functions for measures and system dynamics.
+    * Implemented module logger.
+* Renamed ```helpers/logger_console``` to ```qom/wrappers/logs```.
+    * Added initialization of main logger and singleton usage.
 * Renamed ```helpers/plotter_2D``` to ```qom/wrappers/plot```.
-* Created ```setup``` for installation.
-* Created ```requirements``` file.
-* Added MIT license.
+    * Updated functions.
 
-## 20200609 - 00 - v0.1.4
+## v0.1.4 - 2020/06/09 - 00
 
 * Updated ```quantum_correlations``` with rotated phase measure.
 * Updated ```plotter_2D``` with contour plot.
 * Updated ```solver_dynamics``` with cache option.
 
-## 20200501 - 00 - v0.1.3
+## v0.1.3 - 2020/05/01 - 00
 
 * Added ```solver_dynamics``` wrapper for integration and calculation of measures.
 * Updtaed ```plotter_2D``` with scatter plot.
