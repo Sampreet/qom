@@ -98,6 +98,23 @@ def property_1D(model, property_code, property_data, thres_mode='max_min', plot=
         # update model
         model.p[x_name] = X[i]
 
+        # if absorption
+        if property_code == 'absorp':
+            # get property
+            p = model.get_absorp()
+    
+            # update lists
+            X_p.append(X[i])
+            P.append(p)
+
+            # update thresholds
+            if thres_mode == 'max_min' and p != 0 and p > p_max:
+                p_max = p
+                Thres[x_name] = X[i]
+            if thres_mode == 'max_max' and p != 0 and p >= p_max:
+                p_max = p
+                Thres[x_name] = X[i]
+
         # if stability state
         if property_code == 'bis':
             # obtain mean occupancy number
@@ -114,6 +131,23 @@ def property_1D(model, property_code, property_data, thres_mode='max_min', plot=
             if p == 1:
                 if Thres[x_name] < x_min or abs(Thres[x_name]) > abs(X[i]):
                     Thres[x_name] = X[i]
+
+        # if dispersion
+        if property_code == 'disper':
+            # get property
+            p = model.get_disper()
+    
+            # update lists
+            X_p.append(X[i])
+            P.append(p)
+
+            # update thresholds
+            if thres_mode == 'max_min' and p != 0 and p > p_max:
+                p_max = p
+                Thres[x_name] = X[i]
+            if thres_mode == 'max_max' and p != 0 and p >= p_max:
+                p_max = p
+                Thres[x_name] = X[i]
 
         # if imaginary part of exponent
         if property_code == 'exp_im':
@@ -176,10 +210,14 @@ def property_1D(model, property_code, property_data, thres_mode='max_min', plot=
                 p_max = max(N)
                 Thres[x_name] = X[i]
 
-        # if stability state
+        # if transmission
         if property_code == 'trans':
             # get property
             p = model.get_trans()
+    
+            # update lists
+            X_p.append(X[i])
+            P.append(p)
 
             # update thresholds
             if thres_mode == 'max_min' and p != 0 and p > p_max:
@@ -188,10 +226,23 @@ def property_1D(model, property_code, property_data, thres_mode='max_min', plot=
             if thres_mode == 'max_max' and p != 0 and p >= p_max:
                 p_max = p
                 Thres[x_name] = X[i]
+
+        # if transmission phase
+        if property_code == 'trans_phase':
+            # get property
+            p = model.get_trans_phase()
     
-            # update list
+            # update lists
             X_p.append(X[i])
             P.append(p)
+
+            # update thresholds
+            if thres_mode == 'max_min' and p != 0 and p > p_max:
+                p_max = p
+                Thres[x_name] = X[i]
+            if thres_mode == 'max_max' and p != 0 and p >= p_max:
+                p_max = p
+                Thres[x_name] = X[i]
 
         # update plot
         if plot:
@@ -304,6 +355,21 @@ def property_2D(model, property_code, property_data, thres_mode='max_min', plot=
             model.p[x_name] = X[i]
             model.p[y_name] = Y[j]
 
+            # if absorption
+            if property_code == 'absorp':
+                # get property
+                p = model.get_absorp()
+
+                # update thresholds
+                if thres_mode == 'max_min' and p != 0 and p > p_max:
+                    p_max = p
+                    Thres[x_name] = X[i]
+                    Thres[y_name] = Y[j]
+                if thres_mode == 'max_max' and p != 0 and p >= p_max:
+                    p_max = p
+                    Thres[x_name] = X[i]
+                    Thres[y_name] = Y[j]
+
             # if stability state
             if property_code == 'bis':
                 # obtain mean occupancy number
@@ -318,6 +384,21 @@ def property_2D(model, property_code, property_data, thres_mode='max_min', plot=
                         Thres[x_name] = X[i]
                     if Thres[y_name] < y_min or abs(Thres[y_name]) > abs(Y[j]):
                         Thres[y_name] = Y[j]
+
+            # if dispersion
+            if property_code == 'disper':
+                # get property
+                p = model.get_disper()
+
+                # update thresholds
+                if thres_mode == 'max_min' and p != 0 and p > p_max:
+                    p_max = p
+                    Thres[x_name] = X[i]
+                    Thres[y_name] = Y[j]
+                if thres_mode == 'max_max' and p != 0 and p >= p_max:
+                    p_max = p
+                    Thres[x_name] = X[i]
+                    Thres[y_name] = Y[j]
 
             # if imaginary part of exponent
             if property_code == 'exp_im':
@@ -371,10 +452,25 @@ def property_2D(model, property_code, property_data, thres_mode='max_min', plot=
                     p_max = p
                     Thres[x_name] = X[i]
 
-            # if stability state
+            # if transmission
             if property_code == 'trans':
                 # get property
                 p = model.get_trans()
+
+                # update thresholds
+                if thres_mode == 'max_min' and p != 0 and p > p_max:
+                    p_max = p
+                    Thres[x_name] = X[i]
+                    Thres[y_name] = Y[j]
+                if thres_mode == 'max_max' and p != 0 and p >= p_max:
+                    p_max = p
+                    Thres[x_name] = X[i]
+                    Thres[y_name] = Y[j]
+
+            # if transmission phase
+            if property_code == 'trans_phase':
+                # get property
+                p = model.get_trans_phase()
 
                 # update thresholds
                 if thres_mode == 'max_min' and p != 0 and p > p_max:
