@@ -43,29 +43,36 @@ The repository follows the following structure:
 ```
 ROOT_DIR/
 |
-│───controllers/
-│   │───__init__.py
-│   └───...
-|
-│───helpers/
+│───examples/
 │   ├───__init__.py
 │   └───...
 |
-│───modules/
+│───qom/
 │   │
 │   ├───measures/
 │   │   ├───__init__.py
 │   │   └───...
 │   │
-│   ├───techniques/
+│   ├───ui/
+│   │   ├───__init__.py
+│   │   └───...
+│   │
+│   ├───wrappers/
 │   │   ├───__init__.py
 │   │   └───...
 │   │   
 │   └───__init__.py
+|
+│───tests/
+│   │───__init__.py
+│   └───...
 │
 ├───.gitignore
-├───LICENSE
-└───README.md
+├───CHANGELOG.md
+├───LICENSE.txt
+├───README.md
+├───requirements.txt
+└───setup.py
 ```
 
 

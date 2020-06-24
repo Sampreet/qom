@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.2.5 - 2020/06/24 - 00
+* Created UI modules.
+    * Created ```qom/ui/figure``` for plotting figures.
+    * Moved ```qom/wrappers/logs``` to ```qom/ui/logs```.
+    * Removed ```qom/wrappers/plot```.
+* Updated wrapper modules.
+    * Added ```qom/wrappers/measures``` to calculate measures from dynamics.
+    * Added ```qom/wrappers/properties``` to calculate properties.
+    * Updated ```qom/wrappers/__init__``` for UI initialization.
+    * Minor fixes to ```qom/wrappers/dynamics```.
+* Updated ```README```.
+
 ## v0.2.1 - 2020/06/15 - 00
 
 * Added ```qom/wrappers/cvar``` for continuous variable calculations.

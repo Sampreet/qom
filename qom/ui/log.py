@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Wrapper module to output logs."""
+"""UI module to format logging."""
 
-__name__    = 'qom.wrappers.logs'
+__name__    = 'qom.ui.log'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-02-05'
-__updated__ = '2020-06-09'
+__updated__ = '2020-06-19'
 
 # dependencies
 import logging
@@ -14,7 +14,7 @@ import logging
 # module logger    
 logger = logging.getLogger(__name__)
 
-def init(log_format='default', debug=False):
+def init_log(log_format='short', debug=False):
     """Function to initialize the logger for the package.
     
     Parameters

@@ -3,10 +3,10 @@
  
 """Wrapper modules for dynamics."""
 
-__name__    = 'qom.wrappers.dyna'
+__name__    = 'qom.wrappers.dynamics'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-05-01'
-__updated__ = '2020-06-15'
+__updated__ = '2020-06-24'
 
 # dependencies
 import logging
@@ -16,23 +16,36 @@ from scipy.integrate import ode
 
 # dev dependencies
 from qom.measures import corr
+from qom.ui import figure
 
 # module logger
 logger = logging.getLogger(__name__)
 
-def measure(V, measure_code, measure_data):
+def measure(model, measure_code, measure_data, solver_type='complex', cache=True, dir_name='data', plot=False):
     """Function to obtain the dynamics of a quantum correlation measure.
 
     Parameters
     ----------
-    V : list
-        Modes and Correlation matrices.
+    model : :class:`Model`
+        Model of the system.
 
     measure_code : str
         Short code for the measure.
     
     measure_data : dict
-        Data for the measure.
+        Data for the calculation of measure.
+
+    solver_type : str
+        Type of solver ('real' or 'complex').
+
+    cache : boolean
+        Option to cache data.
+
+    dir_name: str
+        Directory name to cache data.
+
+    plot: boolean
+        Option to plot the measure dynamics.
 
     Returns
     -------
@@ -42,13 +55,22 @@ def measure(V, measure_code, measure_data):
 
     # extract frequently used variables
     measure_params = measure_data['params']
+    plot_params = measure_data['figure']['dynamics']
     num_modes = measure_params['num_modes']
 
     # display initialization
-    logger.info('Initializing {measure_name} calculation with parameters {measure_params}\n'.format(measure_name=measure_data['name'], measure_params=measure_params))
+    logger.info('Initializing {measure_name} calculation for {model_name} model:\n\tModel Parameters:\n\t\t{model_params}\n\tMeasure Parameters:\n\t\t{measure_params}\n\tPlot Parameters:\n\t\t{plot_params}\n'.format(measure_name=measure_data['name'], model_name=model.NAME, model_params=model.p, measure_params=measure_params, plot_params=plot_params))
+
+    # obtain all variables
+    T, V = get_variables(model, measure_params['t_max'], measure_params['t_steps'], solver_type, cache, dir_name)
+
+    # initialize plot
+    if plot:
+        plotter = figure.Plotter2D('line', plot_params)
 
     # initialize list
     M = []
+
     # for each time step, calculate the measure
     for i in range(len(V)):
         # calculate progress
@@ -86,14 +108,23 @@ def measure(V, measure_code, measure_data):
         
         # update list
         M.append(m)
+
+        # update plot
+        if plot:
+            plotter.update(T[0:i + 1], M)
+
     
     # display completion
     logger.info('----------------Measure Dynamics Obtained---------------\n')
 
-    # values of the measure
-    return M
+    # update plot
+    if plot:
+        plotter.update(T, M, head=False, hold=True)
 
-def system(model, t_max, t_steps, solver_type='complex', cache=True, dir_name='data'):
+    # values of the measure
+    return T, M
+
+def get_variables(model, t_max, t_steps, solver_type='complex', cache=True, dir_name='data'):
     """Function to obtain the dynamics of variables for a given model.
 
     Parameters
@@ -125,12 +156,9 @@ def system(model, t_max, t_steps, solver_type='complex', cache=True, dir_name='d
         Dynamics of the variables.
     """
 
-    # display initialization
-    logger.info('Intializing {model_name} model with parameters {model_params}\n'.format(model_name=model.NAME, model_params=model.p))
-
     # directory and file names for storing data
-    dir_name += '\\' + model.CODE + '\\dyna\\' + str(t_max) + '_' + str(t_steps) + '\\'
-    file_name = 'system'
+    dir_name += '\\' + model.CODE + '\\dynamics\\' + str(t_max) + '_' + str(t_steps) + '\\'
+    file_name = 'V'
     for key in model.p:
         file_name += '_' + str(model.p[key])
 
@@ -172,7 +200,7 @@ def system(model, t_max, t_steps, solver_type='complex', cache=True, dir_name='d
     
     if solver_type == 'complex':
         # complex ode solver formalism
-        integrator = ode(model.modelComplex)
+        integrator = ode(model.model_complex)
         integrator.set_integrator('zvode')
     else:
         # real-valued ode solver formalism
