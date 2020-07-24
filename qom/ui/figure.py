@@ -6,60 +6,133 @@
 __name__    = 'qom.ui.figure'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-06-16'
-__updated__ = '2020-06-24'
+__updated__ = '2020-07-24'
 
 # dependencies
+from matplotlib.lines import Line2D
 import logging
 import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sns
-from matplotlib.lines import Line2D
-from numpy import array, c_, empty, linspace, meshgrid, NaN, sin
 
 # module logger
 logger = logging.getLogger(__name__)
 
 class Plotter2D():
+    """Class containing various 2D plot scenarios.
 
+    Attibutes
+    ---------
+    axes : :class:`matplotlib.axes.Axes`
+        Axes for the figure.
+
+    cbar : :class:`matplotlib.colorbar.Colorbar`
+        Colorbar for 2D color figures.
+
+    head : :class:`matplotlib.lines.Line2D`
+        Line to indicate the point of processing.
+
+    plot : :class:`matplotlib.*`
+        Variable plot classes depending on the type of figure.
+
+    x_steps : int
+        Number of steps in x-axis.
+
+    y_steps : int
+        Number of steps in y-axis.
+
+    z_steps : int
+        Number of steps in z-axis.
+
+    plot_type : str
+        Type of plot:
+            contour: Contour plot.
+            contourf: Filled contour plot.
+            line: Line plot.
+            lines: Multi-line plot.
+            pcolormesh: Color plot.
+            scatter: Scatter plot.
+            scatters: Multi-scatter plot.
+    """
+
+    # class attributes
     axes = None
-    plot = None
-    head = None
     cbar = None
+    head = None
+    plot = None
+    x_steps = 0
+    y_steps = 0
+    z_steps = 0
     plot_type = 'line'
 
-    def __init__(self, plot_type, plot_params, X=[], Y=[], Z=[]):
-        """Class constructor for Plotter"""
+    def __init__(self, plot_params, X=[], Y=[], Z=[]):
+        """Class constructor for Plotter.
+        
+        Parameters
+        ----------
+        plot_params : list
+            Parameters of the plot.
+            
+        X : list
+            X-axis data.
+            
+        Y : list
+            Y-axis data.
+            
+        Z : list
+            Z-axis data.
+        """
         
         # initialize plot
         plt.show()
         self.axes = plt.gca()
-        self.axes.set_xlim(plot_params['X']['min'], plot_params['X']['max'])
+        self.axes.set_xlim(min(X), max(X))
+
+        self.x_steps = len(X)
 
         # plot type
-        self.plot_type = plot_type
+        self.plot_type = plot_params['type']
+
         # if line plot
-        if plot_type == 'line':
+        if self.plot_type == 'line':
             self.plot = Line2D([], [], color=plot_params['color'], linestyle=plot_params['linestyle'])
             self.head = Line2D([], [], color=plot_params['color'], linestyle=plot_params['linestyle'], marker='o')
             self.axes.add_line(self.plot)
             self.axes.add_line(self.head)
 
-        # if scatter plot
-        if plot_type == 'scatter':
-            self.plot = self.axes.scatter([], [], s=plot_params['size'], c=plot_params['color'])
-            
-        # if line plot
-        if plot_type == 'pcolormesh':
-            self.axes.set_ylim(plot_params['Y']['min'], plot_params['Y']['max'])
+        # if multi-line plot
+        if self.plot_type == 'lines':
+            self.plot = [Line2D([], [], color=plot_params['colors'][i], linestyle=plot_params['linestyles'][i]) for i in range(len(Z))]
+            self.head = [Line2D([], [], color=plot_params['colors'][i], linestyle=plot_params['linestyles'][i], marker='o') for i in range(len(Z))]
+            [self.axes.add_line(self.plot[i]) for i in range(len(Z))]
+            [self.axes.add_line(self.head[i]) for i in range(len(Z))]
 
-            X, Y = meshgrid(X, Y)
+        # if scatter plot
+        if self.plot_type == 'scatter':
+            self.plot = self.axes.scatter([], [], s=plot_params['size'], c=plot_params['color'])
+
+        # TODO: handle multi-scatter
+            
+        # if pcolormesh plot
+        if self.plot_type == 'pcolormesh':
+            self.axes.set_ylim(min(Y), max(Y))
+
+            X, Y = np.meshgrid(X, Y)
             # blue red
-            cmap = sns.diverging_palette(250, 15, s=75, l=40, n=9, center='dark', as_cmap=True)
-            # red blue
-            cmap = sns.diverging_palette(15, 250, s=75, l=40, n=9, center='dark', as_cmap=True)
-            # # green red
-            # cmap = sns.diverging_palette(150, 15, s=75, l=40, n=9, center='dark', as_cmap=True)
+            cmap = sns.diverging_palette(250, 15, s=75, l=40, n=9, center='light', as_cmap=True)
+            # # red blue
+            # cmap = sns.diverging_palette(15, 250, s=75, l=40, n=9, center='light', as_cmap=True)
+            # green red
+            cmap = sns.diverging_palette(150, 15, s=75, l=40, n=9, center='light', as_cmap=True)
             self.plot = self.axes.pcolormesh(X, Y, Z, shading='gouraud', cmap=cmap)
             self.cbar = plt.colorbar(self.plot)
+
+        # TODO: handle contour plots
+
+        # values
+        self.X = X
+        self.Y = Y
+        self.Z = Z
 
         # setup plot
         self.set_params(plot_params)
@@ -115,6 +188,12 @@ class Plotter2D():
             
         Y : list
             Y-axis data.
+            
+        Z : list
+            Z-axis data.
+
+        head : boolean
+            Option to display the head for line-type plots.
 
         hold : boolean
             Option to hold the plot.
@@ -135,9 +214,43 @@ class Plotter2D():
             Y = [y if y == y else 0 for y in Y]
             self.axes.set_ylim(min(Y), max(Y))
 
+        if self.plot_type == 'lines':
+            # scale down nan or inf values for limits
+            temp = [y if y == y else 0 for y in Y]
+            self.axes.set_ylim(min(temp), max(temp))
+
+            i = 0
+            while len(X) >= self.x_steps:
+                # update data 
+                self.plot[i].set_xdata(X[0:self.x_steps])
+                self.plot[i].set_ydata(Y[0:self.x_steps])
+
+                # reduce data 
+                X = X[self.x_steps:]
+                Y = Y[self.x_steps:]
+
+                # update plot numer
+                i+= 1
+            
+            if len(X) != 0:
+                # update data 
+                self.plot[i].set_xdata(X)
+                self.plot[i].set_ydata(Y)
+
+                if head:
+                    self.head[i].set_xdata(X[-1:])
+                    self.head[i].set_ydata(Y[-1:])
+                else:
+                    self.head[i].set_xdata([])
+                    self.head[i].set_ydata([])
+
+            elif i > 0:
+                self.head[i-1].set_xdata([])
+                self.head[i-1].set_ydata([])
+
         if self.plot_type == 'scatter':
             # update data
-            XY = c_[X, Y]
+            XY = np.c_[X, Y]
             self.plot.set_offsets(XY)
 
             # scale down nan or inf values for limits
@@ -151,7 +264,7 @@ class Plotter2D():
             # scale down nan or inf values for limits
             Z = [z if z == z else 0 for z in Z]
             self.plot.set_clim(vmin=min(Z), vmax=max(Z))
-            self.cbar.set_ticks(linspace(min(Z), max(Z), 11))
+            self.cbar.set_ticks(np.linspace(min(Z), max(Z), 11))
             self.cbar.ax.set_autoscale_on(True)
             self.cbar.draw_all()
 
@@ -162,4 +275,4 @@ class Plotter2D():
         if hold:
             plt.show()
         else:
-            plt.pause(1e-6)
+            plt.pause(1e-9)

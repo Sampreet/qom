@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.0 - 2020/07/24 - 00 - Added Gradients
+* Created UI modules.
+    * Added support for multi-line plots to ```qom/ui/figure```.
+    * Minor fixes to ```qom/ui/figure```.
+* Updated wrapper modules.
+    * Restructured ```qom/warppers/properties```.
+    * Added gradient functions to ```qom/warppers/properties```.
+* Updated ```requirements```.
+* Updated ```setup```.
+
 ## v0.2.5 - 2020/06/24 - 00
 * Created UI modules.
     * Created ```qom/ui/figure``` for plotting figures.

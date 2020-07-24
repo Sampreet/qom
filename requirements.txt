@@ -5,3 +5,4 @@ setuptools>=40.0
 
 # ui modules
 matplotlib>=3.0
+seaborn>=0.10
