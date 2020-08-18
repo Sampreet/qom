@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.3.2 - 2020/08/18 - 00 - Updated Wrappers
+*  Updated ```qom/measures```:
+    * Added switch function in ```corr``` module.
+    * Minor fixes to function parameters in ```corr``` module.
+* Updated color options in ```qom/ui/figure``` module.
+* Updated ```qom/wrappers```:
+    * Added switch functions to ```dynamics``` and ```measures``` modules.
+    * Added cache options and updated parameters in ```dynamics``` module.
+    * Revamped ```measures``` module functions.
+    * Minor fixes to ```properties``` module.
+* Updated ```setup```.
+
 ## v0.3.0 - 2020/07/24 - 00 - Added Gradients
 * Created UI modules.
     * Added support for multi-line plots to ```qom/ui/figure```.

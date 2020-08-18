@@ -6,7 +6,7 @@
 __name__    = 'qom.wrappers.properties'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-06-15'
-__updated__ = '2020-07-24'
+__updated__ = '2020-08-18'
 
 # dependencies
 import logging
@@ -19,7 +19,7 @@ from qom.ui import figure
 # module logger
 logger = logging.getLogger(__name__)
 
-def calculate(model, prop_data):
+def calculate(model, data):
     """Wrapper function to switch functions for calculation of properties.
     
     Parameters
@@ -27,7 +27,7 @@ def calculate(model, prop_data):
     model : :class:`Model`
         Model of the system.
 
-    prop_data: str
+    data : dict
         Data for the calculation.
 
     Returns
@@ -36,14 +36,8 @@ def calculate(model, prop_data):
         Data of the propreties calculated.
     """
 
-    # extract frequently used variables
-    prop_type = prop_data['type']
-    prop_params = prop_data['prop_params']
-    plot = prop_data['plot']
-    plot_params = prop_data['plot_params']
-
     # get properties
-    return globals()['properties_' + prop_type](model, prop_params, plot, plot_params)
+    return globals()[data['func']](model, data['prop_params'], data['plot'], data['plot_params'])
 
 def properties_1D(model, prop_params, plot=False, plot_params=None):
     """Function to calculate properties versus a continuous variable.
@@ -53,39 +47,37 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
     model : :class:`Model`
         Model of the system.
 
-    prop_params: str
-        Parameters for the calculation.
+    prop_params : dict
+        Parameters for the property.
 
-    plot: boolean
+    plot : boolean
         Option to plot the property.
 
-    plot_type: str
-        Option for type of plot:
-            line: Line plot.
-            scatter: Scatter plot.
+    plot_params : dict
+        Parameters for the plot.
 
     Returns
     -------
     P : list
         Properties calculated.
 
-    Thres: dict
+    Thres : dict
         Threshold values of the variables used.
 
     Axes : dict
         Axes points used to calculate the properties.
     """
 
-    # TODO: check property and plot parametes
+    # TODO: verify presence of parametes
 
     # extract frequently used variables
-    prop_code = prop_params['code']
-    prop_name = prop_params['name']
-    thres_mode = prop_params['thres_mode']
-    x_name = prop_params['X']['name']
-    x_min = prop_params['X']['min']
-    x_max = prop_params['X']['max']
-    x_steps = prop_params['X']['steps']
+    prop_code   = prop_params['code']
+    prop_name   = prop_params['name']
+    thres_mode  = prop_params['thres_mode']
+    x_name      = prop_params['X']['name']
+    x_min       = prop_params['X']['min']
+    x_max       = prop_params['X']['max']
+    x_steps     = prop_params['X']['steps']
 
     # initialize variables
     num_decimals = int(np.ceil(np.log10((x_steps - 1) / (x_max - x_min))))
@@ -96,7 +88,7 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
     Thres[x_name] = x_min - 1
 
     # threshold values
-    if thres_mode.index('max_') != -1:
+    if thres_mode.find('max_') != -1:
         # max value of property
         p_max = 0
 
@@ -124,7 +116,7 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
         if type(p) == list:
             X_p += [X[i] for l in range(len(p))]
             P += p
-            if thres_mode.index('max_') != -1:
+            if thres_mode.find('max_') != -1:
                 p = max(p)
         # update lists for line plot
         else:
@@ -172,42 +164,40 @@ def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
     model : :class:`Model`
         Model of the system.
 
-    prop_params: str
-        Parameters for the calculation.
+    prop_params : dict
+        Parameters for the property.
 
-    plot: boolean
+    plot : boolean
         Option to plot the property.
 
-    plot_type: str
-        Option for type of plot:
-            lines: Multi-line plot.
-            scatters: Multi-scatter plot.
+    plot_params : dict
+        Parameters for the plot.
 
     Returns
     -------
     P : list
         Properties calculated.
 
-    Thres: dict
+    Thres : dict
         Threshold values of the variables used.
 
     Axes : dict
         Axes points used to calculate the properties.
     """
 
-    # TODO: check property and plot parametes
+    # TODO: assert property and plot parametes
 
     # extract frequently used variables
-    prop_code = prop_params['code']
-    prop_name = prop_params['name']
-    thres_mode = prop_params['thres_mode']
-    x_name = prop_params['X']['name']
-    x_min = prop_params['X']['min']
-    x_max = prop_params['X']['max']
-    x_steps = prop_params['X']['steps']
-    z_name = prop_params['Z']['name']
-    z_unit = prop_params['Z']['unit']
-    Z = prop_params['Z']['values']
+    prop_code   = prop_params['code']
+    prop_name   = prop_params['name']
+    thres_mode  = prop_params['thres_mode']
+    x_name      = prop_params['X']['name']
+    x_min       = prop_params['X']['min']
+    x_max       = prop_params['X']['max']
+    x_steps     = prop_params['X']['steps']
+    z_name      = prop_params['Z']['name']
+    z_unit      = prop_params['Z']['unit']
+    Z           = prop_params['Z']['values']
     if plot:
         plot_params['legend'] = ['{name} = {value} {unit}'.format(name=z_name, value=z, unit=z_unit) for z in Z]
 
@@ -220,7 +210,7 @@ def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
     Thres[x_name] = x_min - 1
 
     # threshold values
-    if thres_mode.index('max_') != -1:
+    if thres_mode.find('max_') != -1:
         # max value of property
         p_max = 0
 
@@ -251,7 +241,7 @@ def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
             if type(p) == list:
                 X_p += [X[i] for l in range(len(p))]
                 P += p
-                if thres_mode.index('max_') != -1:
+                if thres_mode.find('max_') != -1:
                     p = max(p)
             # update lists for multi-line plot
             else:
@@ -302,15 +292,14 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
     model : :class:`Model`
         Model of the system.
 
-    prop_params: str
-        Parameters for the calculation.
+    prop_params : dict
+        Parameters for the property.
 
-    plot: boolean
+    plot : boolean
         Option to plot the property.
 
-    plot_type: str
-        Option for type of plot:
-            pcolormesh: Pcolormesh plot.
+    plot_params : dict
+        Parameters for the plot.
 
     Returns
     -------
@@ -324,20 +313,20 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
         Axes points used to calculate the properties.
     """
 
-    # TODO: check property and plot parametes
+    # TODO: assert property and plot parametes
 
     # extract frequently used variables
-    prop_code = prop_params['code']
-    prop_name = prop_params['name']
-    thres_mode = prop_params['thres_mode']
-    x_name = prop_params['X']['name']
-    x_min = prop_params['X']['min']
-    x_max = prop_params['X']['max']
-    x_steps = prop_params['X']['steps']
-    y_name = prop_params['Y']['name']
-    y_min = prop_params['Y']['min']
-    y_max = prop_params['Y']['max']
-    y_steps = prop_params['Y']['steps']
+    prop_code   = prop_params['code']
+    prop_name   = prop_params['name']
+    thres_mode  = prop_params['thres_mode']
+    x_name      = prop_params['X']['name']
+    x_min       = prop_params['X']['min']
+    x_max       = prop_params['X']['max']
+    x_steps     = prop_params['X']['steps']
+    y_name      = prop_params['Y']['name']
+    y_min       = prop_params['Y']['min']
+    y_max       = prop_params['Y']['max']
+    y_steps     = prop_params['Y']['steps']
 
     # initialize variables
     num_decimals = int(np.ceil(np.log10((x_steps - 1) / (x_max - x_min))))
@@ -351,7 +340,7 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
     Thres[y_name] = y_min - 1
 
     # threshold values
-    if thres_mode.index('max_') != -1:
+    if thres_mode.find('max_') != -1:
         # max value of property
         p_max = 0
 
@@ -363,7 +352,7 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
     logger.info('Initializing {prop_name} calculation...\t\n'.format(prop_name=prop_name))
 
     # for variation in Y
-    for j in range(len(Y)):       
+    for j in range(len(Y)):
         # for variation in X
         for i in range(len(X)):
             # calculate progress
@@ -380,7 +369,7 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
 
             # handle multi-value points
             if type(p) == list:
-                if thres_mode.index('max_') != -1:
+                if thres_mode.find('max_') != -1:
                     p = max(p)
 
             # update list
@@ -429,35 +418,33 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
     model : :class:`Model`
         Model of the system.
 
-    prop_params: str
-        Parameters for the calculation.
+    prop_params : dict
+        Parameters for the property.
 
-    plot: boolean
+    plot  : boolean
         Option to plot the property.
 
-    plot_type: str
-        Option for type of plot:
-            line: Line plot.
-            scatter: Scatter plot.
+    plot_params : dict
+        Parameters for the plot.
 
     Returns
     -------
     P : list
         Properties calculated.
 
-    Thres: dict
+    Thres : dict
         Threshold values of the variables used.
 
     Axes : dict
         Axes points used to calculate the properties.
     """
 
-    # TODO: check property and plot parametes
+    # TODO: assert property and plot parametes
 
     # extract frequently used variables
-    prop_name = prop_params['name']
-    grad_func = prop_params['grad_func']
-    prop_model = model
+    prop_name   = prop_params['name']
+    grad_func   = prop_params['grad_func']
+    prop_model  = model
 
     # initialize variables
     X_g = []
@@ -543,22 +530,21 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
     model : :class:`Model`
         Model of the system.
 
-    prop_params: str
-        Parameters for the calculation of property.
+    prop_params : dict
+        Parameters for the property.
 
-    plot: boolean
+    plot : boolean
         Option to plot the property.
 
-    plot_type: str
-        Option for type of plot:
-            lines: Lines plot.
+    plot_params : dict
+        Parameters for the plot.
 
     Returns
     -------
     P : list
         Properties calculated.
 
-    Thres: dict
+    Thres : dict
         Threshold values of the variables used.
 
     Axes : dict
@@ -566,12 +552,12 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
     """
 
     # extract frequently used variables
-    prop_name = prop_params['name']
-    grad_func = prop_params['grad_func']
-    prop_model = model
-    z_name = prop_params['Z']['name']
-    z_unit = prop_params['Z']['unit']
-    Z = prop_params['Z']['values']
+    prop_name   = prop_params['name']
+    grad_func   = prop_params['grad_func']
+    prop_model  = model
+    z_name      = prop_params['Z']['name']
+    z_unit      = prop_params['Z']['unit']
+    Z           = prop_params['Z']['values']
     if plot:
         plot_params['legend'] = ['{name} = {value} {unit}'.format(name=z_name, value=z, unit=z_unit) for z in Z]
 
@@ -671,32 +657,33 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
     model : :class:`Model`
         Model of the system.
 
-    prop_params: str
-        Parameters for the calculation.
+    prop_params : dict
+        Parameters for the property.
 
-    plot: boolean
+    plot : boolean
         Option to plot the property.
 
-    plot_type: str
-        Option for type of plot:
-            lines: Lines plot.
+    plot_params : dict
+        Parameters for the plot.
 
     Returns
     -------
     P : list
         Properties calculated.
 
-    Thres: dict
+    Thres : dict
         Threshold values of the variables used.
 
     Axes : dict
         Axes points used to calculate the properties.
     """
 
+    # TODO: assert property and plot parameters
+
     # extract frequently used variables
-    prop_name = prop_params['name']
-    prop_model = model
-    y_name = prop_params['Y']['name']
+    prop_name   = prop_params['name']
+    prop_model  = model
+    y_name      = prop_params['Y']['name']
 
     # TODO: handle 3D plots
 
@@ -767,10 +754,10 @@ def get_grad(Y, X, grad_params):
     Y : list
         Values of the dataset.
 
-    X: list
+    X : list
         Positions of the dataset.
 
-    grad_params: dict
+    grad_params : dict
         Options for the position.
 
     Returns
@@ -778,6 +765,9 @@ def get_grad(Y, X, grad_params):
     grad : float
         Value of the gradient at the position.
     """
+
+    # TODO: handle single parameter case
+
     # calculate gradients
     temp = np.gradient(Y, X)
 

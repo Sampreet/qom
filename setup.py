@@ -5,7 +5,7 @@ with open('README.md', 'r') as file_readme:
 
 setup(
     name='qom-sampreet',
-    version='0.3.0',
+    version='0.3.2',
     author='Sampreet Kalita',
     author_email='sampreet.kalita@hotmail.com',
     desctiption='Toolbox for Quantum Optomechanics',
@@ -26,6 +26,7 @@ setup(
         'numpy>=1.10',
         'scipy>=1.0',
         'seaborn>=0.10',
+        'matplotlib>=3.0'
         'setuptools>=40.0'
     ],
     python_requires='>=3.6',

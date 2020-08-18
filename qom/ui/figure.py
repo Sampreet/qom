@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.figure'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-06-16'
-__updated__ = '2020-07-24'
+__updated__ = '2020-08-17'
 
 # dependencies
 from matplotlib.lines import Line2D
@@ -118,12 +118,13 @@ class Plotter2D():
             self.axes.set_ylim(min(Y), max(Y))
 
             X, Y = np.meshgrid(X, Y)
-            # blue red
-            cmap = sns.diverging_palette(250, 15, s=75, l=40, n=9, center='light', as_cmap=True)
-            # # red blue
-            # cmap = sns.diverging_palette(15, 250, s=75, l=40, n=9, center='light', as_cmap=True)
-            # green red
-            cmap = sns.diverging_palette(150, 15, s=75, l=40, n=9, center='light', as_cmap=True)
+            if 'color_grad' in plot_params:
+                if plot_params['color_grad'] == 'br_light':
+                    cmap = sns.diverging_palette(250, 15, s=75, l=40, n=9, center='light', as_cmap=True)
+                if plot_params['color_grad'] == 'rb_light':
+                    cmap = sns.diverging_palette(15, 250, s=75, l=40, n=9, center='light', as_cmap=True)
+                if plot_params['color_grad'] == 'gr_light':
+                    cmap = sns.diverging_palette(150, 15, s=75, l=40, n=9, center='light', as_cmap=True)
             self.plot = self.axes.pcolormesh(X, Y, Z, shading='gouraud', cmap=cmap)
             self.cbar = plt.colorbar(self.plot)
 
