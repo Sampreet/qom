@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.3.3 - 2020/08/24 - 00 - Added Difference Measures
+*  Updated ```qom/measures```:
+    * Added ```diff``` module for difference measures.
+    * Added looped calculation in ```corr``` module.
+* Updated ```qom/wrappers```:
+    * Removed looped calculation from ```dynamics``` module.
+    * Updated calculation of average measures in ```measures``` module.
+    * Minor fixes to ```properties``` module.
+* Updated ```README```.
+* Updated ```setup```.
+
 ## v0.3.2 - 2020/08/18 - 00 - Updated Wrappers
 *  Updated ```qom/measures```:
     * Added switch function in ```corr``` module.

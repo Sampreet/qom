@@ -18,7 +18,7 @@ Some modules require CUDA-capable hardware for parallelized calculations and hen
 conda install pycuda
 ```
 
-A complete guide for installation of all dependencies is available in [GPU-Accelerated Deep Learning guide](https://github.com/Sampreet/install-guides/blob/master/languages/python/GPU-accelerated-deep-learning-Keras-Tensorflow-Theano-PyCUDA.md) with the packages mentioned replaced by the latest VS Community and Anaconda packages. A separate python environment for ```PyCUDA``` is preferable.
+A complete guide for installation of all dependencies is available in my [GPU-Accelerated Deep Learning guide](https://github.com/Sampreet/install-guides/blob/master/languages/python/GPU-accelerated-deep-learning-Keras-Tensorflow-Theano-PyCUDA.md) with the packages mentioned replaced by the latest VS Community and Anaconda packages. A separate python environment for ```PyCUDA``` is preferable.
 
 #### Tensorflow
 
@@ -42,6 +42,10 @@ The repository follows the following structure:
 
 ```
 ROOT_DIR/
+|
+│───docs/
+│   ├───__init__.py
+│   └───...
 |
 │───examples/
 │   ├───__init__.py

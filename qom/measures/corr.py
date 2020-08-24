@@ -6,7 +6,7 @@
 __name__    = 'qom.measures.corr'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-02-26'
-__updated__ = '2020-08-17'
+__updated__ = '2020-08-24'
 
 # dependencies
 import logging
@@ -21,15 +21,15 @@ def calculate(V, meas_params):
     Parameters
     ----------
     V : list
-        Dynamics of the variables.
+        Values of the variables.
 
     meas_params : dict
         Parameters for the calculation.
 
     Returns
     -------
-    v : float
-        Value of the measure calculated.
+    M : float
+        Measures calculated.
     """
 
     # extract frequently used variables
@@ -38,19 +38,37 @@ def calculate(V, meas_params):
     mode_i      = meas_params['mode_i']
     mode_j      = meas_params['mode_j']
 
-    # correlation matrix
-    mat_corr = np.real(V[num_modes:]).reshape([2 * num_modes, 2 * num_modes])
-    # position of ith mode in the correlation matrix
-    pos_i = 2 * mode_i
-    # position of jth mode in the correlation matrix 
-    pos_j = 2 * mode_j
+    # initialize lists
+    M = []
 
-    # get phase-related measures
-    if meas_code.find('phase') != -1:
-        return globals()[meas_code](mat_corr, pos_i, pos_j, V[mode_i], V[mode_j])
+    # for variation in V
+    for i in range(len(V)):
+        # calculate progress
+        progress = float(i) / float(len(V)) * 100
+        # display progress
+        logger.info('Calculating the measure values: Progress = {progress:3.2f}'.format(progress=progress))
 
-    # get measures
-    return globals()[meas_code](mat_corr, pos_i, pos_j)
+        # initialize value
+        m = 0
+
+        # correlation matrix
+        mat_corr = np.real(V[i][num_modes:]).reshape([2 * num_modes, 2 * num_modes])
+        # position of ith mode in the correlation matrix
+        pos_i = 2 * mode_i
+        # position of jth mode in the correlation matrix 
+        pos_j = 2 * mode_j
+
+        # get phase-related measures
+        if meas_code.find('phase') != -1:
+            m = globals()[meas_code](mat_corr, pos_i, pos_j, V[i][mode_i], V[i][mode_j])
+        else:
+            m = globals()[meas_code](mat_corr, pos_i, pos_j)
+
+        # update lists
+        M.append(m)
+
+    # measures calculated
+    return M
 
 def disc(mat_corr, pos_i, pos_j):
     """Function to calculate Gaussian quantum discord between two modes given the correlation matrix of their quadratures.

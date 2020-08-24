@@ -37,7 +37,7 @@ def calculate(model, data):
     """
 
     # get properties
-    return globals()[data['func']](model, data['prop_params'], data['plot'], data['plot_params'])
+    return globals()[data['prop_params']['func']](model, data['prop_params'], data['plot'], data['plot_params'])
 
 def properties_1D(model, prop_params, plot=False, plot_params=None):
     """Function to calculate properties versus a continuous variable.

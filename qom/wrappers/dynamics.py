@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
- 
+
 """Wrapper modules for dynamics."""
 
 __name__    = 'qom.wrappers.dynamics'
@@ -15,7 +15,7 @@ import os
 import scipy.integrate as si
 
 # dev dependencies
-from qom.measures import corr
+from qom.measures import corr, diff
 from qom.ui import figure
 
 # module logger
@@ -39,7 +39,7 @@ def calculate(model, data):
     """
 
     # get dynamics
-    return globals()[data['func']](model, data['dyna_params'], data['meas_params'], data['plot'], data['plot_params'])
+    return globals()[data['dyna_params']['func']](model, data['dyna_params'], data['meas_params'], data['plot'], data['plot_params'])
 
 def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=None):
     """Function to calculate the dynamics of a quantum correlation measure.
@@ -86,13 +86,11 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
     t_max   = dyna_params['T']['max']
     t_steps = dyna_params['T']['steps']
 
-    # initialize variables
-    X_d = []
-    D   = []
-
     # directory and file names for storing data
     dir_name += '\\' + model.CODE + '\\dynamics\\' + str(t_min) + '_' + str(t_max) + '_' + str(t_steps) + '\\'
     file_name = meas_params['type'] + '_' + meas_params['code']
+    if 'arg_str' in meas_params:
+        file_name += '_' + meas_params['arg_str']
     for key in model.p:
         file_name += '_' + str(model.p[key])
 
@@ -119,9 +117,6 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
             # update log
             logger.debug('File {file_name} does not exist inside directory {dir_name}\n'.format(file_name=file_name, dir_name=dir_name))
         else:
-            # update log
-            logger.info('----------------Measure Dynamics Obtained----------------\n')
-
             # update plot
             if plot:
                 plotter.update(T, D, head=False, hold=True)
@@ -138,27 +133,11 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
     # display initialization
     logger.info('Initializing dynamics calculation of {meas_name} for {model_name} model:\n\tModel Parameters:\n\t\t{model_params}\n\tMeasure Parameters:\n\t\t{meas_params}\n\tDynamics Parameters:\n\t\t{dyna_params}\n'.format(meas_name=meas_params['name'], model_name=model.NAME, model_params=model.p, meas_params=meas_params, dyna_params=dyna_params))
 
-    # for each time step, calculate the measure
-    for i in range(len(V)):
-        # calculate progress
-        progress = float(i) / float(len(V)) * 100
-        # display progress
-        logger.info('Calculating the measure dynamics: Progress = {progress:3.2f}'.format(progress=progress))
-
-        # initialize value
-        d = 0
-
-        # calculate measure
-        if meas_params['type'] == 'corr':
-            d = corr.calculate(V[i], meas_params)
-        
-        # update lists
-        X_d.append(T[i])
-        D.append(d)
-
-        # update plot
-        if plot:
-            plotter.update(X_d, D)
+    # calculate measures
+    if meas_params['type'] == 'corr':
+        D = corr.calculate(V, meas_params)
+    elif meas_params['type'] == 'diff':
+        D = diff.calculate(V, meas_params)
     
     # display completion
     logger.info('----------------Measure Dynamics Obtained---------------\n')
@@ -170,7 +149,7 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
 
     # update plot
     if plot:
-        plotter.update(X_d, D, head=False, hold=True)
+        plotter.update(T, D, head=False, hold=True)
 
     # axes dictionary
     Axes = {}
@@ -241,9 +220,6 @@ def get_dynamics(model, dyna_params):
             # update log
             logger.debug('File {file_name} does not exist inside directory {dir_name}\n'.format(file_name=file_name, dir_name=dir_name))
         else:
-            # update log
-            logger.info('----------------System Dynamics Obtained----------------\n')
-
             # return lists
             return T, V
 

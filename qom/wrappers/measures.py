@@ -6,7 +6,7 @@
 __name__    = 'qom.wrappers.measures'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-06-19'
-__updated__ = '2020-08-18'
+__updated__ = '2020-08-24'
 
 # dependencies
 import logging
@@ -38,7 +38,7 @@ def calculate(model, data):
     """
 
     # get properties
-    return globals()[data['func']](model, data['dyna_params'], data['meas_params'], data['plot'], data['plot_params'])
+    return globals()[data['meas_params']['func']](model, data['dyna_params'], data['meas_params'], data['plot'], data['plot_params'])
 
 def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
     """Function to calculate measures versus a continuous variable.
@@ -76,7 +76,7 @@ def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
 
     # extract frequently used variables
     avg_mode    = meas_params['avg_mode']
-    avg_span    = meas_params['avg_span']
+    avg_type    = meas_params['avg_type']
     thres_mode  = meas_params['thres_mode']
     x_name      = meas_params['X']['name']
     x_min       = meas_params['X']['min']
@@ -122,9 +122,19 @@ def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
 
         # calculate average value
         if avg_mode == 'all':
-            m = sum(D) / len(D)
-        elif avg_mode == 'end':
-            m = sum(D[-avg_span:-1]) / avg_span
+            m = np.mean(D)
+        elif avg_mode == 'end' and avg_type == 'min_max':
+            arr = D[-meas_params['span']:]
+            m = (max(arr) + min(arr)) / 2
+        elif avg_mode == 'range' and avg_type == 'min_max':
+            arr = D[meas_params['start']:meas_params['stop']]
+            m = (max(arr) + min(arr)) / 2
+        elif avg_mode == 'end' and avg_type == 'mean':
+            arr = D[-meas_params['span']:]
+            m = np.mean(arr)
+        elif avg_mode == 'range' and avg_type == 'mean':
+            arr = D[meas_params['start']:meas_params['stop']]
+            m = np.mean(arr)
 
         # update threshold
         if thres_mode == 'max_min' and m != 0 and m > m_max:
@@ -199,7 +209,7 @@ def measures_2D(model, dyna_params, meas_params, plot, plot_params):
 
     # extract frequently used variables
     avg_mode    = meas_params['avg_mode']
-    avg_span    = meas_params['avg_span']
+    avg_type    = meas_params['avg_type']
     thres_mode  = meas_params['thres_mode']
     x_name      = meas_params['X']['name']
     x_min       = meas_params['X']['min']
@@ -256,8 +266,19 @@ def measures_2D(model, dyna_params, meas_params, plot, plot_params):
             # calculate average value
             if avg_mode == 'all':
                 m = sum(D) / len(D)
-            elif avg_mode == 'end':
-                m = sum(D[-avg_span:-1]) / avg_span
+            elif avg_mode == 'end' and avg_type == 'min_max':
+                arr = D[-meas_params['span']:-1]
+                m = (max(arr) + min(arr)) / 2
+            elif avg_mode == 'range' and avg_type == 'min_max':
+                arr = D[meas_params['start']:meas_params['stop']]
+                m = (max(arr) + min(arr)) / 2
+            elif avg_mode == 'end' and avg_type == 'mean':
+                arr = D[-meas_params['span']:-1]
+                m = sum(arr) / len(arr)
+            elif avg_mode == 'range' and avg_type == 'mean':
+                arr = D[meas_params['start']:meas_params['stop']]
+                m = sum(arr) / len(arr)
+
 
             # update threshold
             if thres_mode == 'max_min' and m != 0 and m > m_max:
