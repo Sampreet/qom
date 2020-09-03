@@ -6,7 +6,7 @@
 __name__    = 'qom.wrappers.measures'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-06-19'
-__updated__ = '2020-08-24'
+__updated__ = '2020-09-01'
 
 # dependencies
 import logging
@@ -166,9 +166,9 @@ def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
 
     # axes dictionary
     Axes = {}
-    Axes['x'] = X
-    Axes['y'] = []
-    Axes['z'] = []
+    Axes['X'] = X
+    Axes['Y'] = []
+    Axes['Z'] = []
 
     # return data
     return M, Thres, Axes
@@ -311,9 +311,9 @@ def measures_2D(model, dyna_params, meas_params, plot, plot_params):
 
     # axes dictionary
     Axes = {}
-    Axes['x'] = X
-    Axes['y'] = Y
-    Axes['z'] = []
+    Axes['X'] = X
+    Axes['Y'] = Y
+    Axes['Z'] = []
 
     # return data
     return M, Thres, Axes

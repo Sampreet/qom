@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.5 - 2020/09/04 - 00 - Added dynamics_tf Wrapper
+*  Updated ```qom/ui```:
+    * Minor fixes to ```figure``` module.
+    * Added custom formatter for ```log``` module.
+* Updated ```qom/wrappers```:
+    * Added ```dynamics_tf``` module implementing tensorflow-based integration.
+    * Restructured ```dynamics``` module save/load blocks.
+    * Minor fixes to ```measures``` and ```properties``` modules.
+* Updated ```setup```.
+
 ## v0.3.3 - 2020/08/24 - 00 - Added Difference Measures
 *  Updated ```qom/measures```:
     * Added ```diff``` module for difference measures.

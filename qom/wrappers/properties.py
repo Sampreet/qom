@@ -6,7 +6,7 @@
 __name__    = 'qom.wrappers.properties'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-06-15'
-__updated__ = '2020-08-18'
+__updated__ = '2020-09-01'
 
 # dependencies
 import logging
@@ -149,9 +149,9 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
 
     # axes dictionary
     Axes = {}
-    Axes['x'] = X
-    Axes['y'] = []
-    Axes['z'] = []
+    Axes['X'] = X
+    Axes['Y'] = []
+    Axes['Z'] = []
 
     # return data
     return P, Thres, Axes
@@ -277,9 +277,9 @@ def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
 
     # axes dictionary
     Axes = {}
-    Axes['x'] = X
-    Axes['y'] = []
-    Axes['z'] = Z
+    Axes['X'] = X
+    Axes['Y'] = []
+    Axes['Z'] = Z
 
     # return data
     return P, Thres, Axes
@@ -403,9 +403,9 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
 
     # axes dictionary
     Axes = {}
-    Axes['x'] = X
-    Axes['y'] = Y
-    Axes['z'] = []
+    Axes['X'] = X
+    Axes['Y'] = Y
+    Axes['Z'] = []
 
     # return data
     return P, Thres, Axes
@@ -456,15 +456,15 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
     # switch variables for property function
     if grad_func == '1D':
         x_name = prop_params['X']['name']
-        X = Axes['x']
+        X = Axes['X']
         # calculate gradients
         Grads = np.gradient(P, X)
     elif grad_func == '1D_multi':
         x_name = prop_params['Z']['name']
-        X = Axes['z']
+        X = Axes['Z']
     elif grad_func == '2D':
         x_name = prop_params['Y']['name']
-        X = Axes['y']
+        X = Axes['Y']
 
     # initialize plot
     if plot:
@@ -491,7 +491,7 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
             grad = Grads[i] / grad_params['divisor']
         else:
             # get gradient at particular value
-            grad = get_grad(P[i], Axes['x'], grad_params)
+            grad = get_grad(P[i], Axes['X'], grad_params)
 
         # update lists for line plot
         X_g.append(X[i])
@@ -515,9 +515,9 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
 
     # axes dictionary
     Axes = {}
-    Axes['x'] = X
-    Axes['y'] = []
-    Axes['z'] = []
+    Axes['X'] = X
+    Axes['Y'] = []
+    Axes['Z'] = []
 
     # return data
     return G, Thres, Axes
@@ -570,7 +570,7 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
         # get properties
         P, Thres, Axes = properties_1D_multi(prop_model, prop_params)
         x_name = prop_params['X']['name']
-        X = Axes['x']
+        X = Axes['X']
     elif grad_func == '2D':
         x_name = prop_params['Y']['name']
         y_min = prop_params['Y']['min']
@@ -591,7 +591,7 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
         # switch variables for property function
         if grad_func == '1D_multi':
             # calculate gradients
-            Grads = np.gradient(P[j], Axes['x'])
+            Grads = np.gradient(P[j], Axes['X'])
         elif grad_func == '2D':
             # update model for property calculation
             prop_model.p[z_name] = Z[j]
@@ -617,7 +617,7 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
                 grad = Grads[i] / grad_params['divisor']
             else:
                 # get gradient at particular value
-                grad = get_grad(P[i], Axes['x'], grad_params)
+                grad = get_grad(P[i], Axes['X'], grad_params)
 
             # update lists for line plot
             X_g.append(X[i])
@@ -642,9 +642,9 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
 
     # axes dictionary
     Axes = {}
-    Axes['x'] = X
-    Axes['y'] = []
-    Axes['z'] = Z
+    Axes['X'] = X
+    Axes['Y'] = []
+    Axes['Z'] = Z
 
     # return data
     return G, Thres, Axes
@@ -691,8 +691,8 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
     P, Thres, Axes = properties_2D(prop_model, prop_params)
 
     # initialize variables
-    X = Axes['x']
-    Y = Axes['y']
+    X = Axes['X']
+    Y = Axes['Y']
     G = np.empty((len(Y), len(X)))
     G[:] = np.NaN
 
@@ -738,9 +738,9 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
 
     # axes dictionary
     Axes = {}
-    Axes['x'] = X
-    Axes['y'] = Y
-    Axes['z'] = []
+    Axes['X'] = X
+    Axes['Y'] = Y
+    Axes['Z'] = []
 
     # return data
     return G, Thres, Axes

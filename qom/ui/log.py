@@ -6,15 +6,16 @@
 __name__    = 'qom.ui.log'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-02-05'
-__updated__ = '2020-06-19'
+__updated__ = '2020-09-03'
 
 # dependencies
+import datetime as dt
 import logging
     
 # module logger    
 logger = logging.getLogger(__name__)
 
-def init_log(log_format='short', debug=False):
+def init_log(log_format='full', debug=False):
     """Function to initialize the logger for the package.
     
     Parameters
@@ -46,7 +47,7 @@ def init_log(log_format='short', debug=False):
     # test
     logger.info('-------------------Logger Initialized-------------------\n')
     
-def get_formatter(log_format='short'):
+def get_formatter(log_format='full'):
     """Function to obtain the formatter for stream handler.
     
     Parameters
@@ -61,8 +62,8 @@ def get_formatter(log_format='short'):
     """
 
     # default format
-    if log_format == 'default':
-        return logging.Formatter('\r%(asctime)s %(levelname)s: (%(name)s) %(message)s')
+    if log_format == 'full':
+        return FullFormatter('\r%(thread)10d %(levelname)-7s %(asctime)s: (%(name)s) %(message)s'.format())
 
     # short format
     if log_format == 'short':
@@ -91,3 +92,9 @@ def get_handler(formatter):
 
     return handler
 
+class FullFormatter(logging.Formatter):
+    def formatTime(self, record, datefmt=None):
+        ct = dt.datetime.fromtimestamp(record.created)
+        t = ct.strftime("%Y-%m-%d %H:%M:%S")
+        s = "%s.%03d" % (t, record.msecs)
+        return s

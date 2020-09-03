@@ -1,20 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""Wrapper modules for dynamics."""
+"""Wrapper modules for dynamics using tensorflow."""
 
-__name__    = 'qom.wrappers.dynamics'
+__name__    = 'qom.wrappers.dynamics_tf'
 __authors__ = ['Sampreet Kalita']
-__created__ = '2020-05-01'
+__created__ = '2020-09-03'
 __updated__ = '2020-09-04'
 
 # dependencies
 import logging
 import numpy as np
 import os
-import scipy.integrate as si
 
-# dev dependencies
+# set tensorflow verbose to warning and error only
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+# tensorflow modules
+import tensorflow as tf
+import tensorflow_probability as tfp
+
+# dev dependencies 
 from qom.measures import corr, diff
 from qom.ui import figure
 
@@ -42,7 +48,7 @@ def calculate(model, data):
     return globals()[data['dyna_params']['func']](model, data['dyna_params'], data['meas_params'], data['plot'], data['plot_params'])
 
 def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=None):
-    """Function to calculate the dynamics of a measure.
+    """Function to calculate the dynamics of a quantum correlation measure.
 
     Parameters
     ----------
@@ -87,7 +93,7 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
     t_steps = dyna_params['T']['steps']
 
     # directory and file names for storing data
-    dir_name += '\\' + model.CODE + '\\dynamics\\' + str(t_min) + '_' + str(t_max) + '_' + str(t_steps) + '\\'
+    dir_name += '\\' + model.CODE + '\\dynamics_tf\\' + str(t_min) + '_' + str(t_max) + '_' + str(t_steps) + '\\'
     file_name_v = 'V'
     for key in model.p:
         file_name_v += '_' + str(model.p[key])
@@ -182,7 +188,7 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
     return D, V, Axes
 
 def get_dynamics(model, dyna_params):
-    """Function to calculate the dynamics of variables for a given model using scipy.integrate.
+    """Function to calculate the dynamics of variables for a given model using tfp.math.ode.
 
     Parameters
     ----------
@@ -214,34 +220,15 @@ def get_dynamics(model, dyna_params):
     # get initial values and constants for the model
     v, c = model.get_initial_values_and_constants()
 
-    # initialize integrator
-    integrator = si.ode(getattr(model, 'model_' + solver_type))
-    # for complex ode solver
-    if solver_type.find('complex') != -1:
-        integrator.set_integrator('zvode')
-        
-    # set initial values and constants
-    integrator.set_initial_value(v, t_min)
-    integrator.set_f_params(c)
+    # TODO: Progress callbacks
 
-    # initialize lists
-    V = [v]
-
-    # for each time step, calculate the integration values
-    for i in range(1, t_steps):
-        # update progress
-        progress = float(i)/float(t_steps) * 100
-        # display progress
-        logger.info('Obtaining the system dynamics: Progress = {progress:3.2f}'.format(progress=progress))
-
-        # integrate
-        t = T[i]
-        v = integrator.integrate(t)
-
-        # update log
-        logger.debug('t = {}\tv = {}'.format(t, v))
-
-        # update lists
-        V.append(v)
+    # get integration values
+    V = tfp.math.ode.DormandPrince().solve(
+        ode_fn=getattr(model, 'model_' + solver_type), 
+        initial_time=0, 
+        initial_state=v, 
+        solution_times=T,
+        constants={'c': c}
+    ).states.numpy().tolist()
 
     return T, V

@@ -155,9 +155,9 @@ class Plotter2D():
         # legends
         if 'legend' in plot_params:
             if type(plot_params['legend']) == list:
-                plot_params['legend'] = [r'$' + ele + '$' for ele in plot_params['legend']]
+                plot_params['legend'] = [r'' + ele for ele in plot_params['legend']]
             else:
-                plot_params['legend'] = [r'$' + plot_params['legend'] + '$']
+                plot_params['legend'] = [r'' + plot_params['legend']]
             plt.legend(plot_params['legend'], loc='best')
 
         # title
@@ -166,9 +166,9 @@ class Plotter2D():
 
         # labels
         if 'x_label' in plot_params:
-            plt.xlabel(r'$' + plot_params['x_label'] + '$', fontsize=16)
+            plt.xlabel(r'' + plot_params['x_label'], fontsize=16)
         if 'y_label' in plot_params:
-            plt.ylabel(r'$' + plot_params['y_label'] + '$', fontsize=16)
+            plt.ylabel(r'' + plot_params['y_label'], fontsize=16)
 
         # limits
         if 'x_lim' in plot_params:
@@ -231,7 +231,7 @@ class Plotter2D():
                 Y = Y[self.x_steps:]
 
                 # update plot numer
-                i+= 1
+                i += 1
             
             if len(X) != 0:
                 # update data 
