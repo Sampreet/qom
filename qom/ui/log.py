@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.log'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-02-05'
-__updated__ = '2020-09-03'
+__updated__ = '2020-09-05'
 
 # dependencies
 import datetime as dt
@@ -45,7 +45,7 @@ def init_log(log_format='full', debug=False):
     main_logger.addHandler(handler)
 
     # test
-    logger.info('-------------------Logger Initialized-------------------\n')
+    logger.debug('-------------------Logger Initialized-------------------\n')
     
 def get_formatter(log_format='full'):
     """Function to obtain the formatter for stream handler.
@@ -63,7 +63,7 @@ def get_formatter(log_format='full'):
 
     # default format
     if log_format == 'full':
-        return FullFormatter('\r%(thread)10d %(levelname)-7s %(asctime)s: (%(name)s) %(message)s'.format())
+        return FullFormatter('%(processName)-24s %(levelname)-7s %(asctime)s: (%(name)s) %(message)s\r'.format())
 
     # short format
     if log_format == 'short':

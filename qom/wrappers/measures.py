@@ -14,8 +14,8 @@ import numpy as np
 import os
 
 # dev dependencies
-from qom.ui import figure
-from qom.wrappers import dynamics
+from qom.legacy.ui import figure
+from qom.legacy.wrappers import dynamics
 
 # module logger
 logger = logging.getLogger(__name__)
@@ -78,7 +78,7 @@ def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
     avg_mode    = meas_params['avg_mode']
     avg_type    = meas_params['avg_type']
     thres_mode  = meas_params['thres_mode']
-    x_name      = meas_params['X']['name']
+    x_name      = meas_params['X']['var']
     x_min       = meas_params['X']['min']
     x_max       = meas_params['X']['max']
     x_steps     = meas_params['X']['steps']
@@ -112,7 +112,10 @@ def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
         logger.info('Calculating the measure values: Progress = {progress:3.2f}'.format(progress=progress))
 
         # update model
-        model.p[x_name] = X[i]
+        if type(model.p[x_name]) == list:
+            model.p[x_name][meas_params['X']['index']] = X[i]
+        else:
+            model.p[x_name] = X[i]
 
         # get measure dynamics
         D, _, _ = dynamics.dynamics_measure(model, dyna_params, meas_params)
@@ -211,11 +214,11 @@ def measures_2D(model, dyna_params, meas_params, plot, plot_params):
     avg_mode    = meas_params['avg_mode']
     avg_type    = meas_params['avg_type']
     thres_mode  = meas_params['thres_mode']
-    x_name      = meas_params['X']['name']
+    x_name      = meas_params['X']['var']
     x_min       = meas_params['X']['min']
     x_max       = meas_params['X']['max']
     x_steps     = meas_params['X']['steps']
-    y_name      = meas_params['Y']['name']
+    y_name      = meas_params['Y']['var']
     y_min       = meas_params['Y']['min']
     y_max       = meas_params['Y']['max']
     y_steps     = meas_params['Y']['steps']
@@ -254,8 +257,16 @@ def measures_2D(model, dyna_params, meas_params, plot, plot_params):
             logger.info('Calculating the measure values: Progress = {progress:3.2f}'.format(progress=progress))
 
             # update model
-            model.p[x_name] = X[i]
-            model.p[y_name] = Y[j]
+            if type(model.p[x_name]) == list:
+                model.p[x_name][meas_params['X']['index']] = X[i]
+            else:
+                model.p[x_name] = X[i]
+
+            # update model
+            if type(model.p[y_name]) == list:
+                model.p[y_name][meas_params['Y']['index']] = Y[j]
+            else:
+                model.p[y_name] = Y[j]
 
             # get measure dynamics
             D, _, _ = dynamics.dynamics_measure(model, dyna_params, meas_params)

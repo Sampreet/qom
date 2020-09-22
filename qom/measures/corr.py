@@ -46,7 +46,7 @@ def calculate(V, meas_params):
         # calculate progress
         progress = float(i) / float(len(V)) * 100
         # display progress
-        logger.info('Calculating the measure values: Progress = {progress:3.2f}'.format(progress=progress))
+        logger.debug('Calculating the measure values: Progress = {progress:3.2f}'.format(progress=progress))
 
         # initialize value
         m = 0
