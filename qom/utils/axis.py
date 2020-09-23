@@ -6,7 +6,7 @@
 __name__    = 'qom.utils.axis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-17'
-__updated__ = '2020-09-17'
+__updated__ = '2020-09-23'
 
 # dependencies
 import logging
@@ -23,17 +23,24 @@ class DynamicAxis(object):
 
     Inherits :class:`object` for 2.x compatibility.
 
-    Properties:
-        size (int): Length of the reference axis.
-        values (list): Values of the variable.
+    Properties
+    ----------
+        size : int
+            Length of the reference axis.
+
+        values : list 
+            Values of the variable.
     """
 
     def __init__(self, size=None):
         """Class constructor for DynamicAxis.
 
-        Args:
-            num (int): Length of the reference axis.
+        Parameters
+        ----------
+            size : int 
+                Dimensions of the reference axis.
         """
+
         if size != None:
             self.size = size
         if len(size) == 1:
@@ -45,63 +52,89 @@ class DynamicAxis(object):
     def size(self):
         """Property size.
 
-        Returns:
-            int: Length of the reference axis.
+        Returns
+        -------
+            size : int
+                Length of the reference axis.
         """
 
         return self.__size
 
     @size.setter
-    def size(self, value):
-        """Setter function for size.
+    def size(self, size):
+        """Setter for size.
 
-        Args:
-            value (int): Length of the reference axis.
+        Parameters
+        ----------
+            size : int
+                Dimensions of the reference axis.
         """
 
-        self.__size = value    
+        self.__size = size    
 
     @property
     def values(self):
         """Property values.
 
-        Returns:
-            list: Values of the axis.
+        Returns
+        -------
+            values : list
+                Values of the axis.
         """
 
         return self.__values
 
     @values.setter
-    def values(self, value):
-        """Setter function for values.
+    def values(self, values):
+        """Setter for values.
 
-        Args:
-            value (list): Values of the axis.
+        Parameters
+        ----------
+            values : list
+                Values of the axis.
         """
 
-        self.__values = value
+        self.__values = values
 
 class StaticAxis(object):
     """Utility class to format corrdinates from dictionary.
 
     Inherits :class:`object` for 2.x compatibility.
 
-    Properties:
-        var (str): Variable of the axis.
-        label (str): Label of the axis.
-        unit (str): Display unit of the axis.
-        values (list): Values of the variable.
-        ticks (list): Values of the axis ticks.
-        legends (list): Legends for the values.
-        colors (list): Colors for line plots.
-        linestyles (list): Linestyles for line plots.
+    Properties
+    ----------
+        var : str
+            Variable of the axis.
+
+        label : list
+            Label of the axis.
+
+        unit : list
+            Display unit of the axis.
+
+        values : list
+            Values of the variable.
+
+        ticks : list
+            Values of the axis ticks.
+
+        legends : list 
+            Legends for the values.
+
+        colors : list 
+            Colors for line plots.
+
+        linestyles : list
+            Linestyles for line plots.
     """
 
     def __init__(self, axis_data):
         """Class constructor for StaticAxis.
 
-        Args:
-            axis_data (dict): Dictionary of the data for the axis.
+        Parameters
+        ----------
+            axis_data : dict
+                Dictionary of the data for the axis.
         """
 
         # variable
@@ -132,53 +165,66 @@ class StaticAxis(object):
         # linestyles
         if 'linestyles' in axis_data:
             self.linestyles = axis_data['linestyles']
+        # sizes
+        if 'sizes' in axis_data:
+            self.sizes = axis_data['sizes']
 
     @property
     def var(self):
-        """Property variable.
+        """Property var.
 
-        Returns:
-            str: Variable of the axis.
+        Returns
+        -------
+            var : str
+                Variable of the axis.
         """
 
         return self.__var
 
     @var.setter
-    def var(self, value):
-        """Setter function for variable.
+    def var(self, var):
+        """Setter for var.
 
-        Args:
-            value (str): Variable of the axis.
+        Parameters
+        ----------
+            var : str
+                Variable of the axis.
         """
 
-        self.__var = value
+        self.__var = var
 
     @property
     def index(self):
         """Property index.
 
-        Returns:
-            str: Index of the variable.
+        Returns
+        -------
+            index : str
+                Index of the variable.
         """
 
         return self.__index
 
     @index.setter
-    def index(self, value):
-        """Setter function for index.
+    def index(self, index):
+        """Setter for index.
 
-        Args:
-            str: Index of the variable.
+        Parameters
+        ----------
+            index : str
+                Index of the variable.
         """
 
-        self.__index = value
+        self.__index = index
 
     @property
     def label(self):
         """Property label.
 
-        Returns:
-            str: Label of the axis.
+        Returns
+        -------
+            label : str
+                Label of the axis.
         """
 
         if self.__label == None:
@@ -187,138 +233,200 @@ class StaticAxis(object):
         return self.__label
 
     @label.setter
-    def label(self, value):
-        """Setter function for label.
+    def label(self, label):
+        """Setter for label.
 
-        Args:
-            value (str): Label of the axis.
+        Parameters
+        ----------
+            label : str
+                Label of the axis.
         """
 
-        if value == '':
+        if label == '':
             self.__label = r'$' + self.__var + '$'
             return
 
-        self.__label = r'' + value + ''
+        self.__label = r'' + label + ''
 
     @property
     def unit(self):
         """Property unit.
 
-        Returns:
-            str: Unit of the axis.
+        Returns
+        -------
+            unit : str
+                Unit of the axis.
         """
 
         return self.__unit
 
     @unit.setter
-    def unit(self, value):
-        """Setter function for unit.
+    def unit(self, unit):
+        """Setter for unit.
 
-        Args:
-            value (str): Unit of the axis.
+        Parameters
+        ----------
+            unit : str
+                Unit of the axis.
         """
-        if value == '':
-            self.__unit = value
+
+        if unit == '':
+            self.__unit = ''
             return
-        self.__unit = '~\\mathrm{' + value + '}'
+
+        self.__unit = '~\\mathrm{' + unit + '}'
 
     @property
     def values(self):
         """Property values.
 
-        Returns:
-            list: Values of the axis.
+        Returns
+        -------
+            values : list
+                Values of the axis.
         """
 
         return self.__values
 
     @values.setter
-    def values(self, value):
-        """Setter function for values.
+    def values(self, values):
+        """Setter for values.
 
-        Args:
-            value (list): Values of the axis.
+        Parameters
+        ----------
+            values : list
+                Values of the axis.
         """
 
-        self.__values = value
+        self.__values = values
 
     @property
     def ticks(self):
         """Property ticks.
 
-        Returns:
-            list: Ticks of the axis.
+        Returns
+        -------
+            ticks : list
+                Ticks of the axis.
         """
 
         return self.__ticks
 
     @ticks.setter
-    def ticks(self, value):
-        """Setter function for ticks.
+    def ticks(self, ticks):
+        """Setter for ticks.
 
-        Args:
-            value (list): Ticks of the axis.
+        Parameters
+            ticks : list
+                Ticks of the axis.
         """
 
-        self.__ticks = value
-
-    @property
-    def legends(self):
-        """Property legends.
-
-        Returns:
-            list: Legends of the axis.
-        """
-
-        return [r'$' + '{label} = {value} {unit}'.format(label=self.__label, value=value, unit=self.__unit) + '$' for value in self.__values]
+        self.__ticks = ticks
 
     @property
     def colors(self):
         """Property colors.
 
-        Returns:
-            list: Colors of the axis.
+        Returns
+        -------
+            colors : list
+                Colors of the axis.
         """
+
+        if not self.__colors:
+            self.__colors = ['b' for i in range(len(self.__values))]
 
         return self.__colors
 
     @colors.setter
-    def colors(self, value):
-        """Setter function for colors.
+    def colors(self, colors):
+        """Setter for colors.
 
-        Args:
-            value (list): Colors of the axis.
+        Parameters
+        ----------
+            colors : list
+                Colors of the axis.
         """
 
-        self.__colors = value
+        self.__colors = colors
 
     @property
     def linestyles(self):
         """Property linestyles.
 
-        Returns:
-            list: Linestyles of the axis.
+        Returns
+        -------
+            linestyles : list
+                Linestyles of the line plots.
         """
+
+        if not self.__linestyles:
+            self.__linestyles = ['-' for i in range(len(self.__values))]
 
         return self.__linestyles
 
     @linestyles.setter
-    def linestyles(self, value):
-        """Setter function for linestyles.
+    def linestyles(self, linestyles):
+        """Setter for linestyles.
 
-        Args:
-            value (list): Linestyles of the axis.
+        Parameters
+        ----------
+            linestyles : list
+                Linestyles of the line plots.
         """
 
-        self.__linestyles = value
+        self.__linestyles = linestyles
+
+    @property
+    def sizes(self):
+        """Property sizes.
+
+        Returns
+        -------
+            sizes : list
+                Sizes of the scatter plots.
+        """
+
+        if not self.__sizes:
+            self.__sizes = [100 for i in range(len(self.__values))]
+
+        return self.__sizes
+
+    @sizes.setter
+    def sizes(self, sizes):
+        """Setter for sizes.
+
+        Parameters
+        ----------
+            sizes : list
+                Sizes of the scatter plots.
+        """
+
+        self.__sizes = sizes
+
+    @property
+    def legends(self):
+        """Property legends.
+
+        Returns
+        -------
+            legends : list 
+                Legends of the axis.
+        """
+
+        return [r'$' + '{label} = {value} {unit}'.format(label=self.__label, value=value, unit=self.__unit) + '$' for value in self.__values]
 
     def init_array(self, mini, maxi, num):
         """Function to initialize an array given a range and number of elements.
 
-        Args:
-            mini (int): Minimum value of the range.
-            maxi (int): Maximum value of the range.
-            num (int): Number of elements to consider.
+        Parameters
+        ----------
+            mini : int
+                Minimum value of the range.
+            maxi : int 
+                Maximum value of the range.
+            num : int
+                Number of elements to consider.
         """
     
         values = (mini + np.arange(num) * (maxi - mini) / (num - 1))

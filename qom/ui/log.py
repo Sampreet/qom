@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.log'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-02-05'
-__updated__ = '2020-09-05'
+__updated__ = '2020-09-23'
 
 # dependencies
 import datetime as dt
@@ -20,16 +20,16 @@ def init_log(log_format='full', debug=False):
     
     Parameters
     ----------    
-    log_format : str
-        Format type for output to console.
+        log_format : str
+            Format type for output to console.
 
-    debug : boolean
-        Option to enable DEBUG log level.
+        debug : boolean, optional
+            Option to enable DEBUG log level.
         
     Returns
     -------
-    logger : :class:`logging.Logger`
-        Logger for output to console.
+        logger : :class:`logging.Logger`
+            Logger for output to console.
     """
 
     # get logger
@@ -45,20 +45,20 @@ def init_log(log_format='full', debug=False):
     main_logger.addHandler(handler)
 
     # test
-    logger.debug('-------------------Logger Initialized-------------------\n')
+    logger.info('-------------------Logger Initialized-------------------\n')
     
 def get_formatter(log_format='full'):
     """Function to obtain the formatter for stream handler.
     
     Parameters
     ----------    
-    log_format : str
-        Format type for output to console.
+        log_format : str, optional
+            Format type for output to console.
 
     Returns
     -------
-    formatter : :class:`logging.Formatter`
-        Formatter for stream handler.
+        formatter : :class:`logging.Formatter`
+            Formatter for stream handler.
     """
 
     # default format
@@ -74,13 +74,13 @@ def get_handler(formatter):
     
     Parameters
     ----------    
-    formatter : :class:`logging.Formatter`
-        Formatter for stream handler.
+        formatter : :class:`logging.Formatter`
+            Formatter for stream handler.
 
     Returns
     -------
-    handler : :class:`logging.StreamHandler`
-        Stream handler for console logger.
+        handler : :class:`logging.StreamHandler`
+            Stream handler for console logger.
     """
     
     # get stream handler
@@ -93,8 +93,34 @@ def get_handler(formatter):
     return handler
 
 class FullFormatter(logging.Formatter):
+    """Class to customize logging format.
+    
+    The class inherits :class:`logging.Formatter`.
+    """
+
     def formatTime(self, record, datefmt=None):
-        ct = dt.datetime.fromtimestamp(record.created)
-        t = ct.strftime("%Y-%m-%d %H:%M:%S")
-        s = "%s.%03d" % (t, record.msecs)
-        return s
+        """Overriding method to display milliseconds in the time format.
+
+        Parameters
+        ----------
+            record : :class:`logging.LogRecord`
+                Current record to log.
+
+            datefmt : str
+                Date format for log.
+        
+        Returns
+        -------
+            f_time : str
+                Formatted time.
+        """
+
+        # current time
+        _time = dt.datetime.fromtimestamp(record.created)
+
+        # format upto seconds
+        f_time = _time.strftime('%Y-%m-%d %H:%M:%S')
+        # append milliseconds
+        f_time += '.{0:03d}'.format(int(record.msecs))
+
+        return f_time

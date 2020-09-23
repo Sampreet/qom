@@ -3,10 +3,10 @@
 
 """Wrapper modules for dynamics."""
 
-__name__    = 'qom.wrappers.dynamics'
+__name__    = 'qom.legacy.wrappers.dynamics'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-05-01'
-__updated__ = '2020-09-04'
+__updated__ = '2020-09-23'
 
 # dependencies
 import logging
@@ -234,9 +234,10 @@ def get_dynamics(model, dyna_params):
     # for each time step, calculate the integration values
     for i in range(1, t_steps):
         # update progress
-        progress = float(i)/float(t_steps) * 100
+        progress = float(i)/float(t_steps - 1) * 100
         # display progress
-        logger.info('Obtaining the system dynamics: Progress = {progress:3.2f}'.format(progress=progress))
+        if int(progress * 1000) % 10 == 0:
+            logger.info('Obtaining the system dynamics: Progress = {progress:3.2f}'.format(progress=progress))
 
         # integrate
         t = T[i]

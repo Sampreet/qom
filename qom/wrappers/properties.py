@@ -6,7 +6,7 @@
 __name__    = 'qom.wrappers.properties'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-06-15'
-__updated__ = '2020-09-17'
+__updated__ = '2020-09-23'
 
 # dependencies
 import copy
@@ -21,21 +21,27 @@ from qom.utils import axis
 # module logger
 logger = logging.getLogger(__name__)
 
+# TODO: Move `get_grad` and index functions to to `qom/utils/array`.
+# TODO: Handle single parameter case for `get_grad`.
+# TODO: handle scatter and 3D plots for gradient functions.
+# TODO: handle multi-value points for 2D functions.
+# TODO: Verify parametes.
+
 def calculate(model, data):
     """Wrapper function to switch functions for calculation of properties.
     
     Parameters
     ----------
-    model : :class:`Model`
-        Model of the system.
+        model : :class:`Model`
+            Model of the system.
 
-    data : dict
-        Data for the calculation.
+        data : dict
+            Data for the calculation.
 
     Returns
     -------
-    data : list
-        Data of the propreties calculated.
+        data : list
+            Data of the propreties calculated.
     """
 
     # get properties
@@ -46,31 +52,29 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
     
     Parameters
     ----------
-    model : :class:`Model`
-        Model of the system.
+        model : :class:`Model`
+            Model of the system.
 
-    prop_params : dict
-        Parameters for the property.
+        prop_params : dict
+            Parameters for the property.
 
-    plot : boolean, optional
-        Option to plot the property.
+        plot : boolean, optional
+            Option to plot the property.
 
-    plot_params : dict, optional
-        Parameters for the plot.
+        plot_params : dict, optional
+            Parameters for the plot.
 
     Returns
     -------
-    P : list
-        Properties calculated.
+        P : list
+            Properties calculated.
 
-    Thres : dict
-        Threshold values of the variables used.
+        Thres : dict
+            Threshold values of the variables used.
 
-    Axes : dict
-        Axes points used to calculate the properties as DynamicAxis.
+        Axes : dict
+            Axes points used to calculate the properties as :class:`qom.utils.axis.DynamicAxis`.
     """
-
-    # TODO: verify presence of parametes
 
     # extract frequently used variables
     prop_code   = prop_params['code']
@@ -85,7 +89,7 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
 
     # initialize plot
     if plot:
-        plotter = figure.Plotter2D(plot_params, X=X)
+        plotter = figure.Plotter(plot_params, X=X)
 
     # display initialization
     logger.info('Initializing {prop_name} calculation...\t\n'.format(prop_name=prop_name))
@@ -139,8 +143,6 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
     # axes dictionary
     Axes = {}
     Axes['X'] = X_p
-    Axes['Y'] = None
-    Axes['Z'] = None
 
     # return data
     return P.values, Thres, Axes
@@ -150,31 +152,29 @@ def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
     
     Parameters
     ----------
-    model : :class:`Model`
-        Model of the system.
+        model : :class:`Model`
+            Model of the system.
 
-    prop_params : dict
-        Parameters for the property.
+        prop_params : dict
+            Parameters for the property.
 
-    plot : boolean
-        Option to plot the property.
+        plot : boolean, optional
+            Option to plot the property.
 
-    plot_params : dict, optional
-        Parameters for the plot.
+        plot_params : dict, optional
+            Parameters for the plot.
 
     Returns
     -------
-    P : list
-        Properties calculated.
+        P : list
+            Properties calculated.
 
-    Thres : dict
-        Threshold values of the variables used.
+        Thres : dict
+            Threshold values of the variables used.
 
-    Axes : dict
-        Axes points used to calculate the properties as DynamicAxis.
+        Axes : dict
+            Axes points used to calculate the properties as :class:`qom.utils.axis.DynamicAxis`.
     """
-
-    # TODO: assert property and plot parametes
 
     # extract frequently used variables
     prop_code   = prop_params['code']
@@ -191,7 +191,7 @@ def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
 
     # initialize plot
     if plot:
-        plotter = figure.Plotter2D(plot_params, X=X, Z=Z)
+        plotter = figure.Plotter(plot_params, X=X, Z=Z)
 
     # display initialization
     logger.info('Initializing {prop_name} calculation...\t\n'.format(prop_name=prop_name))
@@ -252,7 +252,6 @@ def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
     # axes dictionary
     Axes = {}
     Axes['X'] = X_p
-    Axes['Y'] = None
     Axes['Z'] = Z_p
 
     # return data
@@ -263,31 +262,29 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
     
     Parameters
     ----------
-    model : :class:`Model`
-        Model of the system.
+        model : :class:`Model`
+            Model of the system.
 
-    prop_params : dict
-        Parameters for the property.
+        prop_params : dict
+            Parameters for the property.
 
-    plot : boolean
-        Option to plot the property.
+        plot : boolean, optional
+            Option to plot the property.
 
-    plot_params : dict
-        Parameters for the plot.
+        plot_params : dict, optional
+            Parameters for the plot.
 
     Returns
     -------
-    P : list
-        Properties calculated.
+        P : list
+            Properties calculated.
 
-    Thres: dict
-        Threshold values of the variables used.
+        Thres: dict
+            Threshold values of the variables used.
 
-    Axes : dict
-        Axes points used to calculate the properties as StaticAxis.
+        Axes : dict
+            Axes points used to calculate the properties as :class:`qom.utils.axis.DynamicAxis`.
     """
-
-    # TODO: assert property and plot parametes
 
     # extract frequently used variables
     prop_code   = prop_params['code']
@@ -307,7 +304,7 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
 
     # initialize plot
     if plot:
-        plotter = figure.Plotter2D(plot_params, X=X, Y=Y, Z=P)
+        plotter = figure.Plotter(plot_params, X=X, Y=Y, Z=P)
 
     # display initialization
     logger.info('Initializing {prop_name} calculation...\t\n'.format(prop_name=prop_name))
@@ -329,7 +326,6 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
             # get property from model
             p = getattr(model, prop_code)()
 
-            # TODO: handle multi-value points
             if type(p) == list:
                 if thres_mode.find('max_') != -1:
                     p = max(p)
@@ -368,7 +364,6 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
     Axes = {}
     Axes['X'] = X_p
     Axes['Y'] = Y_p
-    Axes['Z'] = None
 
     # return data
     return P.values, Thres, Axes
@@ -378,146 +373,151 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
     
     Parameters
     ----------
-    model : :class:`Model`
-        Model of the system.
+        model : :class:`Model`
+            Model of the system.
 
-    prop_params : dict
-        Parameters for the property.
+        prop_params : dict
+            Parameters for the property.
 
-    plot  : boolean
-        Option to plot the property.
+        plot : boolean, optional
+            Option to plot the property.
 
-    plot_params : dict
-        Parameters for the plot.
+        plot_params : dict, optional
+            Parameters for the plot.
 
     Returns
     -------
-    P : list
-        Properties calculated.
+        G : list
+            Gradients calculated.
 
-    Thres : dict
-        Threshold values of the variables used.
+        Thres : dict
+            Threshold values of the variables used.
 
-    Axes : dict
-        Axes points used to calculate the properties as list.
+        Axes : dict
+            Axes points used to calculate the gradients as :class:`qom.utils.axis.DynamicAxis`.
     """
-
-    # TODO: assert property and plot parametes
 
     # extract frequently used variables
     prop_name   = prop_params['name']
-    grad_func   = prop_params['grad_func']
+    grad_axis   = prop_params['grad_axis']
+    thres_mode  = prop_params['thres_mode']
     plot_prog   = plot_params['progress'] if plot_params != None else False 
-    prop_model  = model
-
-    # initialize variables
-    X_g = []
-    G = []
-
-    # get properties
-    P, Thres, Axes = globals()['properties_' + grad_func](prop_model, prop_params)
+    prop_model  = copy.deepcopy(model)
 
     # switch variables for property function
-    if grad_func == '1D':
-        x_name = prop_params['X']['name']
-        X = Axes['X']
+    if grad_axis == 'X':
+        # get properties
+        P_values, Thres, Axes = properties_1D(prop_model, prop_params)
         # calculate gradients
-        Grads = np.gradient(P, X)
-    elif grad_func == '1D_multi':
-        x_name = prop_params['Z']['name']
-        X = Axes['Z']
-    elif grad_func == '2D':
-        x_name = prop_params['Y']['name']
+        Grads = np.gradient(P_values, Axes['X'].values)
+        X = Axes['X']
+    elif grad_axis == 'Y':
+        # get properties
+        P_values, Thres, Axes = properties_2D(prop_model, prop_params)
         X = Axes['Y']
+
+    # initialize variables
+    X_g = axis.DynamicAxis([len(X.values)])
+    G = axis.DynamicAxis([len(X.values)])
 
     # initialize plot
     if plot:
-        plotter = figure.Plotter2D(plot_params, X=X)
+        plotter = figure.Plotter(plot_params, X=X)
 
     # display initialization
     logger.info('Initializing {prop_name} gradient calculation...\t\n'.format(prop_name=prop_name))
     
     # for variation in X
-    for i in range(len(X)):
+    for i in range(len(X.values)):
         # calculate progress
-        progress = float(i) / float(len(X)) * 100
+        progress = float(i) / float(len(X.values)) * 100
         # display progress
-        logger.info('Calculating the gradient values: Progress = {progress:3.2f}'.format(progress=progress))
+        if int(progress * 1000) % 10 == 0:
+            logger.info('Calculating the property values: Progress = {progress:3.2f}'.format(progress=progress))
 
         # update model for gradient calculation
-        model.p[x_name] = X[i]
+        model.p[X.var] = X.values[i]
 
         # get parameters from model
         grad_params = model.get_grad_params()
 
-        if grad_func == '1D':
+        if grad_axis == 'X':
             # obtain calculated gradients
             grad = Grads[i] / grad_params['divisor']
-        else:
+        elif grad_axis == 'Y':
             # get gradient at particular value
-            grad = get_grad(P[i], Axes['X'], grad_params)
+            grad = get_grad(P_values[i], Axes['X'].values[i], grad_params)
 
         # update lists for line plot
-        X_g.append(X[i])
-        G.append(grad)
-
-        # TODO: handle scatter plot
+        X_g.values.append(X.values[i])
+        G.values.append(grad)
         
         # update plot
-        if plot:
+        if plot and plot_prog:
             plotter.update(X_g, G)
     
     # display completion
     logger.info('----------------Gradient Values Obtained----------------\t\n')
 
     # # display gradient values
-    # logger.info('Gradient values: {G}\t\n'.format(G=G))
+    # logger.info('Gradient values: {G}\n'.format(G=G))
 
     # update plot
     if plot:
         plotter.update(X_g, G, head=False, hold=True)
+    
+    thres_idx = get_thres_indices(G.values, thres_mode)
+
+    Thres = {}
+    Thres[X.var] = X.values[thres_idx[0]]
+
+    # display threshold values
+    logger.info('Threshold values: {Thres}\t\n'.format(Thres=Thres))
+
+    # update sizes
+    dim = [len(G.values), len(G.values[0])]
+    X_g.size = dim
 
     # axes dictionary
     Axes = {}
-    Axes['X'] = X
-    Axes['Y'] = []
-    Axes['Z'] = []
+    Axes['X'] = X_g
 
     # return data
-    return G, Thres, Axes
+    return G.values, Thres, Axes
 
 def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
     """Function to calculate a gradient of properties versus a continuous variable for multiple discrete variables.
     
     Parameters
     ----------
-    model : :class:`Model`
-        Model of the system.
+        model : :class:`Model`
+            Model of the system.
 
-    prop_params : dict
-        Parameters for the property.
+        prop_params : dict
+            Parameters for the property.
 
-    plot : boolean
-        Option to plot the property.
+        plot : boolean, optional
+            Option to plot the property.
 
-    plot_params : dict
-        Parameters for the plot.
+        plot_params : dict, optional
+            Parameters for the plot.
 
     Returns
     -------
-    P : list
-        Properties calculated.
+        G : list
+            Gradients calculated.
 
-    Thres : dict
-        Threshold values of the variables used.
+        Thres : dict
+            Threshold values of the variables used.
 
-    Axes : dict
-        Axes points used to calculate the properties.
+        Axes : dict
+            Axes points used to calculate the gradients as :class:`qom.utils.axis.DynamicAxis`.
     """
 
     # extract frequently used variables
     prop_name   = prop_params['name']
     grad_axis   = prop_params['grad_axis']
+    thres_mode  = prop_params['thres_mode']
     plot_prog   = plot_params['progress'] if plot_params != None else False 
     X           = axis.StaticAxis(prop_params[grad_axis])
     Z           = axis.StaticAxis(prop_params['Z'])
@@ -529,7 +529,7 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
 
     # initialize plot
     if plot:
-        plotter = figure.Plotter2D(plot_params, X=X, Z=Z)
+        plotter = figure.Plotter(plot_params, X=X, Z=Z)
 
     # for variation in Z
     for j in range(len(Z.values)):
@@ -589,6 +589,15 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
     # update plot
     if plot:
         plotter.update(X_g, G, head=False, hold=True)
+    
+    thres_idx = get_thres_indices(G.values, thres_mode)
+
+    Thres = {}
+    Thres[X.var] = X.values[thres_idx[1]]
+    Thres[Z.var] = Z.values[thres_idx[0]]
+
+    # display threshold values
+    logger.info('Threshold values: {Thres}\t\n'.format(Thres=Thres))
 
     # update sizes
     dim = [len(G.values), len(G.values[0])]
@@ -598,7 +607,6 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
     # axes dictionary
     Axes = {}
     Axes['X'] = X_g
-    Axes['Y'] = None
     Axes['Z'] = Z_g
 
     # return data
@@ -609,76 +617,80 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
     
     Parameters
     ----------
-    model : :class:`Model`
-        Model of the system.
+        model : :class:`Model`
+            Model of the system.
 
-    prop_params : dict
-        Parameters for the property.
+        prop_params : dict
+            Parameters for the property.
 
-    plot : boolean
-        Option to plot the property.
+        plot : boolean, optional
+            Option to plot the property.
 
-    plot_params : dict
-        Parameters for the plot.
+        plot_params : dict, optional
+            Parameters for the plot.
 
     Returns
     -------
-    P : list
-        Properties calculated.
+        G : list
+            Gradients calculated.
 
-    Thres : dict
-        Threshold values of the variables used.
+        Thres : dict
+            Threshold values of the variables used.
 
-    Axes : dict
-        Axes points used to calculate the properties.
+        Axes : dict
+            Axes points used to calculate the gradients as :class:`qom.utils.axis.DynamicAxis`.
     """
-
-    # TODO: assert property and plot parameters
 
     # extract frequently used variables
     prop_name   = prop_params['name']
-    prop_model  = model
-    y_name      = prop_params['Y']['name']
-
-    # TODO: handle 3D plots
+    thres_mode  = prop_params['thres_mode']
+    plot_prog   = plot_params['progress'] if plot_params != None else False 
+    prop_model  = copy.deepcopy(model)
 
     # get properties
-    P, Thres, Axes = properties_2D(prop_model, prop_params)
-
-    # initialize variables
+    P_values, Thres, Axes = properties_2D(prop_model, prop_params)
     X = Axes['X']
     Y = Axes['Y']
-    G = np.empty((len(Y), len(X)))
-    G[:] = np.NaN
+
+    # initialize variables
+    X_g = axis.DynamicAxis([len(Y.values), len(X.values)])
+    Y_g = axis.DynamicAxis([len(Y.values), len(X.values)])
+    G = axis.DynamicAxis([len(Y.values), len(X.values)])
+
+    for j in range(len(Y.values)):
+        G.values[j] = [np.NaN for i in range(len(X.values))]
 
     # initialize plot
     if plot:
-        plotter = figure.Plotter2D(plot_params, X=X, Y=Y, Z=G)
+        plotter = figure.Plotter(plot_params, X=X, Y=Y, Z=G)
 
     # display initialization
     logger.info('Initializing {prop_name} gradient calculation...\t\n'.format(prop_name=prop_name))
         
     # for variation in Y
-    for j in range(len(Y)):
+    for j in range(len(Y.values)):
         # calculate progress
-        progress = float(j) / float(len(X)) * 100
+        progress = float(j) / float(len(Y.values)) * 100
         # display progress
-        logger.info('Calculating the gradient values: Progress = {progress:3.2f}'.format(progress=progress))
+        if int(progress * 1000) % 10 == 0:
+            logger.info('Calculating the gradient values: Progress = {progress:3.2f}'.format(progress=progress))
 
         # update model for gradient calculation
-        model.p[y_name] = Y[j]
+        model.p[Y.var] = Y.values[j]
 
         # get parameters from model
         grad_params = model.get_grad_params()
 
         # calculate gradients
-        Grads = np.gradient(P[j], X) / grad_params['divisor']
+        Grads = np.gradient(P_values[j], X.values) / grad_params['divisor']
 
         # update lists
-        G[j] = Grads.tolist()
+        X_g.values.append(X.values)
+        Y_g.values.append([Y.values[j] for _ in range(len(X.values))])
+        G.values[j] = Grads.tolist()
             
         # update plot
-        if plot:
+        if plot and plot_prog:
             plotter.update(Z=G)
     
     # display completion
@@ -690,38 +702,48 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
     # update plot
     if plot:
         plotter.update(Z=G, head=False, hold=True)
+    
+    thres_idx = get_thres_indices(G.values, thres_mode)
+
+    Thres = {}
+    Thres[X.var] = X.values[thres_idx[1]]
+    Thres[Y.var] = Y.values[thres_idx[0]]
+
+    # display threshold values
+    logger.info('Threshold values: {Thres}\t\n'.format(Thres=Thres))
+
+    # update sizes
+    dim = [len(G.values), len(G.values[0])]
+    X_g.size = dim
+    Y_g.size = dim
 
     # axes dictionary
     Axes = {}
-    Axes['X'] = X
-    Axes['Y'] = Y
-    Axes['Z'] = []
+    Axes['X'] = X_g
+    Axes['Y'] = Y_g
 
     # return data
-    return G, Thres, Axes
-
+    return G.values, Thres, Axes
 
 def get_grad(Y, X, grad_params):
     """Function to calculate the gradient of a dataset at a particular position.
     
     Parameters
     ----------
-    Y : list
-        Values of the dataset.
+        Y : list
+            Values of the dataset.
 
-    X : list
-        Positions of the dataset.
+        X : list
+            Positions of the dataset.
 
-    grad_params : dict
-        Options for the position.
+        grad_params : dict
+            Options for the position.
 
     Returns
     -------
-    grad : float
-        Value of the gradient at the position.
+        grad : float
+            Value of the gradient at the position.
     """
-
-    # TODO: handle single parameter case
 
     # calculate gradients
     temp = np.gradient(Y, X)
@@ -768,13 +790,13 @@ def get_index_monotonic_mean(Y):
     
     Parameters
     ----------
-    Y : list
-        Values of the data.
+        Y : list
+            Values of the data.
 
     Returns
     -------
-    idx : list
-        Indices of the mid points.
+        idx : list
+            Indices of the mid points.
     """
     
     # list of signum values
@@ -801,13 +823,13 @@ def get_index_monotonic_max_min(Y):
     
     Parameters
     ----------
-    Y : list
-        Values of the data.
+        Y : list
+            Values of the data.
 
     Returns
     -------
-    idx : list
-        Indices of the local maximas points.
+        idx : list
+            Indices of the local maximas points.
     """
     
     # list of signum values
@@ -829,13 +851,35 @@ def get_index_monotonic_max_min(Y):
 
     return idx
 
-def get_thres_indices(values, thres_mode):
+def get_thres_indices(values, thres_mode='max_min'):
+    """Function to obtain the indices of threshold for a given mode.
+
+    Parameters
+    ----------
+        values : list
+            Values of the variable.
+
+        thres_mode : str
+            Mode of threshold index calculation:
+                min_min : Minimum index where minimum is observed.
+                min_max : Maximum index where minimum is observed.
+                max_min : Minimum index where minimum is observed.
+                max_max : Maximum index where minimum is observed.
+
+    Returns
+    -------
+        res : list
+            Indices of the threshold.
+    """
+
     # indices of minimas and maximas
     idx_min = np.argwhere(np.array(values) == np.amin(values)).flatten().tolist()
     idx_max = np.argwhere(np.array(values) == np.amax(values)).flatten().tolist()
+
     # handle 1D array
     idx_min = [idx_min[2 * i : 2 * i + len(np.shape(values))] for i in range(int(len(idx_min) / len(np.shape(values))))]
     idx_max = [idx_max[2 * i : 2 * i + len(np.shape(values))] for i in range(int(len(idx_max) / len(np.shape(values))))]
+
     # required threshold
     res = {
         'min_min': idx_min[0],
@@ -843,6 +887,7 @@ def get_thres_indices(values, thres_mode):
         'max_min': idx_max[0],
         'max_max': idx_max[-1]
     }
+
     return res[thres_mode]
 
 

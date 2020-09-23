@@ -3,10 +3,10 @@
 
 """Wrapper modules for dynamics."""
 
-__name__    = 'qom.experimental.wrappers.dynamics'
+__name__    = 'qom.wrappers.dynamics'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-21'
-__updated__ = '2020-09-22'
+__updated__ = '2020-09-23'
 
 # dependencies
 import logging
@@ -22,56 +22,61 @@ from qom.utils import axis
 # modules logger
 logger = logging.getLogger(__name__)
 
+# TODO: Add single-system legacy module.
+# TODO: Optimize the workflow for `dynamics_measure`.
+# TODO: Move `get_dynamics` to `qom/numerical/integration`.
+# TODO: Verify parametes.
+
 def calculate(model, data):
     """Wrapper function to switch functions for calculation of dynamcis.
 
     Parameters
     ----------
-    model : :class:`Model`
-        Model of the systems.
+        model : :class:`Model`
+            Model of the systems.
 
-    data : dict
-        System data for the calculation.
+        data : dict
+            System data for the calculation.
 
     Returns
     -------
-    data : list 
-        Data of the dynamics calculated.
+        data : list 
+            Data of the dynamics calculated.
     """
 
     # get dynamics
     return globals()[data['dyna_params']['func']](model, data['dyna_params'], data['meas_params'], data['plot'], data['plot_params'])
 
 def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=None):
-    """Function to calculate the dynamics of a measure.
+    """Function to calculate the dynamics of a measure for multiple systems.
 
     Parameters
     ----------
-    model : :class:`Model`
-        Model of the system.
-    
-    dyna_params : dict
-        Parameters for the calculation of dynamics.
-    
-    meas_params : dict
-        Parameters for the calculation of measures.
+        model : :class:`Model`
+            Model for the systems.
+        
+        dyna_params : dict
+            Parameters for the calculation of dynamics.
+        
+        meas_params : dict
+            Parameters for the calculation of measures.
 
-    plot : boolean
-        Option to plot the dynamics.
+        plot : boolean, optional
+            Option to plot the dynamics.
 
-    plot_params : dict
-        Parameters for the plot.
+        plot_params : dict, optional
+            Parameters for the plot.
 
     Returns
     -------
-    D : list
-        Dynamics of the measure.
+        D_all : list
+            Dynamics of the measures for all systems.
 
-    V : list
-        Dynamics of the variables.
+        V_all : list
+            Dynamics of the variables for all systems.
 
-    Axes : dict
-        Axes points used to calculate the dynamics as :class:`qom.utils.axis.DynamicAxis`.
+        Axes : dict
+            Axes points used to calculate the dynamics as :class:`qom.utils.axis.DynamicAxis`.
     """
 
     # extract frequently used variables
@@ -101,9 +106,9 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
         var_params = {
             X.var: X.values
         }
-        _v, _c = model.get_initial_values_and_constants(var_params)
+        _v, _c = model.get_ivc_multi(var_params)
     else:
-        _v, _c = model.get_initial_values_and_constants()
+        _v, _c = model.get_ivc_multi()
 
     # constants
     _n_s = _c['n_s']
@@ -177,29 +182,36 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
     V_all = list()
     # all measures
     D_all = list()
+
+    # display initialization
+    logger.info('Calculating dynamics for {model_name}...\n\tMeasure Parameters:\n\t\t{meas_params}\n\tDynamics Parameters:\n\t\t{dyna_params}\n'.format(model_name=model.name, meas_params=meas_params, dyna_params=dyna_params))
     
     if _c['n_s'] != 0:
+        # solver function
+        solver_type = dyna_params['solver_type']
+        func = getattr(model, 'f_multi_' + solver_type)
+
         # calculate dynamics
-        T, Vs = get_dynamics(model, dyna_params['solver_type'], T, _v, _c)
+        T, V = get_dynamics(func, solver_type, T, _v, _c)
 
         # display completion
-        logger.debug('----------------System Dynamics Obtained----------------\n')
+        logger.info('----------------System Dynamics Obtained----------------\n')
             
         # convert to numpy array
-        Vs = np.array(Vs)
+        V = np.array(V)
 
         # offset for correlations
         _offset = _c['n_s'] * _c['n_m']
         for i in range(_c['n_s']):
             # extract dynamics of individual system
             # update lists
-            V = Vs[:, _n_v * i : _n_v * i + _n_v]
-            D = axis.DynamicAxis([len(T.values)])
+            _V_s = V[:, _n_v * i : _n_v * i + _n_v]
+            _D_s = axis.DynamicAxis([len(T.values)])
             # calculate measures for individual system
             if meas_params['type'] == 'corr':
-                D.values = corr.calculate(V, meas_params)
+                _D_s.values = corr.calculate(_V_s, meas_params)
             elif meas_params['type'] == 'diff':
-                D.values = diff.calculate(V, meas_params)
+                _D_s.values = diff.calculate(_V_s, meas_params)
 
             # if caching is enabled
             if _cache:
@@ -210,40 +222,40 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
                     _file_d += '_' + str(val)
 
                 # save system dynamics data to file
-                np.save(_dir + _file_v, np.array(V))
+                np.save(_dir + _file_v, np.array(_V_s))
                 # save measure dynamics data to file
-                np.save(_dir + _file_d, np.array(D.values)) 
+                np.save(_dir + _file_d, np.array(_D_s.values)) 
 
             else:
                 # update lists
-                V_all.append(V)
-                D_all.append(D.values)  
+                V_all.append(_V_s)
+                D_all.append(_D_s.values)  
 
                 # display plot
                 if plot:
-                    plotter = figure.Plotter2D(plot_params, X=T)
-                    plotter.update(T, D, head=False, hold=True)
+                    plotter = figure.Plotter(plot_params, X=T)
+                    plotter.update(T, _D_s, head=False, hold=True)
             
         # display completion
-        logger.debug('----------------Measure Dynamics Obtained---------------\n') 
+        logger.info('----------------Measure Dynamics Obtained---------------\n') 
 
     # display completion
-    logger.info('----------------Dynamics Obtained---------------\n')
+    logger.debug('----------------Dynamics Obtained---------------\n')
     
     if _cache:
         for i in range(_n_s):
-            V = np.load(_dir + _file_vs[i] + '.npy').tolist()
-            D = axis.DynamicAxis([len(T.values)])
-            D.values = np.load(_dir + _file_ds[i] + '.npy').tolist()
-            V_all.append(V)
-            D_all.append(D.values)
+            _V_s = np.load(_dir + _file_vs[i] + '.npy').tolist()
+            _D_s = axis.DynamicAxis([len(T.values)])
+            _D_s.values = np.load(_dir + _file_ds[i] + '.npy').tolist()
+            V_all.append(_V_s)
+            D_all.append(_D_s.values)
 
             # display plot
             if plot:
                 if X != None:
                     plot_params['legend'] = X.legends[i]
-                plotter = figure.Plotter2D(plot_params, X=T)
-                plotter.update(T, D, head=False, hold=True)
+                plotter = figure.Plotter(plot_params, X=T)
+                plotter.update(T, _D_s, head=False, hold=True)
 
     # axes dictionary
     Axes = {}
@@ -254,38 +266,47 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
     return D_all, V_all, Axes
 
 
-def get_dynamics(model, solver_type, T, v, c):
-    """Function to calculate the dynamics of variables for a given model using scipy.integrate.
+def get_dynamics(func, solver_type, T, iv, c):
+    """Function to calculate the dynamics of variables for a given model using :class:`scipy.integrate`.
 
     Parameters
     ----------
-    model : :class:`Model`
-        Model of the system.
-    
-    solver_type : dict
-        Parameters for the calculation of dynamics.
+        func : callable
+            Function for the model.
+        
+        solver_type : dict
+            Parameters for the calculation of dynamics.
+        
+        T : list
+            Times at which dynamics are required.
+        
+        iv : list
+            Initial values of variables.
+        
+        c : list
+            Constants for the model.
 
     Returns
     -------
     T : list
         Times at which dynamics are calculated.
 
-    Vs : list
+    V : list
         Dynamics of the variables.
     """
 
     # initialize integrator
-    integrator = si.ode(getattr(model, 'f_' + solver_type))
+    integrator = si.ode(func)
     # for complex ode solver
     if solver_type.find('complex') != -1:
         integrator.set_integrator('zvode')
         
     # set initial values and constants
-    integrator.set_initial_value(v, T.values[0])
+    integrator.set_initial_value(iv, T.values[0])
     integrator.set_f_params(c)
 
     # initialize lists
-    Vs = [v]
+    V = [iv]
 
     # for each time step, calculate the integration values
     for i in range(1, len(T.values)):
@@ -303,9 +324,9 @@ def get_dynamics(model, solver_type, T, v, c):
         logger.debug('t = {}\tv = {}'.format(t, v))
 
         # update lists
-        Vs.append(v)
+        V.append(v)
 
-    return T, Vs
+    return T, V
 
 
 

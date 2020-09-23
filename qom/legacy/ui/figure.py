@@ -6,7 +6,7 @@
 __name__    = 'qom.legacy.ui.figure'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-06-16'
-__updated__ = '2020-08-17'
+__updated__ = '2020-09-23'
 
 # dependencies
 from matplotlib.lines import Line2D

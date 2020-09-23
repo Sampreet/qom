@@ -6,7 +6,7 @@
 __name__    = 'qom.measures.corr'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-02-26'
-__updated__ = '2020-08-24'
+__updated__ = '2020-09-23'
 
 # dependencies
 import logging
@@ -20,16 +20,16 @@ def calculate(V, meas_params):
     
     Parameters
     ----------
-    V : list
-        Values of the variables.
+        V : list
+            Values of the variables.
 
-    meas_params : dict
-        Parameters for the calculation.
+        meas_params : dict
+            Parameters for the calculation.
 
     Returns
     -------
-    M : float
-        Measures calculated.
+        M : float
+            Measures calculated.
     """
 
     # extract frequently used variables
@@ -75,19 +75,19 @@ def disc(mat_corr, pos_i, pos_j):
 
     Parameters
     ----------
-    mat_corr : list
-        Matrix containing all correlations between quadratures of the modes.
+        mat_corr : list
+            Matrix containing all correlations between quadratures of the modes.
 
-    pos_i : *int*
-        Position of ith mode in the correlation matrix.
+        pos_i : *int*
+            Position of ith mode in the correlation matrix.
 
-    pos_j : *int*
-        Position of jth mode in the correlation matrix.
+        pos_j : *int*
+            Position of jth mode in the correlation matrix.
 
     Returns
     -------
-    D_G : float
-        Gaussian quantum discord.
+        D_G : float
+            Gaussian quantum discord.
     """
 
     # symplectic invariants
@@ -111,19 +111,19 @@ def get_invariants(mat_corr, pos_i, pos_j):
 
     Parameters
     ----------
-    mat_corr : list
-        Matrix containing all correlations between quadratures of the modes.
+        mat_corr : list
+            Matrix containing all correlations between quadratures of the modes.
 
-    pos_i : *int*
-        Position of ith mode in the correlation matrix.
+        pos_i : *int*
+            Position of ith mode in the correlation matrix.
 
-    pos_j : *int*
-        Position of jth mode in the correlation matrix.
+        pos_j : *int*
+            Position of jth mode in the correlation matrix.
 
     Returns
     -------
-    invariants : list
-        Symplectic invariants.
+        invariants : list
+            Symplectic invariants.
     """
 
     # correlation matrix of ith mode
@@ -169,19 +169,19 @@ def entan_bi_log_neg(mat_corr, pos_i, pos_j):
 
     Parameters
     ----------
-    mat_corr : list
-        Matrix containing all correlations between quadratures.
+        mat_corr : list
+            Matrix containing all correlations between quadratures.
 
-    pos_i : *int*
-        Position of ith mode in the correlation matrix.
+        pos_i : *int*
+            Position of ith mode in the correlation matrix.
 
-    pos_j : *int*
-        Position of jth mode in the correlation matrix.
+        pos_j : *int*
+            Position of jth mode in the correlation matrix.
 
     Returns
     -------
-    E_N : float
-        Quantum entanglement value using logarithmic negativity.
+        E_N : float
+            Quantum entanglement value using logarithmic negativity.
     """
 
     # symplectic invariants
@@ -210,19 +210,19 @@ def sync_comp(mat_corr, pos_i, pos_j):
 
     Parameters
     ----------
-    mat_corr : list
-        Matrix containing all correlations between quadratures.
+        mat_corr : list
+            Matrix containing all correlations between quadratures.
 
-    pos_i : *int*
-        Position of ith mode in the correlation matrix.
+        pos_i : *int*
+            Position of ith mode in the correlation matrix.
 
-    pos_j : *int*
-        Position of jth mode in the correlation matrix.
+        pos_j : *int*
+            Position of jth mode in the correlation matrix.
 
     Returns
     -------
-    S_C : float
-        Quantum complete synchronization value.
+        S_C : float
+            Quantum complete synchronization value.
     """
 
     # square difference between position quadratures
@@ -242,25 +242,25 @@ def sync_phase(mat_corr, pos_i, pos_j, mode_i, mode_j):
 
     Parameters
     ----------
-    mat_corr : list
-        Matrix containing all correlations between quadratures.
+        mat_corr : list
+            Matrix containing all correlations between quadratures.
 
-    pos_i : *int*
-        Position of ith mode in the correlation matrix.
+        pos_i : *int*
+            Position of ith mode in the correlation matrix.
 
-    pos_j : *int*
-        Position of jth mode in the correlation matrix.
+        pos_j : *int*
+            Position of jth mode in the correlation matrix.
 
-    mode_i : np.complex
-        Value of the ith mode.
+        mode_i : np.complex
+            Value of the ith mode.
 
-    mode_j : np.complex
-        Value of the jth mode.
+        mode_j : np.complex
+            Value of the jth mode.
 
     Returns
     -------
-    S_P : float
-        Quantum phase synchronization value.
+        S_P : float
+            Quantum phase synchronization value.
     """
 
     # arguments
@@ -287,25 +287,25 @@ def sync_phase_rot(mat_corr, pos_i, pos_j, mode_i, mode_j):
 
     Parameters
     ----------
-    mat_corr : list
-        Matrix containing all correlations between quadratures.
+        mat_corr : list
+            Matrix containing all correlations between quadratures.
 
-    pos_i : *int*
-        Position of ith mode in the correlation matrix.
+        pos_i : *int*
+            Position of ith mode in the correlation matrix.
 
-    pos_j : *int*
-        Position of jth mode in the correlation matrix.
+        pos_j : *int*
+            Position of jth mode in the correlation matrix.
 
-    mode_i : np.complex
-        Value of the ith mode.
+        mode_i : np.complex
+            Value of the ith mode.
 
-    mode_j : np.complex
-        Value of the jth mode.
+        mode_j : np.complex
+            Value of the jth mode.
 
     Returns
     -------
-    S_P : float
-        Quantum phase synchronization value.
+        S_P : float
+            Quantum phase synchronization value.
     """
 
     # arguments

@@ -5,8 +5,8 @@
 
 __name__    = 'qom.wrappers.measures'
 __authors__ = ['Sampreet Kalita']
-__created__ = '2020-06-19'
-__updated__ = '2020-09-01'
+__created__ = '2020-09-23'
+__updated__ = '2020-09-23'
 
 # dependencies
 import logging
@@ -14,27 +14,31 @@ import numpy as np
 import os
 
 # dev dependencies
-from qom.legacy.ui import figure
-from qom.legacy.wrappers import dynamics
+from qom.ui import figure
+from qom.utils import axis
+from qom.wrappers import dynamics
 
 # module logger
 logger = logging.getLogger(__name__)
+
+# TODO: Move `get_thres_indices` calculation to `qom/utils/array`.
+# TODO: Verify parametes.
 
 def calculate(model, data):
     """Wrapper function to switch functions for calculation of measures.
     
     Parameters
     ----------
-    model : :class:`Model`
-        Model of the system.
+        model : :class:`Model`
+            Model of the system.
 
-    data : dict
-        Data for the calculation.
+        data : dict
+            Data for the calculation.
 
     Returns
     -------
-    data : list
-        Data of the measures calculated.
+        data : list
+            Data of the measures calculated.
     """
 
     # get properties
@@ -45,286 +49,397 @@ def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
     
     Parameters
     ----------
-    model : :class:`Model`
-        Model of the system.
-    
-    dyna_params : dict
-        Parameters for the dynamics.
-    
-    meas_params : dict
-        Parameters for the measures.
+        model : :class:`Model`
+            Model of the systems.
+        
+        dyna_params : dict
+            Parameters for the dynamics.
+        
+        meas_params : dict
+            Parameters for the measures.
 
-    plot : boolean
-        Option to plot the measures.
+        plot : boolean, optional
+            Option to plot the measures.
 
-    plot_params : dict
-        Parameters for the plot.
+        plot_params : dict, optional
+            Parameters for the plot.
 
     Returns
     -------
-    M : list
-        Measures calculated.
+        M : list
+            Measures calculated.
 
-    Thres : dict
-        Threshold values of the variables used.
+        Thres : dict
+            Threshold values of the variables used.
 
-    Axes : dict
-        Axes points used to calculate the properties.
+        Axes : dict
+            Axes points used to calculate the properties as :class:`qom.utils.axis.DynamicAxis`.
     """
-
-    # TODO: verify presence of parametes
 
     # extract frequently used variables
     avg_mode    = meas_params['avg_mode']
     avg_type    = meas_params['avg_type']
     thres_mode  = meas_params['thres_mode']
-    x_name      = meas_params['X']['var']
-    x_min       = meas_params['X']['min']
-    x_max       = meas_params['X']['max']
-    x_steps     = meas_params['X']['steps']
+    plot_prog   = plot_params['progress'] if plot_params != None else False 
+
+    # get dynamics
+    D_all, _, Axes = dynamics.dynamics_measure(model, dyna_params, meas_params)
+    X = Axes['X']
 
     # initialize variables
-    num_decimals = int(np.ceil(np.log10((x_steps - 1) / (x_max - x_min))))
-    X = np.around(np.linspace(x_min, x_max, x_steps), num_decimals).tolist()
-    X_m = []
-    M = []
-    m_max = 0
-    Thres = {}
-    Thres[x_name] = x_min - 1
-
-    # threshold values
-    if thres_mode.find('max_') != -1:
-        # max value of measure
-        m_max = 0
+    X_m = axis.DynamicAxis([len(X.values)])
+    M = axis.DynamicAxis([len(X.values)])
 
     # initialize plot
     if plot:
-        plotter = figure.Plotter2D(plot_params, X=X)
+        plotter = figure.Plotter(plot_params, X=X)
 
     # display initialization
     logger.info('Initializing average {meas_name} calculation...\t\n'.format(meas_name=meas_params['name']))
 
     # for variation in X
-    for i in range(len(X)):
+    for i in range(len(X.values)):
         # calculate progress
-        progress = float(i) / float(len(X)) * 100
+        progress = float(i) / float(len(X.values)) * 100
         # display progress
-        logger.info('Calculating the measure values: Progress = {progress:3.2f}'.format(progress=progress))
-
-        # update model
-        if type(model.p[x_name]) == list:
-            model.p[x_name][meas_params['X']['index']] = X[i]
-        else:
-            model.p[x_name] = X[i]
-
-        # get measure dynamics
-        D, _, _ = dynamics.dynamics_measure(model, dyna_params, meas_params)
+        if int(progress * 1000) % 10 == 0:
+            logger.info('Calculating the average values: Progress = {progress:3.2f}'.format(progress=progress))
 
         # initialize value
         m = 0
 
         # calculate average value
         if avg_mode == 'all':
-            m = np.mean(D)
+            m = np.mean(D_all[i])
         elif avg_mode == 'end' and avg_type == 'min_max':
-            arr = D[-meas_params['span']:]
+            arr = D_all[i][-meas_params['span']:]
             m = (max(arr) + min(arr)) / 2
         elif avg_mode == 'range' and avg_type == 'min_max':
-            arr = D[meas_params['start']:meas_params['stop']]
+            arr = D_all[i][meas_params['start']:meas_params['stop']]
             m = (max(arr) + min(arr)) / 2
         elif avg_mode == 'end' and avg_type == 'mean':
-            arr = D[-meas_params['span']:]
+            arr = D_all[i][-meas_params['span']:]
             m = np.mean(arr)
         elif avg_mode == 'range' and avg_type == 'mean':
-            arr = D[meas_params['start']:meas_params['stop']]
+            arr = D_all[i][meas_params['start']:meas_params['stop']]
             m = np.mean(arr)
-
-        # update threshold
-        if thres_mode == 'max_min' and m != 0 and m > m_max:
-            m_max           = m
-            Thres['value']  = m_max
-            Thres[x_name]   = X[i]
-        if thres_mode == 'max_max' and m != 0 and m >= m_max:
-            m_max           = m
-            Thres['value']  = m_max
-            Thres[x_name]   = X[i]
     
         # update list
-        X_m.append(X[i])
-        M.append(m)
+        X_m.values.append(X.values[i])
+        M.values.append(m)
 
         # update plot
-        if plot:
+        if plot and plot_prog:
             plotter.update(X_m, M)
         
     # display completion
     logger.info('----------------Average Measures Obtained----------------\n')
 
-    # display threshold values
-    logger.info('Threshold values: {Thres}\t\n'.format(Thres=Thres))
-
     # update plot
     if plot:
         plotter.update(X_m, M, head=False, hold=True)
+    
+    thres_idx = get_thres_indices(M.values, thres_mode)
+
+    Thres = {}
+    Thres[X.var] = X.values[thres_idx[0]]
+
+    # display threshold values
+    logger.info('Threshold values: {Thres}\t\n'.format(Thres=Thres))
+
+    # update sizes
+    dim = [len(M.values)]
+    X_m.size = dim
 
     # axes dictionary
     Axes = {}
     Axes['X'] = X
-    Axes['Y'] = []
-    Axes['Z'] = []
 
     # return data
-    return M, Thres, Axes
+    return M.values, Thres, Axes
 
-def measures_2D(model, dyna_params, meas_params, plot, plot_params):
-    """Function to calculate measures versus two continuous variables.
+def measures_1D_multi(model, dyna_params, meas_params, plot=False, plot_params=None):
+    """Function to calculate measures versus a continuous variable for multiple discrete variables.
     
     Parameters
     ----------
-    model : :class:`Model`
-        Model of the system.
-    
-    dyna_params : dict
-        Parameters for the dynamics.
-    
-    meas_params : dict
-        Parameters for the measures.
+        model : :class:`Model`
+            Model of the systems.
+        
+        dyna_params : dict
+            Parameters for the dynamics.
+        
+        meas_params : dict
+            Parameters for the measures.
 
-    plot : boolean
-        Option to plot the measures.
+        plot : boolean, optional
+            Option to plot the measures.
 
-    plot_params : dict
-        Parameters for the plot.
+        plot_params : dict, optional
+            Parameters for the plot.
 
     Returns
     -------
-    M : list
-        Measures calculated.
+        M : list
+            Measures calculated.
 
-    Thres : dict
-        Threshold values of the variables used.
+        Thres : dict
+            Threshold values of the variables used.
 
-    Axes : dict
-        Axes points used to calculate the properties.
+        Axes : dict
+            Axes points used to calculate the properties as :class:`qom.utils.axis.DynamicAxis`.
     """
-
-    # TODO: verify presence of parametes
 
     # extract frequently used variables
     avg_mode    = meas_params['avg_mode']
     avg_type    = meas_params['avg_type']
     thres_mode  = meas_params['thres_mode']
-    x_name      = meas_params['X']['var']
-    x_min       = meas_params['X']['min']
-    x_max       = meas_params['X']['max']
-    x_steps     = meas_params['X']['steps']
-    y_name      = meas_params['Y']['var']
-    y_min       = meas_params['Y']['min']
-    y_max       = meas_params['Y']['max']
-    y_steps     = meas_params['Y']['steps']
+    plot_prog   = plot_params['progress'] if plot_params != None else False 
+    X           = axis.StaticAxis(meas_params['X'])
+    Z           = axis.StaticAxis(meas_params['Z'])
 
     # initialize variables
-    num_decimals = int(np.ceil(np.log10((x_steps - 1) / (x_max - x_min))))
-    X = np.around(np.linspace(x_min, x_max, x_steps), num_decimals).tolist()
-    num_decimals = int(np.ceil(np.log10((y_steps - 1) / (y_max - y_min))))
-    Y = np.around(np.linspace(y_min, y_max, y_steps), num_decimals).tolist()
-    M = np.empty((len(Y), len(X)))
-    M[:] = np.NaN
-    m_max = 0
-    Thres = {}
-    Thres[x_name] = x_min - 1
-    Thres[y_name] = y_min - 1
-
-    # threshold values
-    if thres_mode.find('max_') != -1:
-        # max value of measure
-        m_max = 0
+    X_m = axis.DynamicAxis([len(Z.values), len(X.values)])
+    Z_m = axis.DynamicAxis([len(Z.values), len(X.values)])
+    M = axis.DynamicAxis([len(Z.values), len(X.values)])
 
     # initialize plot
     if plot:
-        plotter = figure.Plotter2D(plot_params, X=X, Y=Y, Z=M)
+        plotter = figure.Plotter(plot_params, X=X, Z=Z)
 
     # display initialization
     logger.info('Initializing average {meas_name} calculation...\t\n'.format(meas_name=meas_params['name']))
 
-    # for variation in Y
-    for j in range(len(Y)):
+    # for variation in Z
+    for j in range(len(Z.values)):
+        # update model
+        model.params[Z.var] = Z.values[j]
+
+        # get dynamics
+        D_all, _, Axes = dynamics.dynamics_measure(model, dyna_params, meas_params)
+
         # for variation in X
-        for i in range(len(X)):
+        for i in range(len(X.values)):
             # calculate progress
-            progress = ((float(j) + float(i) / float(len(X))) / float(len(Y))) * 100
+            progress = ((float(i) + float(j) / float(len(Z.values))) / float(len(X.values))) * 100
             # display progress
-            logger.info('Calculating the measure values: Progress = {progress:3.2f}'.format(progress=progress))
-
-            # update model
-            if type(model.p[x_name]) == list:
-                model.p[x_name][meas_params['X']['index']] = X[i]
-            else:
-                model.p[x_name] = X[i]
-
-            # update model
-            if type(model.p[y_name]) == list:
-                model.p[y_name][meas_params['Y']['index']] = Y[j]
-            else:
-                model.p[y_name] = Y[j]
-
-            # get measure dynamics
-            D, _, _ = dynamics.dynamics_measure(model, dyna_params, meas_params)
+            if int(progress * 1000) % 10 == 0:
+                logger.info('Calculating the average values: Progress = {progress:3.2f}'.format(progress=progress))
 
             # initialize value
             m = 0
 
             # calculate average value
             if avg_mode == 'all':
-                m = sum(D) / len(D)
+                m = np.mean(D_all[i])
             elif avg_mode == 'end' and avg_type == 'min_max':
-                arr = D[-meas_params['span']:-1]
+                arr = D_all[i][-meas_params['span']:]
                 m = (max(arr) + min(arr)) / 2
             elif avg_mode == 'range' and avg_type == 'min_max':
-                arr = D[meas_params['start']:meas_params['stop']]
+                arr = D_all[i][meas_params['start']:meas_params['stop']]
                 m = (max(arr) + min(arr)) / 2
             elif avg_mode == 'end' and avg_type == 'mean':
-                arr = D[-meas_params['span']:-1]
-                m = sum(arr) / len(arr)
+                arr = D_all[i][-meas_params['span']:]
+                m = np.mean(arr)
             elif avg_mode == 'range' and avg_type == 'mean':
-                arr = D[meas_params['start']:meas_params['stop']]
-                m = sum(arr) / len(arr)
-
-
-            # update threshold
-            if thres_mode == 'max_min' and m != 0 and m > m_max:
-                m_max           = m
-                Thres['value']  = m_max
-                Thres[x_name]   = X[i]
-                Thres[y_name]   = Y[j]
-            if thres_mode == 'max_max' and m != 0 and m >= m_max:
-                m_max           = m
-                Thres['value']  = m_max
-                Thres[x_name]   = X[i]
-                Thres[y_name]   = Y[j]
+                arr = D_all[i][meas_params['start']:meas_params['stop']]
+                m = np.mean(arr)
         
             # update list
-            M[j][i] = m
+            X_m.values[j].append(X.values[i])
+            Z_m.values[j].append(Z.values[j])
+            M.values[j].append(m)
+
+        # update plot
+        if plot and plot_prog:
+            plotter.update(X_m, M)
+        
+    # display completion
+    logger.info('----------------Average Measures Obtained----------------\n')
+
+    # update plot
+    if plot:
+        plotter.update(X_m, M, head=False, hold=True)
+    
+    thres_idx = get_thres_indices(M.values, thres_mode)
+
+    Thres = {}
+    Thres[X.var] = X.values[thres_idx[1]]
+    Thres[Z.var] = Z.values[thres_idx[0]]
+
+    # display threshold values
+    logger.info('Threshold values: {Thres}\t\n'.format(Thres=Thres))
+
+    # update sizes
+    dim = [len(M.values), len(M.values[0])]
+    X_m.size = dim
+    Z_m.size = dim
+
+    # axes dictionary
+    Axes = {}
+    Axes['X'] = X_m
+    Axes['Z'] = Z_m
+
+    # return data
+    return M.values, Thres, Axes
+
+def measures_2D(model, dyna_params, meas_params, plot, plot_params):
+    """Function to calculate measures versus two continuous variables.
+    
+    Parameters
+    ----------
+        model : :class:`Model`
+            Model of the systems.
+        
+        dyna_params : dict
+            Parameters for the dynamics.
+        
+        meas_params : dict
+            Parameters for the measures.
+
+        plot : boolean, optional
+            Option to plot the measures.
+
+        plot_params : dict, optional
+            Parameters for the plot.
+
+    Returns
+    -------
+        M : list
+            Measures calculated.
+
+        Thres : dict
+            Threshold values of the variables used.
+
+        Axes : dict
+            Axes points used to calculate the measures as :class:`qom.utils.axis.DynamicAxis`.
+    """
+
+    # extract frequently used variables
+    avg_mode    = meas_params['avg_mode']
+    avg_type    = meas_params['avg_type']
+    thres_mode  = meas_params['thres_mode']
+    plot_prog   = plot_params['progress'] if plot_params != None else False 
+    X           = axis.StaticAxis(meas_params['X'])
+    Y           = axis.StaticAxis(meas_params['Y'])
+
+    # initialize variables
+    X_m = axis.DynamicAxis([len(Y.values), len(X.values)])
+    Y_m = axis.DynamicAxis([len(Y.values), len(X.values)])
+    M = axis.DynamicAxis([len(Y.values), len(X.values)])
+
+    for j in range(len(Y.values)):
+        M.values[j] = [np.NaN for i in range(len(X.values))]
+
+    # initialize plot
+    if plot:
+        plotter = figure.Plotter(plot_params, X=X, Y=Y, Z=M)
+
+    # display initialization
+    logger.info('Initializing average {meas_name} calculation...\t\n'.format(meas_name=meas_params['name']))
+
+    # for variation in Y
+    for j in range(len(Y.values)):
+        # update model
+        model.params[Y.var] = Y.values[j]
+
+        # get dynamics
+        D_all, _, Axes = dynamics.dynamics_measure(model, dyna_params, meas_params)
+
+        # for variation in X
+        for i in range(len(X.values)):
+            # calculate progress
+            progress = ((float(j) + float(i) / float(len(X.values))) / float(len(Y.values))) * 100
+            # display progress
+            logger.info('Calculating the measure values: Progress = {progress:3.2f}'.format(progress=progress))
+
+            # initialize value
+            m = 0
+
+            # calculate average value
+            if avg_mode == 'all':
+                m = np.mean(D_all[i])
+            elif avg_mode == 'end' and avg_type == 'min_max':
+                arr = D_all[i][-meas_params['span']:]
+                m = (max(arr) + min(arr)) / 2
+            elif avg_mode == 'range' and avg_type == 'min_max':
+                arr = D_all[i][meas_params['start']:meas_params['stop']]
+                m = (max(arr) + min(arr)) / 2
+            elif avg_mode == 'end' and avg_type == 'mean':
+                arr = D_all[i][-meas_params['span']:]
+                m = np.mean(arr)
+            elif avg_mode == 'range' and avg_type == 'mean':
+                arr = D_all[i][meas_params['start']:meas_params['stop']]
+                m = np.mean(arr)
+        
+            # update list
+            X_m.values[j].append(X.values[i])
+            Y_m.values[j].append(Y.values[j])
+            M.values[j][i] = m
 
             # update plot
-            if plot:
+            if plot and plot_prog:
                 plotter.update(Z=M)
         
     # display completion
     logger.info('----------------Average Measures Obtained----------------\n')
 
-    # display threshold values
-    logger.info('Threshold values: {Thres}\t\n'.format(Thres=Thres))
-
     # update plot
     if plot:
         plotter.update(Z=M, head=False, hold=True)
+    
+    thres_idx = get_thres_indices(M.values, thres_mode)
+
+    Thres = {}
+    Thres[X.var] = X.values[thres_idx[1]]
+    Thres[Y.var] = Y.values[thres_idx[0]]
+
+    # display threshold values
+    logger.info('Threshold values: {Thres}\t\n'.format(Thres=Thres))
+
+    # update sizes
+    dim = [len(M.values), len(M.values[0])]
+    X_m.size = dim
+    Y_m.size = dim
 
     # axes dictionary
     Axes = {}
-    Axes['X'] = X
-    Axes['Y'] = Y
-    Axes['Z'] = []
+    Axes['X'] = X_m
+    Axes['Y'] = Y_m
 
     # return data
-    return M, Thres, Axes
+    return M.values, Thres, Axes
+
+def get_thres_indices(values, thres_mode='max_min'):
+    """Function to obtain the indices of threshold for a given mode.
+
+    Parameters
+    ----------
+        values : list
+            Values of the variable.
+
+        thres_mode : str
+            Mode of threshold index calculation:
+                min_min : Minimum index where minimum is observed.
+                min_max : Maximum index where minimum is observed.
+                max_min : Minimum index where minimum is observed.
+                max_max : Maximum index where minimum is observed.
+    """
+
+    # indices of minimas and maximas
+    idx_min = np.argwhere(np.array(values) == np.amin(values)).flatten().tolist()
+    idx_max = np.argwhere(np.array(values) == np.amax(values)).flatten().tolist()
+
+    # handle 1D array
+    idx_min = [idx_min[2 * i : 2 * i + len(np.shape(values))] for i in range(int(len(idx_min) / len(np.shape(values))))]
+    idx_max = [idx_max[2 * i : 2 * i + len(np.shape(values))] for i in range(int(len(idx_max) / len(np.shape(values))))]
+
+    # required threshold
+    res = {
+        'min_min': idx_min[0],
+        'min_max': idx_min[-1],
+        'max_min': idx_max[0],
+        'max_max': idx_max[-1]
+    }
+    
+    return res[thres_mode]

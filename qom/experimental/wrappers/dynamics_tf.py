@@ -6,7 +6,7 @@
 __name__    = 'qom.experimental.wrappers.dynamics_tf'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-03'
-__updated__ = '2020-09-04'
+__updated__ = '2020-09-23'
 
 # dependencies
 import logging
