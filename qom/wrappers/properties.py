@@ -22,9 +22,10 @@ from qom.utils import axis
 logger = logging.getLogger(__name__)
 
 # TODO: Move `get_grad` and index functions to to `qom/utils/array`.
+# TODO: Handle scatter plots for gradient functions.
 # TODO: Handle single parameter case for `get_grad`.
-# TODO: handle scatter and 3D plots for gradient functions.
-# TODO: handle multi-value points for 2D functions.
+# TODO: Handle multi-value points for 2D functions.
+# TODO: Implement 3D plots.
 # TODO: Verify parametes.
 
 def calculate(model, data):
@@ -410,11 +411,11 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
         P_values, Thres, Axes = properties_1D(prop_model, prop_params)
         # calculate gradients
         Grads = np.gradient(P_values, Axes['X'].values)
-        X = Axes['X']
+        X = axis.StaticAxis(prop_params['X'])
     elif grad_axis == 'Y':
         # get properties
         P_values, Thres, Axes = properties_2D(prop_model, prop_params)
-        X = Axes['Y']
+        X = axis.StaticAxis(prop_params['Y'])
 
     # initialize variables
     X_g = axis.DynamicAxis([len(X.values)])
@@ -475,7 +476,7 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
     logger.info('Threshold values: {Thres}\t\n'.format(Thres=Thres))
 
     # update sizes
-    dim = [len(G.values), len(G.values[0])]
+    dim = [len(G.values)]
     X_g.size = dim
 
     # axes dictionary
@@ -649,8 +650,8 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
 
     # get properties
     P_values, Thres, Axes = properties_2D(prop_model, prop_params)
-    X = Axes['X']
-    Y = Axes['Y']
+    X = axis.StaticAxis(prop_params['X'])
+    Y = axis.StaticAxis(prop_params['Y'])
 
     # initialize variables
     X_g = axis.DynamicAxis([len(Y.values), len(X.values)])
