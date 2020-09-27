@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.4.4 - 2020/09/27 - 02 - Minor Fixes
+* Minor fixes to `examples/qom_loopers_properties` notebook.
+* Updated `README` and `setup`.
+
 ## v0.4.3 - 2020/09/27 - 01 - Example Notebook
 * Added `qom_loopers_properties` notebook in `examples`.
 * Updated `qom/loopers`:
