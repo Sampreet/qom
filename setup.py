@@ -4,8 +4,8 @@ with open('README.md', 'r') as file_readme:
     long_desc = file_readme.read()
 
 setup(
-    name='qom-sampreet',
-    version='0.4.0',
+    name='qom-toolbox',
+    version='0.4.2',
     author='Sampreet Kalita',
     author_email='sampreet.kalita@hotmail.com',
     desctiption='Toolbox for Quantum Optomechanics',

@@ -1,29 +1,27 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Wrapper modules for properties."""
+"""Looper functions for properties."""
 
-__name__    = 'qom.wrappers.properties'
+__name__    = 'qom.loopers.properties'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-06-15'
-__updated__ = '2020-09-23'
+__updated__ = '2020-09-27'
 
 # dependencies
 import copy
 import logging
 import numpy as np
-import os
 
 # dev dependencies
+from qom.numerics import calculators
 from qom.ui import figure
-from qom.utils import axis
+from qom.utils import axis, misc
 
 # module logger
 logger = logging.getLogger(__name__)
 
-# TODO: Move `get_grad` and index functions to to `qom/utils/array`.
 # TODO: Handle scatter plots for gradient functions.
-# TODO: Handle single parameter case for `get_grad`.
 # TODO: Handle multi-value points for 2D functions.
 # TODO: Implement 3D plots.
 # TODO: Verify parametes.
@@ -80,7 +78,7 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
     # extract frequently used variables
     prop_code   = prop_params['code']
     prop_name   = prop_params['name']
-    thres_mode  = prop_params['thres_mode']
+    thres_mode  = prop_params['thres_mode'] if 'thres_mode' in prop_params else 'max_min'
     plot_prog   = plot_params['progress'] if plot_params != None else False 
     X           = axis.StaticAxis(prop_params['X'])
 
@@ -104,7 +102,7 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
             logger.info('Calculating the property values: Progress = {progress:3.2f}'.format(progress=progress))
 
         # update model
-        model.p[X.var] = X.values[i]
+        model.params[X.var] = X.values[i]
 
         # get property from model
         p = getattr(model, prop_code)()
@@ -129,7 +127,7 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
     if plot:
         plotter.update(X_p, P, head=False, hold=True)
     
-    thres_idx = get_thres_indices(P.values, thres_mode)
+    thres_idx = misc.get_index_threshold(P.values, thres_mode)
 
     Thres = {}
     Thres[X.var] = X.values[thres_idx[0]]
@@ -180,7 +178,7 @@ def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
     # extract frequently used variables
     prop_code   = prop_params['code']
     prop_name   = prop_params['name']
-    thres_mode  = prop_params['thres_mode']
+    thres_mode  = prop_params['thres_mode'] if 'thres_mode' in prop_params else 'max_min'
     plot_prog   = plot_params['progress'] if plot_params != None else False 
     X           = axis.StaticAxis(prop_params['X'])
     Z           = axis.StaticAxis(prop_params['Z'])
@@ -208,8 +206,8 @@ def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
                 logger.info('Calculating the property values: Progress = {progress:3.2f}'.format(progress=progress))
 
             # update model
-            model.p[X.var] = X.values[i]
-            model.p[Z.var] = Z.values[j]
+            model.params[X.var] = X.values[i]
+            model.params[Z.var] = Z.values[j]
 
             # get property from model
             p = getattr(model, prop_code)()
@@ -236,7 +234,7 @@ def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
     if plot:
         plotter.update(X_p, P, head=False, hold=True)
     
-    thres_idx = get_thres_indices(P.values, thres_mode)
+    thres_idx = misc.get_index_threshold(P.values, thres_mode)
 
     Thres = {}
     Thres[X.var] = X.values[thres_idx[1]]
@@ -290,7 +288,7 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
     # extract frequently used variables
     prop_code   = prop_params['code']
     prop_name   = prop_params['name']
-    thres_mode  = prop_params['thres_mode']
+    thres_mode  = prop_params['thres_mode'] if 'thres_mode' in prop_params else 'max_min'
     plot_prog   = plot_params['progress'] if plot_params != None else False 
     X           = axis.StaticAxis(prop_params['X'])
     Y           = axis.StaticAxis(prop_params['Y'])
@@ -321,8 +319,8 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
                 logger.info('Calculating the property values: Progress = {progress:3.2f}'.format(progress=progress))
 
             # update model
-            model.p[X.var] = X.values[i]
-            model.p[Y.var] = Y.values[j]
+            model.params[X.var] = X.values[i]
+            model.params[Y.var] = Y.values[j]
 
             # get property from model
             p = getattr(model, prop_code)()
@@ -347,7 +345,7 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
     if plot:
         plotter.update(Z=P, head=False, hold=True)
     
-    thres_idx = get_thres_indices(P.values, thres_mode)
+    thres_idx = misc.get_index_threshold(P.values, thres_mode)
 
     Thres = {}
     Thres[X.var] = X.values[thres_idx[1]]
@@ -401,7 +399,7 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
     # extract frequently used variables
     prop_name   = prop_params['name']
     grad_axis   = prop_params['grad_axis']
-    thres_mode  = prop_params['thres_mode']
+    thres_mode  = prop_params['thres_mode'] if 'thres_mode' in prop_params else 'max_min'
     plot_prog   = plot_params['progress'] if plot_params != None else False 
     prop_model  = copy.deepcopy(model)
 
@@ -437,7 +435,7 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
             logger.info('Calculating the property values: Progress = {progress:3.2f}'.format(progress=progress))
 
         # update model for gradient calculation
-        model.p[X.var] = X.values[i]
+        model.params[X.var] = X.values[i]
 
         # get parameters from model
         grad_params = model.get_grad_params()
@@ -447,7 +445,7 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
             grad = Grads[i] / grad_params['divisor']
         elif grad_axis == 'Y':
             # get gradient at particular value
-            grad = get_grad(P_values[i], Axes['X'].values[i], grad_params)
+            grad = calculators.get_grad(P_values[i], Axes['X'].values[i], grad_params)
 
         # update lists for line plot
         X_g.values.append(X.values[i])
@@ -467,7 +465,7 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
     if plot:
         plotter.update(X_g, G, head=False, hold=True)
     
-    thres_idx = get_thres_indices(G.values, thres_mode)
+    thres_idx = misc.get_index_threshold(G.values, thres_mode)
 
     Thres = {}
     Thres[X.var] = X.values[thres_idx[0]]
@@ -518,7 +516,7 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
     # extract frequently used variables
     prop_name   = prop_params['name']
     grad_axis   = prop_params['grad_axis']
-    thres_mode  = prop_params['thres_mode']
+    thres_mode  = prop_params['thres_mode'] if 'thres_mode' in prop_params else 'max_min'
     plot_prog   = plot_params['progress'] if plot_params != None else False 
     X           = axis.StaticAxis(prop_params[grad_axis])
     Z           = axis.StaticAxis(prop_params['Z'])
@@ -539,7 +537,7 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
 
         # update model for property calculation
         prop_model = copy.deepcopy(model)
-        prop_model.p[Z.var] = Z.values[j]
+        prop_model.params[Z.var] = Z.values[j]
 
         # switch variables for property function
         if grad_axis == 'X':
@@ -559,8 +557,8 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
                 logger.info('Calculating the property values: Progress = {progress:3.2f}'.format(progress=progress))
 
             # update model for gradient calculation
-            model.p[X.var] = X.values[i]
-            model.p[Z.var] = Z.values[j]
+            model.params[X.var] = X.values[i]
+            model.params[Z.var] = Z.values[j]
 
             # get parameters from model
             grad_params = model.get_grad_params()
@@ -570,7 +568,7 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
                 grad = Grads[i] / grad_params['divisor']
             elif grad_axis == 'Y':
                 # get gradient at particular value
-                grad = get_grad(P_values[i], Axes['X'].values[i], grad_params)
+                grad = calculators.get_grad(P_values[i], Axes['X'].values[i], grad_params)
 
             # update lists for line plot
             X_g.values[j].append(X.values[i])
@@ -591,7 +589,7 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
     if plot:
         plotter.update(X_g, G, head=False, hold=True)
     
-    thres_idx = get_thres_indices(G.values, thres_mode)
+    thres_idx = misc.get_index_threshold(G.values, thres_mode)
 
     Thres = {}
     Thres[X.var] = X.values[thres_idx[1]]
@@ -644,7 +642,7 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
 
     # extract frequently used variables
     prop_name   = prop_params['name']
-    thres_mode  = prop_params['thres_mode']
+    thres_mode  = prop_params['thres_mode'] if 'thres_mode' in prop_params else 'max_min'
     plot_prog   = plot_params['progress'] if plot_params != None else False 
     prop_model  = copy.deepcopy(model)
 
@@ -677,7 +675,7 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
             logger.info('Calculating the gradient values: Progress = {progress:3.2f}'.format(progress=progress))
 
         # update model for gradient calculation
-        model.p[Y.var] = Y.values[j]
+        model.params[Y.var] = Y.values[j]
 
         # get parameters from model
         grad_params = model.get_grad_params()
@@ -704,7 +702,7 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
     if plot:
         plotter.update(Z=G, head=False, hold=True)
     
-    thres_idx = get_thres_indices(G.values, thres_mode)
+    thres_idx = misc.get_index_threshold(G.values, thres_mode)
 
     Thres = {}
     Thres[X.var] = X.values[thres_idx[1]]
@@ -725,170 +723,3 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
 
     # return data
     return G.values, Thres, Axes
-
-def get_grad(Y, X, grad_params):
-    """Function to calculate the gradient of a dataset at a particular position.
-    
-    Parameters
-    ----------
-        Y : list
-            Values of the dataset.
-
-        X : list
-            Positions of the dataset.
-
-        grad_params : dict
-            Options for the position.
-
-    Returns
-    -------
-        grad : float
-            Value of the gradient at the position.
-    """
-
-    # calculate gradients
-    temp = np.gradient(Y, X)
-
-    # if position is specified
-    if grad_params['mode'] == 'at_position':
-        index = abs(np.asarray(X) - grad_params['position']).argmin()
-
-    # if vicinity is specified
-    if grad_params['mode'] == 'near_position':
-        # list of indices for mean of monotonic behaviour
-        list_idx = get_index_monotonic_mean(temp)
-
-        # index of gradient position
-        temp_index = abs(np.asarray(X) - grad_params['position']).argmin()
-
-        # get minimum index
-        index = list_idx[abs(np.asarray(list_idx) - temp_index).argmin()]
-
-    # if monotonocity mid position is specified
-    if grad_params['mode'] == 'at_mono_mid':
-        # list of indices for mean of monotonic behaviour
-        list_idx = get_index_monotonic_mean(temp)
-
-        # get minimum index
-        index = list_idx[grad_params['mono_id'] - 1]
-
-    # if monotonocity local maxima/minima value is specified
-    if grad_params['mode'] == 'at_mono_max_min':
-        # list of indices for mean of monotonic behaviour
-        list_idx = get_index_monotonic_mean(temp)
-
-        # get minimum index
-        index = list_idx[grad_params['mono_id'] - 1]
-    
-    grad = temp[index]
-    if 'divisor' in grad_params:
-        grad /= grad_params['divisor']
-
-    return grad
-
-def get_index_monotonic_mean(Y):
-    """Function to calculate the position of the mid points of monotonicity for given function data.
-    
-    Parameters
-    ----------
-        Y : list
-            Values of the data.
-
-    Returns
-    -------
-        idx : list
-            Indices of the mid points.
-    """
-    
-    # list of signum values
-    sgn = [1 if ele >= 0 else -1 for ele in Y]
-    # list of mid points of same sign
-    idx = []
-    # sign of element
-    sign = sgn[0]
-    # start index
-    i = 0
-    for j in range(1, len(sgn)):
-        # if sign changes
-        if sgn[j] != sign:
-            # mark mid value of previous cluster
-            idx.append((int) ((i + j - 1) / 2))
-            sign = sgn[j]
-            i = j
-    idx.append((int) ((i + len(sgn) - 1) / 2))
-
-    return idx
-
-def get_index_monotonic_max_min(Y):
-    """Function to calculate the position of the local maximas/minimas of monotonicity for given function data.
-    
-    Parameters
-    ----------
-        Y : list
-            Values of the data.
-
-    Returns
-    -------
-        idx : list
-            Indices of the local maximas points.
-    """
-    
-    # list of signum values
-    sgn = [1 if ele >= 0 else -1 for ele in Y]
-    # list of local maxima/minima points of same sign
-    idx = []
-    # sign of element
-    sign = sgn[0]
-    # start index
-    i = 0
-    for j in range(1, len(sgn)):
-        # if sign changes
-        if sgn[j] != sign:
-            # mark max value of previous cluster
-            idx.append(np.abs(np.asarray(Y[i:j - 1])).argmax() + i)
-            sign = sgn[j]
-            i = j
-    idx.append(np.abs(np.asarray(Y[i:j - 1])).argmax() + i)
-
-    return idx
-
-def get_thres_indices(values, thres_mode='max_min'):
-    """Function to obtain the indices of threshold for a given mode.
-
-    Parameters
-    ----------
-        values : list
-            Values of the variable.
-
-        thres_mode : str
-            Mode of threshold index calculation:
-                min_min : Minimum index where minimum is observed.
-                min_max : Maximum index where minimum is observed.
-                max_min : Minimum index where minimum is observed.
-                max_max : Maximum index where minimum is observed.
-
-    Returns
-    -------
-        res : list
-            Indices of the threshold.
-    """
-
-    # indices of minimas and maximas
-    idx_min = np.argwhere(np.array(values) == np.amin(values)).flatten().tolist()
-    idx_max = np.argwhere(np.array(values) == np.amax(values)).flatten().tolist()
-
-    # handle 1D array
-    idx_min = [idx_min[2 * i : 2 * i + len(np.shape(values))] for i in range(int(len(idx_min) / len(np.shape(values))))]
-    idx_max = [idx_max[2 * i : 2 * i + len(np.shape(values))] for i in range(int(len(idx_max) / len(np.shape(values))))]
-
-    # required threshold
-    res = {
-        'min_min': idx_min[0],
-        'min_max': idx_min[-1],
-        'max_min': idx_max[0],
-        'max_max': idx_max[-1]
-    }
-
-    return res[thres_mode]
-
-

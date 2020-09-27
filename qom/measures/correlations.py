@@ -3,10 +3,10 @@
  
 """Modules to calculate quantum correlation measures."""
 
-__name__    = 'qom.measures.corr'
+__name__    = 'qom.measures.correlations'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-02-26'
-__updated__ = '2020-09-23'
+__updated__ = '2020-09-27'
 
 # dependencies
 import logging

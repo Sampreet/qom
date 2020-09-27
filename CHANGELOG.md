@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.4.2 - 2020/09/27 - 00 - Restructured Modules
+* Moved `qom/wrappers` to `qom/loopers`:
+    * Removed limit function from `dynamics` module.
+    * Removed threshold function from `measures` module. 
+    * Removed threshold and gradient functions from `properties` module. 
+* Renamed modules in `qom/measures`.
+* Added `qom/numerics`:
+    * Added `calculators` module for functions.
+    * Added `solvers` module for equations.
+* Updated font properties and added plot limits to `qom/ui/figure` module.
+* Updated `qom/utils`:
+    * Minor fixes to `axis` module.
+    * Added `misc` module for miscellaneous utilities.
+* Moved `qom/experimental` and `qom/legacy` to `qom_experimental` and `qom_legacy` with minor fixes to modules.
+* Renamed `LICENSE`.
+* Updated `README`, `requirements` and `setup`.
+
 ## v0.4.0 - 2020/09/23 - 00 - Revamped Modules
 * Added `qom/experimental` module for experimental features:
     * Moved `qom/wrappers/dynamics_tf` to `qom/experimental/wrappers`.

@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""Wrapper modules for dynamics."""
+"""Looper functions for dynamics."""
 
-__name__    = 'qom.wrappers.dynamics'
+__name__    = 'qom.loopers.dynamics'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-21'
-__updated__ = '2020-09-23'
+__updated__ = '2020-09-27'
 
 # dependencies
 import logging
 import numpy as np
 import os
-import scipy.integrate as si
 
 # dev dependencies
-from qom.measures import corr, diff
+from qom.measures import correlations, differences
+from qom.numerics import solvers
 from qom.ui import figure
 from qom.utils import axis
 
@@ -24,7 +24,6 @@ logger = logging.getLogger(__name__)
 
 # TODO: Add single-system legacy module.
 # TODO: Optimize the workflow for `dynamics_measure`.
-# TODO: Move `get_dynamics` to `qom/numerical/integration`.
 # TODO: Verify parametes.
 
 def calculate(model, data):
@@ -112,7 +111,7 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
 
     # constants
     _n_s = _c['n_s']
-    _n_v = _c['n_m'] + 4 * _c['n_m'] * _c['n_m']
+    _n_v = int(len(_v) / _n_s)
 
     if _cache: 
         # update log
@@ -144,7 +143,7 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
         for key in _c:
             if type(_c[key]) == list:
                 _c_todo[key] = list()
-        _offset = _c['n_s'] * _c['n_m']
+                
         # filter calculated systems
         for i in range(_c['n_s']):
             # flag 
@@ -178,7 +177,11 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
             if type(_c[key]) == list:
                 _c[key] = _c_todo[key]
 
-    # all modes and correlations
+    # initialize axis
+    _T_d = axis.DynamicAxis([len(T.values)])
+    _T_d.values = T.values 
+
+    # all variables
     V_all = list()
     # all measures
     D_all = list()
@@ -192,16 +195,15 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
         func = getattr(model, 'f_multi_' + solver_type)
 
         # calculate dynamics
-        T, V = get_dynamics(func, solver_type, T, _v, _c)
+        _, V = solvers.solve_ode_scipy(func, solver_type, T.values, _v, _c)
 
         # display completion
         logger.info('----------------System Dynamics Obtained----------------\n')
             
         # convert to numpy array
         V = np.array(V)
-
-        # offset for correlations
-        _offset = _c['n_s'] * _c['n_m']
+        
+        # for each system
         for i in range(_c['n_s']):
             # extract dynamics of individual system
             # update lists
@@ -209,9 +211,9 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
             _D_s = axis.DynamicAxis([len(T.values)])
             # calculate measures for individual system
             if meas_params['type'] == 'corr':
-                _D_s.values = corr.calculate(_V_s, meas_params)
+                _D_s.values = correlations.calculate(_V_s, meas_params)
             elif meas_params['type'] == 'diff':
-                _D_s.values = diff.calculate(_V_s, meas_params)
+                _D_s.values = differences.calculate(_V_s, meas_params)
 
             # if caching is enabled
             if _cache:
@@ -234,7 +236,7 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
                 # display plot
                 if plot:
                     plotter = figure.Plotter(plot_params, X=T)
-                    plotter.update(T, _D_s, head=False, hold=True)
+                    plotter.update(_T_d, _D_s, head=False, hold=True)
             
         # display completion
         logger.info('----------------Measure Dynamics Obtained---------------\n') 
@@ -255,81 +257,12 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
                 if X != None:
                     plot_params['legend'] = X.legends[i]
                 plotter = figure.Plotter(plot_params, X=T)
-                plotter.update(T, _D_s, head=False, hold=True)
+                plotter.update(_T_d, _D_s, head=False, hold=True)
 
     # axes dictionary
     Axes = {}
-    Axes['T'] = T
+    Axes['T'] = _T_d
     if X != None:
         Axes['X'] = X
 
-    return D_all, V_all, Axes
-
-
-def get_dynamics(func, solver_type, T, iv, c):
-    """Function to calculate the dynamics of variables for a given model using :class:`scipy.integrate`.
-
-    Parameters
-    ----------
-        func : callable
-            Function for the model.
-        
-        solver_type : dict
-            Parameters for the calculation of dynamics.
-        
-        T : list
-            Times at which dynamics are required.
-        
-        iv : list
-            Initial values of variables.
-        
-        c : list
-            Constants for the model.
-
-    Returns
-    -------
-    T : list
-        Times at which dynamics are calculated.
-
-    V : list
-        Dynamics of the variables.
-    """
-
-    # initialize integrator
-    integrator = si.ode(func)
-    # for complex ode solver
-    if solver_type.find('complex') != -1:
-        integrator.set_integrator('zvode')
-        
-    # set initial values and constants
-    integrator.set_initial_value(iv, T.values[0])
-    integrator.set_f_params(c)
-
-    # initialize lists
-    V = [iv]
-
-    # for each time step, calculate the integration values
-    for i in range(1, len(T.values)):
-        # update progress
-        progress = float(i - 1)/float(len(T.values) - 1) * 100
-        # display progress
-        if int(progress * 1000) % 10 == 0:
-            logger.info('Obtaining the system dynamics: Progress = {progress:3.2f}'.format(progress=progress))
-
-        # integrate
-        t = T.values[i]
-        v = integrator.integrate(t)
-
-        # update log
-        logger.debug('t = {}\tv = {}'.format(t, v))
-
-        # update lists
-        V.append(v)
-
-    return T, V
-
-
-
-
-
-    
+    return D_all, V_all, Axes    

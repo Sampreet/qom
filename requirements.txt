@@ -1,8 +1,12 @@
-# base modules
+# qom
+matplotlib>=3.0
 numpy>=1.10
 scipy>=1.0
 setuptools>=40.0
-
-# ui modules
-matplotlib>=3.0
 seaborn>=0.10
+
+# qom_experimental
+tensorflow>=2.0
+tensorflow-probability>=1.0
+
+# qom_legacy

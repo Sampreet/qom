@@ -1,27 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Wrapper modules for measures."""
+"""Looper functions for measures."""
 
-__name__    = 'qom.wrappers.measures'
+__name__    = 'qom.loopers.measures'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-23'
-__updated__ = '2020-09-23'
+__updated__ = '2020-09-27'
 
 # dependencies
 import logging
 import numpy as np
-import os
 
 # dev dependencies
+from qom.loopers import dynamics
 from qom.ui import figure
-from qom.utils import axis
-from qom.wrappers import dynamics
+from qom.utils import axis, misc
 
 # module logger
 logger = logging.getLogger(__name__)
 
-# TODO: Move `get_thres_indices` calculation to `qom/utils/array`.
 # TODO: Verify parametes.
 
 def calculate(model, data):
@@ -139,7 +137,7 @@ def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
     if plot:
         plotter.update(X_m, M, head=False, hold=True)
     
-    thres_idx = get_thres_indices(M.values, thres_mode)
+    thres_idx = misc.get_index_threshold(M.values, thres_mode)
 
     Thres = {}
     Thres[X.var] = X.values[thres_idx[0]]
@@ -261,7 +259,7 @@ def measures_1D_multi(model, dyna_params, meas_params, plot=False, plot_params=N
     if plot:
         plotter.update(X_m, M, head=False, hold=True)
     
-    thres_idx = get_thres_indices(M.values, thres_mode)
+    thres_idx = misc.get_index_threshold(M.values, thres_mode)
 
     Thres = {}
     Thres[X.var] = X.values[thres_idx[1]]
@@ -388,7 +386,7 @@ def measures_2D(model, dyna_params, meas_params, plot, plot_params):
     if plot:
         plotter.update(Z=M, head=False, hold=True)
     
-    thres_idx = get_thres_indices(M.values, thres_mode)
+    thres_idx = misc.get_index_threshold(M.values, thres_mode)
 
     Thres = {}
     Thres[X.var] = X.values[thres_idx[1]]
@@ -409,37 +407,3 @@ def measures_2D(model, dyna_params, meas_params, plot, plot_params):
 
     # return data
     return M.values, Thres, Axes
-
-def get_thres_indices(values, thres_mode='max_min'):
-    """Function to obtain the indices of threshold for a given mode.
-
-    Parameters
-    ----------
-        values : list
-            Values of the variable.
-
-        thres_mode : str
-            Mode of threshold index calculation:
-                min_min : Minimum index where minimum is observed.
-                min_max : Maximum index where minimum is observed.
-                max_min : Minimum index where minimum is observed.
-                max_max : Maximum index where minimum is observed.
-    """
-
-    # indices of minimas and maximas
-    idx_min = np.argwhere(np.array(values) == np.amin(values)).flatten().tolist()
-    idx_max = np.argwhere(np.array(values) == np.amax(values)).flatten().tolist()
-
-    # handle 1D array
-    idx_min = [idx_min[2 * i : 2 * i + len(np.shape(values))] for i in range(int(len(idx_min) / len(np.shape(values))))]
-    idx_max = [idx_max[2 * i : 2 * i + len(np.shape(values))] for i in range(int(len(idx_max) / len(np.shape(values))))]
-
-    # required threshold
-    res = {
-        'min_min': idx_min[0],
-        'min_max': idx_min[-1],
-        'max_min': idx_max[0],
-        'max_max': idx_max[-1]
-    }
-    
-    return res[thres_mode]

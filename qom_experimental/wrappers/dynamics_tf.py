@@ -3,10 +3,10 @@
 
 """Wrapper modules for dynamics using tensorflow."""
 
-__name__    = 'qom.experimental.wrappers.dynamics_tf'
+__name__    = 'qom_experimental.wrappers.dynamics_tf'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-03'
-__updated__ = '2020-09-23'
+__updated__ = '2020-09-27'
 
 # dependencies
 import logging
@@ -21,8 +21,8 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 
 # dev dependencies 
-from qom.measures import corr, diff
-from qom.ui import figure
+from qom.measures import correlations, differences
+from qom_legacy.ui import figure
 
 # module logger
 logger = logging.getLogger(__name__)
@@ -162,9 +162,9 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
     if not found_saved_d:
         # calculate measures
         if meas_params['type'] == 'corr':
-            D = corr.calculate(V, meas_params)
+            D = correlations.calculate(V, meas_params)
         elif meas_params['type'] == 'diff':
-            D = diff.calculate(V, meas_params)
+            D = differences.calculate(V, meas_params)
             
         # display completion
         logger.info('----------------Measure Dynamics Obtained---------------\n')

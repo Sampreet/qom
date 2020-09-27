@@ -3,19 +3,18 @@
  
 """Wrapper modules for measures."""
 
-__name__    = 'qom.wrappers.measures'
+__name__    = 'qom_legacy.wrappers.measures'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-06-19'
-__updated__ = '2020-09-01'
+__updated__ = '2020-09-27'
 
 # dependencies
 import logging
 import numpy as np
-import os
 
 # dev dependencies
-from qom.legacy.ui import figure
-from qom.legacy.wrappers import dynamics
+from qom_legacy.ui import figure
+from qom_legacy.wrappers import dynamics
 
 # module logger
 logger = logging.getLogger(__name__)
