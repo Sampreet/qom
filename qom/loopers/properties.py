@@ -78,8 +78,8 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
     # extract frequently used variables
     prop_code   = prop_params['code']
     prop_name   = prop_params['name']
-    thres_mode  = prop_params['thres_mode'] if 'thres_mode' in prop_params else 'max_min'
-    plot_prog   = plot_params['progress'] if plot_params != None else False 
+    thres_mode  = prop_params.get('thres_mode', 'max_min')
+    plot_prog   = plot_params.get('progress', False) if plot_params != None else False
     X           = axis.StaticAxis(prop_params['X'])
 
     # initialize variables
@@ -178,8 +178,8 @@ def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
     # extract frequently used variables
     prop_code   = prop_params['code']
     prop_name   = prop_params['name']
-    thres_mode  = prop_params['thres_mode'] if 'thres_mode' in prop_params else 'max_min'
-    plot_prog   = plot_params['progress'] if plot_params != None else False 
+    thres_mode  = prop_params.get('thres_mode', 'max_min')
+    plot_prog   = plot_params.get('progress', False) if plot_params != None else False
     X           = axis.StaticAxis(prop_params['X'])
     Z           = axis.StaticAxis(prop_params['Z'])
 
@@ -288,8 +288,8 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
     # extract frequently used variables
     prop_code   = prop_params['code']
     prop_name   = prop_params['name']
-    thres_mode  = prop_params['thres_mode'] if 'thres_mode' in prop_params else 'max_min'
-    plot_prog   = plot_params['progress'] if plot_params != None else False 
+    thres_mode  = prop_params.get('thres_mode', 'max_min')
+    plot_prog   = plot_params.get('progress', False) if plot_params != None else False
     X           = axis.StaticAxis(prop_params['X'])
     Y           = axis.StaticAxis(prop_params['Y'])
 
@@ -398,9 +398,9 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
 
     # extract frequently used variables
     prop_name   = prop_params['name']
-    grad_axis   = prop_params['grad_axis']
-    thres_mode  = prop_params['thres_mode'] if 'thres_mode' in prop_params else 'max_min'
-    plot_prog   = plot_params['progress'] if plot_params != None else False 
+    grad_axis   = prop_params.get('grad_axis', 'X')
+    thres_mode  = prop_params.get('thres_mode', 'max_min')
+    plot_prog   = plot_params.get('progress', False) if plot_params != None else False
     prop_model  = copy.deepcopy(model)
 
     # switch variables for property function
@@ -438,7 +438,7 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
         model.params[X.var] = X.values[i]
 
         # get parameters from model
-        grad_params = model.get_grad_params()
+        grad_params = getattr(model, 'get_grad_params', {'divisor': 1})
 
         if grad_axis == 'X':
             # obtain calculated gradients
@@ -515,9 +515,9 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
 
     # extract frequently used variables
     prop_name   = prop_params['name']
-    grad_axis   = prop_params['grad_axis']
-    thres_mode  = prop_params['thres_mode'] if 'thres_mode' in prop_params else 'max_min'
-    plot_prog   = plot_params['progress'] if plot_params != None else False 
+    grad_axis   = prop_params.get('grad_axis', 'X')
+    thres_mode  = prop_params.get('thres_mode', 'max_min')
+    plot_prog   = plot_params.get('progress', False) if plot_params != None else False
     X           = axis.StaticAxis(prop_params[grad_axis])
     Z           = axis.StaticAxis(prop_params['Z'])
 
@@ -561,7 +561,7 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
             model.params[Z.var] = Z.values[j]
 
             # get parameters from model
-            grad_params = model.get_grad_params()
+            grad_params = getattr(model, 'get_grad_params', {'divisor': 1})
 
             if grad_axis == 'X':
                 # obtain calculated gradients
@@ -642,8 +642,8 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
 
     # extract frequently used variables
     prop_name   = prop_params['name']
-    thres_mode  = prop_params['thres_mode'] if 'thres_mode' in prop_params else 'max_min'
-    plot_prog   = plot_params['progress'] if plot_params != None else False 
+    thres_mode  = prop_params.get('thres_mode', 'max_min')
+    plot_prog   = plot_params.get('progress', False) if plot_params != None else False
     prop_model  = copy.deepcopy(model)
 
     # get properties
@@ -678,7 +678,7 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
         model.params[Y.var] = Y.values[j]
 
         # get parameters from model
-        grad_params = model.get_grad_params()
+        grad_params = getattr(model, 'get_grad_params', {'divisor': 1})
 
         # calculate gradients
         Grads = np.gradient(P_values[j], X.values) / grad_params['divisor']

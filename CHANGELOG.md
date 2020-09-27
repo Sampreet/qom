@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.4.3 - 2020/09/27 - 01 - Example Notebook
+* Added `qom_loopers_properties` notebook in `examples`.
+* Updated `qom/loopers`:
+    * Handled attribute errors in `measures` module. 
+    * Updated script and model attributes in `properties` module. 
+* Updated `.gitignore` and `README`.
+
 ## v0.4.2 - 2020/09/27 - 00 - Restructured Modules
 * Moved `qom/wrappers` to `qom/loopers`:
     * Removed limit function from `dynamics` module.

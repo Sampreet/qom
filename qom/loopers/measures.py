@@ -77,8 +77,14 @@ def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
     # extract frequently used variables
     avg_mode    = meas_params['avg_mode']
     avg_type    = meas_params['avg_type']
-    thres_mode  = meas_params['thres_mode']
-    plot_prog   = plot_params['progress'] if plot_params != None else False 
+    if plot_params != None and 'thres_mode' in prop_params:
+        thres_mode = prop_params['thres_mode']
+    else:
+        thres_mode = 'max_min'
+    if plot_params != None and 'progress' in plot_params:
+        plot_prog = prop_params['progress']
+    else:
+        plot_prog = False
 
     # get dynamics
     D_all, _, Axes = dynamics.dynamics_measure(model, dyna_params, meas_params)
@@ -191,8 +197,14 @@ def measures_1D_multi(model, dyna_params, meas_params, plot=False, plot_params=N
     # extract frequently used variables
     avg_mode    = meas_params['avg_mode']
     avg_type    = meas_params['avg_type']
-    thres_mode  = meas_params['thres_mode']
-    plot_prog   = plot_params['progress'] if plot_params != None else False 
+    if plot_params != None and 'thres_mode' in prop_params:
+        thres_mode = prop_params['thres_mode']
+    else:
+        thres_mode = 'max_min'
+    if plot_params != None and 'progress' in plot_params:
+        plot_prog = prop_params['progress']
+    else:
+        plot_prog = False
     X           = axis.StaticAxis(meas_params['X'])
     Z           = axis.StaticAxis(meas_params['Z'])
 
@@ -316,8 +328,14 @@ def measures_2D(model, dyna_params, meas_params, plot, plot_params):
     # extract frequently used variables
     avg_mode    = meas_params['avg_mode']
     avg_type    = meas_params['avg_type']
-    thres_mode  = meas_params['thres_mode']
-    plot_prog   = plot_params['progress'] if plot_params != None else False 
+    if plot_params != None and 'thres_mode' in prop_params:
+        thres_mode = prop_params['thres_mode']
+    else:
+        thres_mode = 'max_min'
+    if plot_params != None and 'progress' in plot_params:
+        plot_prog = prop_params['progress']
+    else:
+        plot_prog = False
     X           = axis.StaticAxis(meas_params['X'])
     Y           = axis.StaticAxis(meas_params['Y'])
 
