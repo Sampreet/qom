@@ -15,9 +15,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-# # dev dependencies
-# from qom.utils import misc
-
 # module logger
 logger = logging.getLogger(__name__)
 
@@ -83,26 +80,29 @@ class Plotter():
             colors = [plot_params['color'] if 'color' in plot_params else 'r']
             linestyles = [plot_params['linestyle'] if 'linestyle' in plot_params else '-']
             legends = [plot_params['legend'] if 'legend' in plot_params else '']
-            self.__init_1D(X.values, 1, colors, linestyles=linestyles, legends=legends)
+            self.__init_1D(X.values, 1, colors, linestyles=linestyles, legends=legends, xticks=X.ticks)
         # multi-line plot
         elif self.__plot_type == 'lines':
-            self.__init_1D(X.values, len(Z.legends), Z.colors, linestyles=Z.linestyles, legends=Z.legends)
+            self.__init_1D(X.values, len(Z.legends), Z.colors, linestyles=Z.linestyles, legends=Z.legends, xticks=X.ticks)
         # scatter plot
         elif self.__plot_type == 'scatter':
             colors = [plot_params['color'] if 'color' in plot_params else 'r']
             sizes = [plot_params['size'] if 'size' in plot_params else 2]
             legends = [plot_params['legend'] if 'legend' in plot_params else '']
-            self.__init_1D(X.values, 1, colors, sizes=sizes, legends=legends)
+            self.__init_1D(X.values, 1, colors, sizes=sizes, legends=legends, xticks=X.ticks)
         # multi-scatter plot
         elif self.__plot_type == 'scatters':
-            self.__init_1D(X.values, len(Z.legends), Z.colors, sizes=Z.sizes, legends=Z.legends)
+            self.__init_1D(X.values, len(Z.legends), Z.colors, sizes=Z.sizes, legends=Z.legends, xticks=X.ticks)
 
         # contourf plot
         elif self.plot_type == 'contourf':
-            self.__init_2D(X.values, Y.values, plot_params)
+            self.__init_2D(X.values, Y.values, plot_params, xticks=X.ticks, yticks=Y.ticks)
         # pcolormesh plot
         elif self.plot_type == 'pcolormesh':
-            self.__init_2D(X.values, Y.values, plot_params)
+            self.__init_2D(X.values, Y.values, plot_params, xticks=X.ticks, yticks=Y.ticks)
+
+        # display initialization
+        logger.info('----------------------------Figure Initialized-------------------\t\n')
 
     @property
     def axes(self):
@@ -296,7 +296,6 @@ class Plotter():
         """
 
         # get axes
-        plt.show()
         self.axes = plt.gca()
         self.plot_type = plot_params['type']
             
@@ -352,7 +351,7 @@ class Plotter():
         if 'y_lim' in plot_params:
             plt.ylim(plot_params['y_lim'][0], plot_params['y_lim'][1])
 
-    def __init_1D(self, xs, num, colors, linestyles=None, sizes=None, legends=None):
+    def __init_1D(self, xs, num, colors, linestyles=None, sizes=None, legends=None, xticks=None):
         """Function to initialize 1D plots.
         
         Parameters
@@ -374,6 +373,9 @@ class Plotter():
 
             legends : list, optional
                 Legends for the plots.
+
+            xticks : list, optional
+                Ticks for the X-axis.
         """
 
         # update axis
@@ -395,7 +397,7 @@ class Plotter():
             self.plot = [self.__axes.scatter([], [], c=colors[i], s=sizes[i]) for i in range(num)]  
 
         # legends
-        if legends and legends[0] != '':
+        if legends is not None and legends[0] != '':
             l = plt.legend(legends, loc='best')                
             plt.setp(l.texts, 
                 fontfamily=self.__fonts['text']['family'], 
@@ -404,8 +406,12 @@ class Plotter():
                 fontweight=self.__fonts['text']['weight'], 
                 fontsize=12.0
             )
+        
+        # ticks
+        if xticks is not None:
+            plt.xticks(ticks=xticks)
 
-    def __init_2D(self, xs, ys, plot_params, color_grad='br_light', shading='gouraud', cbar=True):
+    def __init_2D(self, xs, ys, plot_params, color_grad='br_light', shading='gouraud', cbar=True, xticks=None, yticks=None):
         """Function to initialize 2D plots.
         
         Parameters
@@ -427,6 +433,12 @@ class Plotter():
 
             cbar : bool, optional
                 Option to plot colorbar.
+
+            xticks : list, optional
+                Ticks for the X-axis.
+
+            yticks : list, optional
+                Ticks for the Y-axis.
         """
 
         # update axes
@@ -473,6 +485,12 @@ class Plotter():
                 fontweight=self.__fonts['text']['weight'], 
                 fontsize=12.0
             )
+        
+        # axis ticks
+        if xticks is not None:
+            plt.xticks(ticks=xticks)
+        if yticks is not None:
+            plt.yticks(ticks=yticks)
 
     def update(self, X=None, Y=None, Z=None, head=True, hold=False):
         """Function to update plot.
@@ -519,6 +537,7 @@ class Plotter():
 
         # display plot
         if hold:
+            logger.info('------------------------------Figure Updated---------------------\t\n')
             plt.show()
         else:
             plt.pause(1e-9)
@@ -569,12 +588,12 @@ class Plotter():
                 _no_nan = [y if y == y else 0 for y in ys[j]]
 
                 # update limits
-                # _mini, _maxi, _prec = misc.get_limits(min(_no_nan), max(_no_nan))
                 _minis.append(min(_no_nan))
                 _maxis.append(max(_no_nan))
 
         # set limits
-        self.__axes.set_ylim(min(_minis), max(_maxis))
+        _mini, _maxi = min(_minis), max(_maxis)
+        self.__axes.set_ylim(_mini, _maxi)
 
     def __update_2D(self, zs):
         """Function to udpate 2D plots.
@@ -600,7 +619,6 @@ class Plotter():
         _no_nan = [z if z == z else 0 for z in rave]
 
         # set limits
-        # _mini, _maxi, _prec = misc.get_limits(min(_no_nan), max(_no_nan), res=1)
         _mini, _maxi = min(_no_nan), max(_no_nan)
         self.__plot.set_clim(vmin=_mini, vmax=_maxi)
 

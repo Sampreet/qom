@@ -139,25 +139,25 @@ class StaticAxis(object):
         # variable
         self.var = axis_data['var']
         # index
-        self.index = axis_data['index'] if 'index' in axis_data else None
+        self.index = axis_data.get('index', None)
         # label
-        self.label = axis_data['label'] if 'label' in axis_data else r'$' + self.__var + '$'
+        self.label = axis_data.get('label', r'$' + self.__var + '$')
         # unit
-        self.unit = axis_data['unit'] if 'unit' in axis_data else ''
+        self.unit = axis_data.get('unit', '')
         # values
         if 'values' in axis_data and len(axis_data['values']) != 0:
             self.values = axis_data['values']
         else: 
             self.values = self.init_array(axis_data['min'], axis_data['max'], axis_data['steps'])
         # ticks
-        _num = axis_data['ticks'] if 'ticks' in axis_data else 5
+        _num = axis_data.get('ticks', 5)
         self.ticks = self.init_array(axis_data['min'], axis_data['max'], _num)
         # colors
-        self.colors = axis_data['colors'] if 'colors' in axis_data else []
+        self.colors = axis_data.get('colors', [])
         # linestyles
-        self.linestyles = axis_data['linestyles'] if 'linestyles' in axis_data else []
+        self.linestyles = axis_data.get('linestyles', [])
         # sizes
-        self.sizes = axis_data['sizes'] if 'sizes' in axis_data else []
+        self.sizes = axis_data.get('sizes', [])
 
     @property
     def var(self):

@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.4.5 - 2020/09/29 - 00 - Attribute Handling
+* Minor fixes to `measures` and `properties` modules in `qom/loopers`.
+* Handled ticks and attribute fixes in `qom/ui/figure` module.
+* Handled null attributes is `qom/utils/axis` module.
+
 ## v0.4.4 - 2020/09/27 - 02 - Minor Fixes
 * Minor fixes to `examples/qom_loopers_properties` notebook.
 * Updated `README` and `setup`.

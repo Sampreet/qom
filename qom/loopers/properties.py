@@ -88,10 +88,12 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
 
     # initialize plot
     if plot:
+        if plot_params.get('type', None) is None:
+            plot_params['type'] = 'line'
         plotter = figure.Plotter(plot_params, X=X)
 
     # display initialization
-    logger.info('Initializing {prop_name} calculation...\t\n'.format(prop_name=prop_name))
+    logger.info('Initializing {prop_name} property calculation...\t\n'.format(prop_name=prop_name))
 
     # for variation in X
     for i in range(len(X.values)):
@@ -122,18 +124,19 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
     
     # display completion
     logger.info('----------------Property Values Obtained----------------\t\n')
-
-    # update plot
-    if plot:
-        plotter.update(X_p, P, head=False, hold=True)
     
     thres_idx = misc.get_index_threshold(P.values, thres_mode)
 
     Thres = {}
+    Thres['value'] = P.values[thres_idx[0]]
     Thres[X.var] = X.values[thres_idx[0]]
 
     # display threshold values
     logger.info('Threshold values: {Thres}\t\n'.format(Thres=Thres))
+
+    # update plot
+    if plot:
+        plotter.update(X_p, P, head=False, hold=True)
 
     # update sizes
     dim = [len(P.values)]
@@ -190,10 +193,12 @@ def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
 
     # initialize plot
     if plot:
+        if plot_params.get('type', None) is None:
+            plot_params['type'] = 'lines'
         plotter = figure.Plotter(plot_params, X=X, Z=Z)
 
     # display initialization
-    logger.info('Initializing {prop_name} calculation...\t\n'.format(prop_name=prop_name))
+    logger.info('Initializing {prop_name} property calculation...\t\n'.format(prop_name=prop_name))
 
     # for variation in X
     for i in range(len(X.values)):
@@ -229,19 +234,20 @@ def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
     
     # display completion
     logger.info('----------------Property Values Obtained----------------\t\n')
-
-    # update plot
-    if plot:
-        plotter.update(X_p, P, head=False, hold=True)
     
     thres_idx = misc.get_index_threshold(P.values, thres_mode)
 
     Thres = {}
+    Thres['value'] = P.values[thres_idx[0]][thres_idx[1]]
     Thres[X.var] = X.values[thres_idx[1]]
     Thres[Z.var] = Z.values[thres_idx[0]]
 
     # display threshold values
     logger.info('Threshold values: {Thres}\t\n'.format(Thres=Thres))
+
+    # update plot
+    if plot:
+        plotter.update(X_p, P, head=False, hold=True)
 
     # update sizes
     dim = [len(P.values), len(P.values[0])]
@@ -303,10 +309,12 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
 
     # initialize plot
     if plot:
+        if plot_params.get('type', None) is None:
+            plot_params['type'] = 'pcolormesh'
         plotter = figure.Plotter(plot_params, X=X, Y=Y, Z=P)
 
     # display initialization
-    logger.info('Initializing {prop_name} calculation...\t\n'.format(prop_name=prop_name))
+    logger.info('Initializing {prop_name} property calculation...\t\n'.format(prop_name=prop_name))
 
     # for variation in Y
     for j in range(len(Y.values)):
@@ -340,19 +348,20 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
     
     # display completion
     logger.info('----------------Property Values Obtained----------------\t\n')
-
-    # update plot
-    if plot:
-        plotter.update(Z=P, head=False, hold=True)
     
     thres_idx = misc.get_index_threshold(P.values, thres_mode)
 
     Thres = {}
+    Thres['value'] = P.values[thres_idx[0]][thres_idx[1]]
     Thres[X.var] = X.values[thres_idx[1]]
     Thres[Y.var] = Y.values[thres_idx[0]]
 
     # display threshold values
     logger.info('Threshold values: {Thres}\t\n'.format(Thres=Thres))
+
+    # update plot
+    if plot:
+        plotter.update(Z=P, head=False, hold=True)
 
     # update sizes
     dim = [len(P.values), len(P.values[0])]
@@ -421,6 +430,8 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
 
     # initialize plot
     if plot:
+        if plot_params.get('type', None) is None:
+            plot_params['type'] = 'line'
         plotter = figure.Plotter(plot_params, X=X)
 
     # display initialization
@@ -432,13 +443,21 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
         progress = float(i) / float(len(X.values)) * 100
         # display progress
         if int(progress * 1000) % 10 == 0:
-            logger.info('Calculating the property values: Progress = {progress:3.2f}'.format(progress=progress))
+            logger.info('Calculating the gradient values: Progress = {progress:3.2f}'.format(progress=progress))
 
         # update model for gradient calculation
         model.params[X.var] = X.values[i]
 
         # get parameters from model
-        grad_params = getattr(model, 'get_grad_params', {'divisor': 1})
+        _f_grad_params = getattr(model, 'get_grad_params', None)
+        if _f_grad_params is not None:
+            grad_params = _f_grad_params()
+        else:
+            grad_params = {
+                'divisor': 1,
+                'mode': 'at_position',
+                'position': 0
+            }
 
         if grad_axis == 'X':
             # obtain calculated gradients
@@ -460,18 +479,19 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
 
     # # display gradient values
     # logger.info('Gradient values: {G}\n'.format(G=G))
-
-    # update plot
-    if plot:
-        plotter.update(X_g, G, head=False, hold=True)
     
     thres_idx = misc.get_index_threshold(G.values, thres_mode)
 
     Thres = {}
+    Thres['value'] = G.values[thres_idx[0]]
     Thres[X.var] = X.values[thres_idx[0]]
 
     # display threshold values
     logger.info('Threshold values: {Thres}\t\n'.format(Thres=Thres))
+
+    # update plot
+    if plot:
+        plotter.update(X_g, G, head=False, hold=True)
 
     # update sizes
     dim = [len(G.values)]
@@ -528,6 +548,8 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
 
     # initialize plot
     if plot:
+        if plot_params.get('type', None) is None:
+            plot_params['type'] = 'lines'
         plotter = figure.Plotter(plot_params, X=X, Z=Z)
 
     # for variation in Z
@@ -554,14 +576,22 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
             progress = (float(i) / float(len(X.values))) * 100
             # display progress
             if int(progress * 1000) % 10 == 0:
-                logger.info('Calculating the property values: Progress = {progress:3.2f}'.format(progress=progress))
+                logger.info('Calculating the gradient values: Progress = {progress:3.2f}'.format(progress=progress))
 
             # update model for gradient calculation
             model.params[X.var] = X.values[i]
             model.params[Z.var] = Z.values[j]
 
             # get parameters from model
-            grad_params = getattr(model, 'get_grad_params', {'divisor': 1})
+            _f_grad_params = getattr(model, 'get_grad_params', None)
+            if _f_grad_params is not None:
+                grad_params = _f_grad_params()
+            else:
+                grad_params = {
+                    'divisor': 1,
+                    'mode': 'at_position',
+                    'position': 0
+                }
 
             if grad_axis == 'X':
                 # obtain calculated gradients
@@ -584,19 +614,20 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
 
     # # display gradient values
     # logger.info('Gradient values: {G}\n'.format(G=G))
-
-    # update plot
-    if plot:
-        plotter.update(X_g, G, head=False, hold=True)
     
     thres_idx = misc.get_index_threshold(G.values, thres_mode)
 
     Thres = {}
+    Thres['value'] = G.values[thres_idx[0]][thres_idx[1]]
     Thres[X.var] = X.values[thres_idx[1]]
     Thres[Z.var] = Z.values[thres_idx[0]]
 
     # display threshold values
     logger.info('Threshold values: {Thres}\t\n'.format(Thres=Thres))
+
+    # update plot
+    if plot:
+        plotter.update(X_g, G, head=False, hold=True)
 
     # update sizes
     dim = [len(G.values), len(G.values[0])]
@@ -661,6 +692,8 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
 
     # initialize plot
     if plot:
+        if plot_params.get('type', None) is None:
+            plot_params['type'] = 'pcolormesh'
         plotter = figure.Plotter(plot_params, X=X, Y=Y, Z=G)
 
     # display initialization
@@ -678,7 +711,15 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
         model.params[Y.var] = Y.values[j]
 
         # get parameters from model
-        grad_params = getattr(model, 'get_grad_params', {'divisor': 1})
+        _f_grad_params = getattr(model, 'get_grad_params', None)
+        if _f_grad_params is not None:
+            grad_params = _f_grad_params()
+        else:
+            grad_params = {
+                'divisor': 1,
+                'mode': 'at_position',
+                'position': 0
+            }
 
         # calculate gradients
         Grads = np.gradient(P_values[j], X.values) / grad_params['divisor']
@@ -697,19 +738,20 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
 
     # # display gradient values
     # logger.info('Gradient values: {Grads}\t\n'.format(Grads=Grads))
-
-    # update plot
-    if plot:
-        plotter.update(Z=G, head=False, hold=True)
     
     thres_idx = misc.get_index_threshold(G.values, thres_mode)
 
     Thres = {}
+    Thres['value'] = G.values[thres_idx[0]][thres_idx[1]]
     Thres[X.var] = X.values[thres_idx[1]]
     Thres[Y.var] = Y.values[thres_idx[0]]
 
     # display threshold values
     logger.info('Threshold values: {Thres}\t\n'.format(Thres=Thres))
+
+    # update plot
+    if plot:
+        plotter.update(Z=G, head=False, hold=True)
 
     # update sizes
     dim = [len(G.values), len(G.values[0])]

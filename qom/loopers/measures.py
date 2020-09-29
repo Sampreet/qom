@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.measures'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-23'
-__updated__ = '2020-09-27'
+__updated__ = '2020-09-29'
 
 # dependencies
 import logging
@@ -77,14 +77,8 @@ def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
     # extract frequently used variables
     avg_mode    = meas_params['avg_mode']
     avg_type    = meas_params['avg_type']
-    if plot_params != None and 'thres_mode' in prop_params:
-        thres_mode = prop_params['thres_mode']
-    else:
-        thres_mode = 'max_min'
-    if plot_params != None and 'progress' in plot_params:
-        plot_prog = prop_params['progress']
-    else:
-        plot_prog = False
+    thres_mode  = meas_params.get('thres_mode', 'max_min')
+    plot_prog   = plot_params.get('progress', False) if plot_params != None else False
 
     # get dynamics
     D_all, _, Axes = dynamics.dynamics_measure(model, dyna_params, meas_params)
@@ -96,6 +90,8 @@ def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
 
     # initialize plot
     if plot:
+        if plot_params.get('type', None) is None:
+            plot_params['type'] = 'line'
         plotter = figure.Plotter(plot_params, X=X)
 
     # display initialization
@@ -138,10 +134,6 @@ def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
         
     # display completion
     logger.info('----------------Average Measures Obtained----------------\n')
-
-    # update plot
-    if plot:
-        plotter.update(X_m, M, head=False, hold=True)
     
     thres_idx = misc.get_index_threshold(M.values, thres_mode)
 
@@ -150,6 +142,10 @@ def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
 
     # display threshold values
     logger.info('Threshold values: {Thres}\t\n'.format(Thres=Thres))
+
+    # update plot
+    if plot:
+        plotter.update(X_m, M, head=False, hold=True)
 
     # update sizes
     dim = [len(M.values)]
@@ -197,14 +193,8 @@ def measures_1D_multi(model, dyna_params, meas_params, plot=False, plot_params=N
     # extract frequently used variables
     avg_mode    = meas_params['avg_mode']
     avg_type    = meas_params['avg_type']
-    if plot_params != None and 'thres_mode' in prop_params:
-        thres_mode = prop_params['thres_mode']
-    else:
-        thres_mode = 'max_min'
-    if plot_params != None and 'progress' in plot_params:
-        plot_prog = prop_params['progress']
-    else:
-        plot_prog = False
+    thres_mode  = meas_params.get('thres_mode', 'max_min')
+    plot_prog   = plot_params.get('progress', False) if plot_params != None else False
     X           = axis.StaticAxis(meas_params['X'])
     Z           = axis.StaticAxis(meas_params['Z'])
 
@@ -215,6 +205,8 @@ def measures_1D_multi(model, dyna_params, meas_params, plot=False, plot_params=N
 
     # initialize plot
     if plot:
+        if plot_params.get('type', None) is None:
+            plot_params['type'] = 'lines'
         plotter = figure.Plotter(plot_params, X=X, Z=Z)
 
     # display initialization
@@ -266,10 +258,6 @@ def measures_1D_multi(model, dyna_params, meas_params, plot=False, plot_params=N
         
     # display completion
     logger.info('----------------Average Measures Obtained----------------\n')
-
-    # update plot
-    if plot:
-        plotter.update(X_m, M, head=False, hold=True)
     
     thres_idx = misc.get_index_threshold(M.values, thres_mode)
 
@@ -279,6 +267,10 @@ def measures_1D_multi(model, dyna_params, meas_params, plot=False, plot_params=N
 
     # display threshold values
     logger.info('Threshold values: {Thres}\t\n'.format(Thres=Thres))
+
+    # update plot
+    if plot:
+        plotter.update(X_m, M, head=False, hold=True)
 
     # update sizes
     dim = [len(M.values), len(M.values[0])]
@@ -328,14 +320,8 @@ def measures_2D(model, dyna_params, meas_params, plot, plot_params):
     # extract frequently used variables
     avg_mode    = meas_params['avg_mode']
     avg_type    = meas_params['avg_type']
-    if plot_params != None and 'thres_mode' in prop_params:
-        thres_mode = prop_params['thres_mode']
-    else:
-        thres_mode = 'max_min'
-    if plot_params != None and 'progress' in plot_params:
-        plot_prog = prop_params['progress']
-    else:
-        plot_prog = False
+    thres_mode  = meas_params.get('thres_mode', 'max_min')
+    plot_prog   = plot_params.get('progress', False) if plot_params != None else False
     X           = axis.StaticAxis(meas_params['X'])
     Y           = axis.StaticAxis(meas_params['Y'])
 
@@ -349,6 +335,8 @@ def measures_2D(model, dyna_params, meas_params, plot, plot_params):
 
     # initialize plot
     if plot:
+        if plot_params.get('type', None) is None:
+            plot_params['type'] = 'pcolormesh'
         plotter = figure.Plotter(plot_params, X=X, Y=Y, Z=M)
 
     # display initialization
@@ -399,10 +387,6 @@ def measures_2D(model, dyna_params, meas_params, plot, plot_params):
         
     # display completion
     logger.info('----------------Average Measures Obtained----------------\n')
-
-    # update plot
-    if plot:
-        plotter.update(Z=M, head=False, hold=True)
     
     thres_idx = misc.get_index_threshold(M.values, thres_mode)
 
@@ -412,6 +396,10 @@ def measures_2D(model, dyna_params, meas_params, plot, plot_params):
 
     # display threshold values
     logger.info('Threshold values: {Thres}\t\n'.format(Thres=Thres))
+
+    # update plot
+    if plot:
+        plotter.update(Z=M, head=False, hold=True)
 
     # update sizes
     dim = [len(M.values), len(M.values[0])]
