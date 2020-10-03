@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.4.6 - 2020/10/03 - 00 - Added Plotters
+* Minor fixes to modules in `qom/loopers`.
+* Updated `qom/ui`:
+    * Updated `Plotter` class in `figure` module. 
+    * Added `plotters` module to handle different types of plotters. 
+* Added properties and handled attributes in `qom/utils/axis`.
+* Updated `README`.
+
 ## v0.4.5 - 2020/09/29 - 00 - Attribute Handling
 * Minor fixes to `measures` and `properties` modules in `qom/loopers`.
 * Handled ticks and attribute fixes in `qom/ui/figure` module.

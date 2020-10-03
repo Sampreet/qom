@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.measures'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-23'
-__updated__ = '2020-09-29'
+__updated__ = '2020-10-03'
 
 # dependencies
 import logging
@@ -40,7 +40,7 @@ def calculate(model, data):
     """
 
     # get properties
-    return globals()[data['meas_params']['func']](model, data['dyna_params'], data['meas_params'], data['plot'], data['plot_params'])
+    return globals()[data['meas_params']['func']](model, data['dyna_params'], data['meas_params'], data.get('plot', False), data.get('plot_params', None))
 
 def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
     """Function to calculate measures versus a continuous variable.
@@ -130,7 +130,7 @@ def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
 
         # update plot
         if plot and plot_prog:
-            plotter.update(X_m, M)
+            plotter.update(X_m, M, head=True, hold=False)
         
     # display completion
     logger.info('----------------Average Measures Obtained----------------\n')
@@ -145,7 +145,7 @@ def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
 
     # update plot
     if plot:
-        plotter.update(X_m, M, head=False, hold=True)
+        plotter.update(X_m, M)
 
     # update sizes
     dim = [len(M.values)]
@@ -254,7 +254,7 @@ def measures_1D_multi(model, dyna_params, meas_params, plot=False, plot_params=N
 
         # update plot
         if plot and plot_prog:
-            plotter.update(X_m, M)
+            plotter.update(X_m, M, head=True, hold=False)
         
     # display completion
     logger.info('----------------Average Measures Obtained----------------\n')
@@ -270,7 +270,7 @@ def measures_1D_multi(model, dyna_params, meas_params, plot=False, plot_params=N
 
     # update plot
     if plot:
-        plotter.update(X_m, M, head=False, hold=True)
+        plotter.update(X_m, M)
 
     # update sizes
     dim = [len(M.values), len(M.values[0])]
@@ -337,7 +337,7 @@ def measures_2D(model, dyna_params, meas_params, plot, plot_params):
     if plot:
         if plot_params.get('type', None) is None:
             plot_params['type'] = 'pcolormesh'
-        plotter = figure.Plotter(plot_params, X=X, Y=Y, Z=M)
+        plotter = figure.Plotter(plot_params, X=X, Y=Y)
 
     # display initialization
     logger.info('Initializing average {meas_name} calculation...\t\n'.format(meas_name=meas_params['name']))
@@ -383,7 +383,7 @@ def measures_2D(model, dyna_params, meas_params, plot, plot_params):
 
             # update plot
             if plot and plot_prog:
-                plotter.update(Z=M)
+                plotter.update(Z=M, head=True, hold=False)
         
     # display completion
     logger.info('----------------Average Measures Obtained----------------\n')
@@ -399,7 +399,7 @@ def measures_2D(model, dyna_params, meas_params, plot, plot_params):
 
     # update plot
     if plot:
-        plotter.update(Z=M, head=False, hold=True)
+        plotter.update(Z=M)
 
     # update sizes
     dim = [len(M.values), len(M.values[0])]

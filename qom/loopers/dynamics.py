@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.dynamics'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-21'
-__updated__ = '2020-09-27'
+__updated__ = '2020-10-03'
 
 # dependencies
 import logging
@@ -44,7 +44,7 @@ def calculate(model, data):
     """
 
     # get dynamics
-    return globals()[data['dyna_params']['func']](model, data['dyna_params'], data['meas_params'], data['plot'], data['plot_params'])
+    return globals()[data['dyna_params']['func']](model, data['dyna_params'], data['meas_params'], data.get('plot', False), data.get('plot_params', None))
 
 def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=None):
     """Function to calculate the dynamics of a measure for multiple systems.
@@ -236,7 +236,7 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
                 # display plot
                 if plot:
                     plotter = figure.Plotter(plot_params, X=T)
-                    plotter.update(_T_d, _D_s, head=False, hold=True)
+                    plotter.update(_T_d, _D_s)
             
         # display completion
         logger.info('----------------Measure Dynamics Obtained---------------\n') 
@@ -257,7 +257,7 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
                 if X != None:
                     plot_params['legend'] = X.legends[i]
                 plotter = figure.Plotter(plot_params, X=T)
-                plotter.update(_T_d, _D_s, head=False, hold=True)
+                plotter.update(_T_d, _D_s)
 
     # axes dictionary
     Axes = {}

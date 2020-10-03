@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.properties'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-06-15'
-__updated__ = '2020-09-27'
+__updated__ = '2020-10-03'
 
 # dependencies
 import copy
@@ -44,7 +44,7 @@ def calculate(model, data):
     """
 
     # get properties
-    return globals()[data['prop_params']['func']](model, data['prop_params'], data['plot'], data['plot_params'])
+    return globals()[data['prop_params']['func']](model, data['prop_params'], data.get('plot', False), data.get('plot_params', None))
 
 def properties_1D(model, prop_params, plot=False, plot_params=None):
     """Function to calculate properties versus a continuous variable.
@@ -120,7 +120,7 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
 
         # update plot
         if plot and plot_prog:
-            plotter.update(X_p, P)
+            plotter.update(X_p, P, head=True, hold=False)
     
     # display completion
     logger.info('----------------Property Values Obtained----------------\t\n')
@@ -136,7 +136,7 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
 
     # update plot
     if plot:
-        plotter.update(X_p, P, head=False, hold=True)
+        plotter.update(X_p, P)
 
     # update sizes
     dim = [len(P.values)]
@@ -230,7 +230,7 @@ def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
 
         # update plot
         if plot and plot_prog:
-            plotter.update(X_p, P)
+            plotter.update(X_p, P, head=True, hold=False)
     
     # display completion
     logger.info('----------------Property Values Obtained----------------\t\n')
@@ -247,7 +247,7 @@ def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
 
     # update plot
     if plot:
-        plotter.update(X_p, P, head=False, hold=True)
+        plotter.update(X_p, P)
 
     # update sizes
     dim = [len(P.values), len(P.values[0])]
@@ -311,7 +311,7 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
     if plot:
         if plot_params.get('type', None) is None:
             plot_params['type'] = 'pcolormesh'
-        plotter = figure.Plotter(plot_params, X=X, Y=Y, Z=P)
+        plotter = figure.Plotter(plot_params, X=X, Y=Y)
 
     # display initialization
     logger.info('Initializing {prop_name} property calculation...\t\n'.format(prop_name=prop_name))
@@ -344,7 +344,7 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
 
         # update plot
         if plot and plot_prog:
-            plotter.update(Z=P)
+            plotter.update(Z=P, head=True, hold=False)
     
     # display completion
     logger.info('----------------Property Values Obtained----------------\t\n')
@@ -361,7 +361,7 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
 
     # update plot
     if plot:
-        plotter.update(Z=P, head=False, hold=True)
+        plotter.update(Z=P)
 
     # update sizes
     dim = [len(P.values), len(P.values[0])]
@@ -472,7 +472,7 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
         
         # update plot
         if plot and plot_prog:
-            plotter.update(X_g, G)
+            plotter.update(X_g, G, head=True, hold=False)
     
     # display completion
     logger.info('----------------Gradient Values Obtained----------------\t\n')
@@ -491,7 +491,7 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
 
     # update plot
     if plot:
-        plotter.update(X_g, G, head=False, hold=True)
+        plotter.update(X_g, G)
 
     # update sizes
     dim = [len(G.values)]
@@ -607,7 +607,7 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
             
             # update plot
             if plot and plot_prog:
-                plotter.update(X_g, G)
+                plotter.update(X_g, G, head=True, hold=False)
     
         # display completion
         logger.info('----------------Gradient Values Obtained----------------\t\n')
@@ -627,7 +627,7 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
 
     # update plot
     if plot:
-        plotter.update(X_g, G, head=False, hold=True)
+        plotter.update(X_g, G)
 
     # update sizes
     dim = [len(G.values), len(G.values[0])]
@@ -694,7 +694,7 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
     if plot:
         if plot_params.get('type', None) is None:
             plot_params['type'] = 'pcolormesh'
-        plotter = figure.Plotter(plot_params, X=X, Y=Y, Z=G)
+        plotter = figure.Plotter(plot_params, X=X, Y=Y)
 
     # display initialization
     logger.info('Initializing {prop_name} gradient calculation...\t\n'.format(prop_name=prop_name))
@@ -731,7 +731,7 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
             
         # update plot
         if plot and plot_prog:
-            plotter.update(Z=G)
+            plotter.update(Z=G, head=True, hold=False)
     
     # display completion
     logger.info('----------------Gradient Values Obtained----------------\t\n')
@@ -751,7 +751,7 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
 
     # update plot
     if plot:
-        plotter.update(Z=G, head=False, hold=True)
+        plotter.update(Z=G)
 
     # update sizes
     dim = [len(G.values), len(G.values[0])]

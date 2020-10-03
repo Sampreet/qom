@@ -8,7 +8,7 @@
 * Automatically managed and optimized wrappers to implement loops.
 * Configurable visualizations without the requirement for explicit plotting.
 
-## Usage
+## Basic Usage
 
 The library features easy-to-use functions to easily calculate as well as visualize the trend of several quantum signatures.
 For example, the `qom.looper.properties` module can be implemented as:

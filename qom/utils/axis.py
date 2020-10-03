@@ -6,7 +6,7 @@
 __name__    = 'qom.utils.axis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-17'
-__updated__ = '2020-09-27'
+__updated__ = '2020-10-03'
 
 # dependencies
 import logging
@@ -17,10 +17,8 @@ logger = logging.getLogger(__name__)
 
 # TODO: Handle index-based initialization.
 
-class DynamicAxis(object):
+class DynamicAxis():
     """Utility class to create a dynamic axis.
-
-    Inherits :class:`object` for 2.x compatibility.
 
     Properties
     ----------
@@ -40,7 +38,7 @@ class DynamicAxis(object):
                 Dimensions of the reference axis.
         """
 
-        if size != None:
+        if size is not None:
             self.size = size
         if len(size) == 1:
             self.values = []
@@ -95,10 +93,8 @@ class DynamicAxis(object):
 
         self.__values = values
 
-class StaticAxis(object):
+class StaticAxis():
     """Utility class to format corrdinates from dictionary.
-
-    Inherits :class:`object` for 2.x compatibility.
 
     Properties
     ----------
@@ -117,47 +113,18 @@ class StaticAxis(object):
         ticks : list
             Values of the axis ticks.
 
-        legends : list 
-            Legends for the values.
-
         colors : list 
             Colors for line plots.
 
+        legends : list 
+            Legends for the values.
+
         linestyles : list
-            Linestyles for line plots.
+            Linestyles of the line plots.
+
+        sizes : list
+            Sizes of the scatter plots.
     """
-
-    def __init__(self, axis_data):
-        """Class constructor for StaticAxis.
-
-        Parameters
-        ----------
-            axis_data : dict
-                Dictionary of the data for the axis.
-        """
-
-        # variable
-        self.var = axis_data['var']
-        # index
-        self.index = axis_data.get('index', None)
-        # label
-        self.label = axis_data.get('label', r'$' + self.__var + '$')
-        # unit
-        self.unit = axis_data.get('unit', '')
-        # values
-        if 'values' in axis_data and len(axis_data['values']) != 0:
-            self.values = axis_data['values']
-        else: 
-            self.values = self.init_array(axis_data['min'], axis_data['max'], axis_data['steps'])
-        # ticks
-        _num = axis_data.get('ticks', 5)
-        self.ticks = self.init_array(axis_data['min'], axis_data['max'], _num)
-        # colors
-        self.colors = axis_data.get('colors', [])
-        # linestyles
-        self.linestyles = axis_data.get('linestyles', [])
-        # sizes
-        self.sizes = axis_data.get('sizes', [])
 
     @property
     def var(self):
@@ -230,10 +197,10 @@ class StaticAxis(object):
         """
 
         if label == '':
-            self.__label = r'$' + self.__var + '$'
+            self.__label = self.__var
             return
 
-        self.__label = r'' + label + ''
+        self.__label = label
 
     @property
     def unit(self):
@@ -257,11 +224,7 @@ class StaticAxis(object):
                 Unit of the axis.
         """
 
-        if unit == '':
-            self.__unit = ''
-            return
-
-        self.__unit = '\\mathrm{' + unit + '}'
+        self.__unit = unit
 
     @property
     def values(self):
@@ -311,6 +274,29 @@ class StaticAxis(object):
         self.__ticks = ticks
 
     @property
+    def tick_labels(self):
+        """Property tick labels.
+
+        Returns
+        -------
+            ticks : list
+                Tick labels of the axis.
+        """
+
+        return self.__tick_labels
+
+    @tick_labels.setter
+    def tick_labels(self, tick_labels):
+        """Setter for tick labels.
+
+        Parameters
+            tick_labels : list
+                Tick labels of the axis.
+        """
+
+        self.__tick_labels = tick_labels
+
+    @property
     def colors(self):
         """Property colors.
 
@@ -332,11 +318,23 @@ class StaticAxis(object):
                 Colors of the axis.
         """
 
-        if type(colors) != list or len(colors) == 0:
+        if type(colors) is not list or len(colors) == 0:
             self.__colors = ['b' for i in range(len(self.__values))]
             return
 
         self.__colors = colors
+
+    @property
+    def legends(self):
+        """Property legends.
+
+        Returns
+        -------
+            legends : list 
+                Legends of the axis.
+        """
+
+        return ['{label} = {value} {unit}'.format(label=self.__label, value=value, unit=self.__unit) for value in self.__values]
 
     @property
     def linestyles(self):
@@ -360,7 +358,7 @@ class StaticAxis(object):
                 Linestyles of the line plots.
         """
 
-        if type(linestyles) != list or len(linestyles) == 0:
+        if type(linestyles) is not list or len(linestyles) == 0:
             self.__linestyles = ['-' for i in range(len(self.__values))]
             return
 
@@ -388,23 +386,49 @@ class StaticAxis(object):
                 Sizes of the scatter plots.
         """
 
-        if type(sizes) != list or len(sizes) == 0:
+        if type(sizes) is not list or len(sizes) == 0:
             self.__sizes = [2 for i in range(len(self.__values))]
             return
 
         self.__sizes = sizes
 
-    @property
-    def legends(self):
-        """Property legends.
+    def __init__(self, axis_data):
+        """Class constructor for StaticAxis.
 
-        Returns
-        -------
-            legends : list 
-                Legends of the axis.
+        Parameters
+        ----------
+            axis_data : dict
+                Dictionary of the data for the axis.
         """
 
-        return [r'$' + '{label} =$ {value} $~{unit}'.format(label=self.__label, value=value, unit=self.__unit) + '$' for value in self.__values]
+        # variable
+        self.var = axis_data['var']
+        # index
+        self.index = axis_data.get('index', None)
+        # label
+        self.label = axis_data.get('label', self.__var)
+        # unit
+        self.unit = axis_data.get('unit', '')
+        # values
+        _values = axis_data.get('values', None)
+        if _values is not None and len(_values) is not 0:
+            self.values = _values
+        else: 
+            self.values = self.init_array(axis_data.get('min', 0), axis_data.get('max', 1), axis_data.get('steps', 5))
+        # ticks
+        _tick_labels = axis_data.get('tick_labels', None)
+        if _tick_labels is not None:
+            self.ticks = self.init_array(self.__values[0], self.__values[-1], len(_tick_labels))
+            self.tick_labels = _tick_labels
+        else:
+            self.ticks = self.init_array(self.__values[0], self.__values[-1], axis_data.get('tick_steps', 5))
+            self.tick_labels = self.__ticks 
+        # colors
+        self.colors = axis_data.get('colors', [])
+        # linestyles
+        self.linestyles = axis_data.get('linestyles', [])
+        # sizes
+        self.sizes = axis_data.get('sizes', [])
 
     def init_array(self, mini, maxi, num):
         """Function to initialize an array given a range and number of elements.
