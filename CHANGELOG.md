@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.4.8 - 2020/10/06 - 00 - Added 3D Plots
+* Updated `qom/ui`:
+    * Minor fixes to `figure` module.
+    * Added `BasePlotter` module inside `plotters` module.
+    * Updated 2D and 3D plotting methods in `PlotterMPL` module.
+    * Initialized `PlotterPlotly` module.
+* Minor changes to `qom/utils/axis` and `qom/utils/misc` modules.
+
 ## v0.4.6 - 2020/10/03 - 00 - Added Plotters
 * Minor fixes to modules in `qom/loopers`.
 * Updated `qom/ui`:

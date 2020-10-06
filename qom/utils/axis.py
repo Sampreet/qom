@@ -6,7 +6,7 @@
 __name__    = 'qom.utils.axis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-17'
-__updated__ = '2020-10-03'
+__updated__ = '2020-10-06'
 
 # dependencies
 import logging
@@ -319,7 +319,7 @@ class StaticAxis():
         """
 
         if type(colors) is not list or len(colors) == 0:
-            self.__colors = ['b' for i in range(len(self.__values))]
+            self.__colors = ['r' for i in range(len(self.__values))]
             return
 
         self.__colors = colors
@@ -411,7 +411,7 @@ class StaticAxis():
         self.unit = axis_data.get('unit', '')
         # values
         _values = axis_data.get('values', None)
-        if _values is not None and len(_values) is not 0:
+        if _values is not None and len(_values) != 0:
             self.values = _values
         else: 
             self.values = self.init_array(axis_data.get('min', 0), axis_data.get('max', 1), axis_data.get('steps', 5))

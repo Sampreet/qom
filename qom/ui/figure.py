@@ -6,13 +6,13 @@
 __name__    = 'qom.ui.figure'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-06-16'
-__updated__ = '2020-10-03'
+__updated__ = '2020-10-06'
 
 # dependencies
 import logging
 
 # dev dependencies
-from qom.ui.plotters import PlotterMPL
+from qom.ui.plotters import *
 
 # module logger
 logger = logging.getLogger(__name__)

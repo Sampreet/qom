@@ -163,9 +163,9 @@ def get_limits(mini, maxi, res=2):
 
     # update multiplier
     if _mini != 0 and np.log10(_mini) < res:
-        _mult_min = 10**(- np.floor(np.log10(_mini)) + res)
+        _mult_min = 10**(np.ceil(-np.log10(_mini)) + res - 1)
     if _maxi != 0 and np.log10(_maxi) < res:
-        _mult_max = 10**(- np.floor(np.log10(_maxi)) + res)
+        _mult_max = 10**(np.ceil(-np.log10(_maxi)) + res - 1)
     _mult = max(10**res, min(_mult_min, _mult_max))
 
     # round off
