@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.4.9 - 2020/10/09 - 00 - Added Contour Plot
+* Updated `qom/ui/plotters`:
+    * Minor fixes to `BasePlotter` object.
+    * Added support for contour plot in `PlotterMPL` object.
+* Minor changes to `qom/utils/misc` modules.
+
 ## v0.4.8 - 2020/10/06 - 00 - Added 3D Plots
 * Updated `qom/ui`:
     * Minor fixes to `figure` module.

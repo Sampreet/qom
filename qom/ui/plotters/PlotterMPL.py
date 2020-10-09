@@ -6,9 +6,10 @@
 __name__    = 'qom.ui.plotters.PlotterMPL'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2020-10-06'
+__updated__ = '2020-10-09'
 
 # dependencies
+from matplotlib.colors import Normalize
 from matplotlib.font_manager import FontProperties 
 from matplotlib.lines import Line2D
 import logging
@@ -88,8 +89,9 @@ class PlotterMPL(BasePlotter):
             _legends = plot_params.get('legends', _Z.legends)
             _linestyles = plot_params.get('linestyles', _Z.linestyles)
             _sizes = plot_params.get('sizes', _Z.sizes)
+            _show_legend = plot_params.get('show_legend', True)
             # initialize 1D plot
-            self.__init_1D(_X, _y_ticks, _colors, _legends, _linestyles, _sizes)
+            self.__init_1D(_X, _y_ticks, _colors, _legends, _linestyles, _sizes, _show_legend)
 
         # 2D plot
         elif self.plot_type in self.plot_types_2D:
@@ -99,8 +101,9 @@ class PlotterMPL(BasePlotter):
             _show_cbar = plot_params.get('show_cbar', True)
             _cmap = self.cmaps.get(plot_params.get('color_grad', 'blr'), 'viridis')
             _shading = plot_params.get('shading', 'gouraud')
+            _cbar_ticks = plot_params.get('cbar_ticks', None)
             # initializze 2D plot
-            self.__init_2D(_X, _Y, _show_cbar, _cmap, _shading)
+            self.__init_2D(_X, _Y, _show_cbar, _cbar_ticks, _cmap, _shading)
 
         # 3D plot
         else:
@@ -140,7 +143,7 @@ class PlotterMPL(BasePlotter):
 
         return _font_props
 
-    def __init_1D(self, X, y_ticks, colors, legends, linestyles, sizes):
+    def __init_1D(self, X, y_ticks, colors, legends, linestyles, sizes, show_legend):
         """Method to initialize 1D plots.
         
         Parameters
@@ -162,10 +165,13 @@ class PlotterMPL(BasePlotter):
 
             sizes : list
                 Marker sizes for scatter plots.
+
+            show_legend : bool
+                Option to display colorbar.
         """
 
         # frequently used variables
-        _dim = len(legends)
+        _dim = len(legends) 
 
         # set values
         self.values = dict()
@@ -193,11 +199,11 @@ class PlotterMPL(BasePlotter):
             self.plot = [self.axes.scatter([], [], c=colors[i], s=sizes[i]) for i in range(_dim)]
 
         # update legends
-        if _dim > 1:
+        if show_legend:
             _l = plt.legend(legends, loc='best')            
             plt.setp(_l.texts, fontproperties=self.__get_font_props(self.font_dicts['label']))
 
-    def __init_2D(self, X, Y, show_cbar, cmap, shading):
+    def __init_2D(self, X, Y, show_cbar, cbar_ticks, cmap, shading):
         """Method to initialize 2D plots.
         
         Parameters
@@ -210,6 +216,9 @@ class PlotterMPL(BasePlotter):
 
             show_cbar : bool
                 Option to display colorbar.
+
+            cbar_ticks : list
+                Ticks for ColorBar.
 
             cmap : str or :class:`matplotlib.colorsColorMap`
                 Color map for the plot.
@@ -237,24 +246,37 @@ class PlotterMPL(BasePlotter):
 
         # initailize values
         _xs, _ys = np.meshgrid(X.values, Y.values)
+        _zeros = np.zeros((len(Y.values), len(X.values)))
+        _ticks = np.linspace(-1, 1, 11)
+
+        # contour plot
+        if self.plot_type == 'contour':
+            _zeros[0] = 1
+            self.plot = self.axes.contour(_xs, _ys, _zeros, levels=_ticks, cmap=cmap)
 
         # contourf plot
         if self.plot_type == 'contourf':
-            _zeros = np.zeros((len(Y.values), len(X.values)))
             self.plot = self.axes.contourf(_xs, _ys, _zeros, cmap=cmap)
 
         # pcolormesh plot
         if self.plot_type == 'pcolormesh':
-            _nans = np.zeros((len(Y.values), len(X.values)))
-            _nans[:] = np.NaN
-            self.plot = self.axes.pcolormesh(_xs, _ys, _nans, shading=shading, cmap=cmap)
+            _nan =  np.zeros((len(Y.values), len(X.values)))
+            _nan[:] = np.NaN
+            self.plot = self.axes.pcolormesh(_xs, _ys, _nan, shading=shading, cmap=cmap)
 
         # add color bar
         if show_cbar:
-            self.cbar = plt.colorbar(self.plot)
+            if 'contour' in self.plot_type:
+                _sm = plt.cm.ScalarMappable(cmap=cmap, norm=Normalize(vmin=0, vmax=0))
+                _sm.set_array([])
+            else:
+                _sm = self.plot
+            self.cbar = plt.colorbar(_sm)
             # labels
-            self.cbar.set_label(self.labels['cbar'], fontproperties=self.__get_font_props(self.font_dicts['label']))
+            self.cbar.ax.set_xlabel(self.labels['cbar'], labelpad=self.font_dicts['tick']['size'] + 12, fontproperties=self.__get_font_props(self.font_dicts['label']))
             # ticks
+            if cbar_ticks is not None:
+                self.cbar.set_ticks(cbar_ticks)
             plt.setp(self.cbar.ax.get_yticklabels(), fontproperties=self.__get_font_props(self.font_dicts['tick']))
         else:
             self.cbar = None
@@ -325,7 +347,7 @@ class PlotterMPL(BasePlotter):
         if show_cbar:
             self.cbar = plt.colorbar(self.plot)
             # labels
-            self.cbar.set_label(self.labels['cbar'], fontproperties=self.__get_font_props(self.font_dicts['label']))
+            self.cbar.ax.set_xlabel(self.labels['cbar'], labelpad=self.font_dicts['tick']['size'] + 12, fontproperties=self.__get_font_props(self.font_dicts['label']))
             # ticks
             plt.setp(self.cbar.ax.get_yticklabels(), fontproperties=self.__get_font_props(self.font_dicts['tick']))
         else:
@@ -362,10 +384,8 @@ class PlotterMPL(BasePlotter):
         if self.plot_type == 'scatters':
             self.__update_1D(X.values, Y.values, None, show_head)
         
-        # 2D plot
-        if self.plot_type == 'contourf':
-            self.__update_2D(Z.values)
-        if self.plot_type == 'pcolormesh':
+        # 2D plots
+        if self.plot_type in self.plot_types_2D:
             self.__update_2D(Z.values)
 
         # 3D plot
@@ -423,6 +443,7 @@ class PlotterMPL(BasePlotter):
 
         # set limits
         _mini, _maxi = min(_minis), max(_maxis)
+        _mini, _maxi, _prec = get_limits(_mini, _maxi, res=1)
         self.axes.set_ylim(_mini, _maxi)
         self.axes.set_yticks(np.linspace(_mini, _maxi, len(self.axes.get_yticks())))
 
@@ -443,21 +464,31 @@ class PlotterMPL(BasePlotter):
         _no_nan = [z if z == z else 0 for z in _rave]
         _mini, _maxi = min(_no_nan), max(_no_nan)
         _mini, _maxi, _ = get_limits(_mini, _maxi, res=1)
+        _dim = len(self.cbar.get_ticks())
+        _ticks = np.linspace(_mini, _maxi, _dim)
 
-        # contourf plot
-        if self.plot_type == 'contourf':
+        # contour and contourf plots
+        if 'contour' in self.plot_type:
             # remove QuadContourSet PathCollection
             for pc in self.plot.collections:
-                self.plot.collections.remove(pc)
+                pc.remove()
             _xs, _ys = np.meshgrid(self.values['X'], self.values['Y'])
-            self.plot = self.axes.contourf(_xs, _ys, zs, cmap=_cmap)
+
+            # contour plot
+            if self.plot_type == 'contour':
+                self.plot = self.axes.contour(_xs, _ys, zs, levels=_ticks, cmap=_cmap)
+            # contourf plot
+            if self.plot_type == 'contourf':
+                self.plot = self.axes.contourf(_xs, _ys, zs, cmap=_cmap)
 
             # redraw color bar
             if self.cbar is not None:
                 self.cbar.ax.clear()
-                self.cbar = plt.colorbar(self.plot, cax=self.cbar.ax)
+                _sm = plt.cm.ScalarMappable(cmap=_cmap, norm=Normalize(vmin=_mini, vmax=_maxi))
+                _sm.set_array([])
+                self.cbar = plt.colorbar(_sm, cax=self.cbar.ax)
                 # update label
-                self.cbar.set_label(self.labels['cbar'], fontproperties=self.__get_font_props(self.font_dicts['label']))
+                self.cbar.ax.set_xlabel(self.labels['cbar'], labelpad=self.font_dicts['tick']['size'] + 12, fontproperties=self.__get_font_props(self.font_dicts['label']))
                 # update ticks
                 plt.setp(self.cbar.ax.get_yticklabels(), fontproperties=self.__get_font_props(self.font_dicts['tick']))
 
@@ -470,7 +501,6 @@ class PlotterMPL(BasePlotter):
 
         # color bar
         if self.cbar is not None:
-            _ticks = np.linspace(_mini, _maxi, 11)
             self.cbar.set_ticks(_ticks)
             self.cbar.draw_all()
 
@@ -486,6 +516,7 @@ class PlotterMPL(BasePlotter):
         _Z = np.array(zs)
         _mini, _maxi = min(_Z.ravel()), max(_Z.ravel())
         _mini, _maxi, _ = get_limits(_mini, _maxi, res=2)
+        _ticks = np.linspace(_mini, _maxi, 11)
 
         # surface plot
         if 'surface'in self.plot_type:
@@ -503,14 +534,13 @@ class PlotterMPL(BasePlotter):
                 self.cbar.update_normal(self.plot)
 
         # set limits
-        _ticks = np.linspace(_mini, _maxi, len(self.axes.get_zticks()))
+        _z_ticks = np.linspace(_mini, _maxi, len(self.axes.get_zticks()))
         self.plot.set_clim(vmin=_mini, vmax=_maxi)
         self.axes.set_zlim(_mini, _maxi)
-        self.axes.set_zticks(_ticks)
+        self.axes.set_zticks(_z_ticks)
 
         # color bar
         if self.cbar is not None:
-            _ticks = np.linspace(_mini, _maxi, 11)
             self.cbar.set_ticks(_ticks)
             self.cbar.ax.set_autoscale_on(True)
             self.cbar.draw_all()

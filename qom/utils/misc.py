@@ -6,7 +6,7 @@
 __name__    = 'qom.utils.misc'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-27'
-__updated__ = '2020-09-27'
+__updated__ = '2020-10-09'
 
 # dependencies
 import logging
@@ -169,8 +169,8 @@ def get_limits(mini, maxi, res=2):
     _mult = max(10**res, min(_mult_min, _mult_max))
 
     # round off
-    _mini = np.round(mini * _mult) / _mult
-    _maxi = np.round(maxi * _mult) / _mult
+    _mini = np.floor(mini * _mult) / _mult
+    _maxi = np.ceil(maxi * _mult) / _mult
     _prec = int(np.round(np.log10(_mult)))
 
     return _mini, _maxi, _prec

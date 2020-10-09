@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.BasePlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-06'
-__updated__ = '2020-10-06'
+__updated__ = '2020-10-09'
 
 # dependencies
 import logging
@@ -69,7 +69,7 @@ class BasePlotter():
 
     # attributes
     plot_types_1D = ['line', 'lines', 'scatter', 'scatters']
-    plot_types_2D = ['contourf', 'pcolormesh']
+    plot_types_2D = ['contour', 'contourf', 'pcolormesh']
     plot_types_3D = ['surface', 'surface_cx', 'surface_cy', 'surface_cz']
     bins = 11
     cmaps = {
@@ -321,13 +321,13 @@ class BasePlotter():
         """
 
         # properties
-        _family = plot_params.get(text_type + 'font_family', 'Times New Roman')
-        _style = plot_params.get(text_type + 'font_style', 'normal')
-        _variant = plot_params.get(text_type + 'font_variant', 'normal')
-        _weight = plot_params.get(text_type + 'font_weight', 500)
-        _stretch = plot_params.get(text_type + 'font_stretch', 500)
+        _family = plot_params.get(text_type + '_font_family', 'Times New Roman')
+        _style = plot_params.get(text_type + '_font_style', 'normal')
+        _variant = plot_params.get(text_type + '_font_variant', 'normal')
+        _weight = plot_params.get(text_type + '_font_weight', 500)
+        _stretch = plot_params.get(text_type + '_font_stretch', 500)
         _size = 16.0 if text_type == 'label' else 12.0
-        _size = plot_params.get(text_type + 'font_size', _size)
+        _size = plot_params.get(text_type + '_font_size', _size)
 
         _font_dict = {
             'family': _family,
