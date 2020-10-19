@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.4.9 - 2020/10/19 - 00 - Minor Fixes
+* Minor fixes to  `qom/ui/plotters` and `qom/utils`.
+* Initialized axes classes in `qom_experimental/ui/axes`.
+
 ## v0.4.9 - 2020/10/09 - 00 - Added Contour Plot
 * Updated `qom/ui/plotters`:
     * Minor fixes to `BasePlotter` object.

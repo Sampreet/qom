@@ -127,6 +127,30 @@ class BasePlotter():
         self.__font_dicts = font_dicts
 
     @property
+    def values(self):
+        """Property values.
+
+        Returns
+        -------
+            values : list
+                Values of the axes.
+        """
+
+        return self.__values
+    
+    @values.setter
+    def values(self, values):
+        """Setter for values.
+
+        Parameters
+        ----------
+            values : list
+                Values of the axes.
+        """
+
+        self.__values = values
+
+    @property
     def labels(self):
         """Property labels.
 
@@ -151,6 +175,54 @@ class BasePlotter():
         self.__labels = labels
 
     @property
+    def ticks(self):
+        """Property ticks.
+
+        Returns
+        -------
+            ticks : list
+                Ticks of the axes.
+        """
+
+        return self.__ticks
+    
+    @ticks.setter
+    def ticks(self, ticks):
+        """Setter for ticks.
+
+        Parameters
+        ----------
+            ticks : list
+                Ticks of the axes.
+        """
+
+        self.__ticks = ticks
+
+    @property
+    def tick_labels(self):
+        """Property tick labels.
+
+        Returns
+        -------
+            tick_labels : list
+                Tick labels of the axes.
+        """
+
+        return self.__tick_labels
+    
+    @tick_labels.setter
+    def tick_labels(self, tick_labels):
+        """Setter for tick labels.
+
+        Parameters
+        ----------
+            tick_labels : list
+                Tick labels of the axes.
+        """
+
+        self.__tick_labels = tick_labels
+
+    @property
     def axes(self):
         """Property axes.
 
@@ -173,30 +245,6 @@ class BasePlotter():
         """
 
         self.__axes = axes
-
-    @property
-    def values(self):
-        """Property values.
-
-        Returns
-        -------
-            values : list
-                Values of the axes.
-        """
-
-        return self.__values
-    
-    @values.setter
-    def values(self, values):
-        """Setter for values.
-
-        Parameters
-        ----------
-            values : list
-                Values of the axes.
-        """
-
-        self.__values = values
 
     @property
     def plot(self):
@@ -290,15 +338,40 @@ class BasePlotter():
         self.__font_dicts['label'] = self.__get_font_dict(plot_params, 'label')
         self.__font_dicts['tick'] = self.__get_font_dict(plot_params, 'tick')
 
-        # default labels
+        # set labels 
         _x_label = Axes['X'].label if Axes.get('X', None) is not None else ''
         _y_label = Axes['Y'].label if Axes.get('Y', None) is not None else ''
         _z_label = Axes['Z'].label if Axes.get('Z', None) is not None else ''
+        # supersede StaticAxis labels by plot_params
         self.labels = {
             'X': plot_params.get('x_label', _x_label),
             'Y': plot_params.get('y_label', _y_label),
             'Z': plot_params.get('z_label', _z_label),
             'cbar': plot_params.get('cbar_label', '')
+        }
+
+        # set ticks
+        _x_ticks = Axes['X'].ticks if Axes.get('X', None) is not None else None
+        _y_ticks = Axes['Y'].ticks if Axes.get('Y', None) is not None else None
+        _z_ticks = Axes['Z'].ticks if Axes.get('Z', None) is not None else None
+        # supersede StaticAxis ticks by plot_params
+        self.ticks = {
+            'X': plot_params.get('x_ticks', _x_ticks),
+            'Y': plot_params.get('y_ticks', _y_ticks),
+            'Z': plot_params.get('z_ticks', _z_ticks),
+            'cbar': plot_params.get('cbar_ticks', None)
+        }
+
+        # set tick labels
+        _x_tick_labels = Axes['X'].tick_labels if Axes.get('X', None) is not None else None
+        _y_tick_labels = Axes['Y'].tick_labels if Axes.get('Y', None) is not None else None
+        _z_tick_labels = Axes['Z'].tick_labels if Axes.get('Z', None) is not None else None
+        # supersede StaticAxis tick_labels by plot_params
+        self.tick_labels = {
+            'X': plot_params.get('x_tick_labels', _x_tick_labels),
+            'Y': plot_params.get('y_tick_labels', _y_tick_labels),
+            'Z': plot_params.get('z_tick_labels', _z_tick_labels),
+            'cbar': plot_params.get('cbar_tick_labels', None)
         }
 
     def __get_font_dict(self, plot_params, text_type): 

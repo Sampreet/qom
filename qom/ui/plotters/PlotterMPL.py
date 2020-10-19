@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.PlotterMPL'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2020-10-09'
+__updated__ = '2020-10-19'
 
 # dependencies
 from matplotlib.colors import Normalize
@@ -26,8 +26,6 @@ logger = logging.getLogger(__name__)
 
 # TODO: Add annotations.
 # TODO: Options for `ticklabel_format`.
-# TODO: Handle contour, contourf plots.
-# TODO: Handle 3D.
 
 class PlotterMPL(BasePlotter):
     """Class to handle matplotlib plots.
@@ -58,8 +56,8 @@ class PlotterMPL(BasePlotter):
         plt.title(plot_params.get('title', ''), fontdict=self.font_dicts['label'])
         
         # update labels
-        plt.xlabel(self.labels.get('X'), fontdict=self.font_dicts['label'])
-        plt.ylabel(self.labels.get('Y'), fontdict=self.font_dicts['label'])
+        plt.xlabel(self.labels.get('X'), labelpad=12, fontdict=self.font_dicts['label'])
+        plt.ylabel(self.labels.get('Y'), labelpad=12, fontdict=self.font_dicts['label'])
 
         # update tick properties
         _font_props = self.__get_font_props(self.font_dicts['tick'])
@@ -110,7 +108,7 @@ class PlotterMPL(BasePlotter):
             _Y = Axes['Y'] if Axes.get('Y', None) is not None else _default_axis
             _Z = Axes['Z'] if Axes.get('Z', None) is not None else _default_axis
             # update axes
-            self.axes.set_zlabel(self.labels.get('Z'), fontdict=self.font_dicts['label'])
+            self.axes.set_zlabel(self.labels.get('Z'), labelpad=12, fontdict=self.font_dicts['label'])
             plt.setp(self.axes.get_zticklabels(), fontproperties=_font_props)
             # plot parameters
             _show_cbar = plot_params.get('show_cbar', True)
@@ -252,7 +250,7 @@ class PlotterMPL(BasePlotter):
         # contour plot
         if self.plot_type == 'contour':
             _zeros[0] = 1
-            self.plot = self.axes.contour(_xs, _ys, _zeros, levels=_ticks, cmap=cmap)
+            self.plot = self.axes.contour(_xs, _ys, _zeros, levels=11, cmap=cmap)
 
         # contourf plot
         if self.plot_type == 'contourf':
@@ -476,10 +474,10 @@ class PlotterMPL(BasePlotter):
 
             # contour plot
             if self.plot_type == 'contour':
-                self.plot = self.axes.contour(_xs, _ys, zs, levels=_ticks, cmap=_cmap)
+                self.plot = self.axes.contour(_xs, _ys, zs, levels=11, cmap=_cmap)
             # contourf plot
             if self.plot_type == 'contourf':
-                self.plot = self.axes.contourf(_xs, _ys, zs, cmap=_cmap)
+                self.plot = self.axes.contourf(_xs, _ys, zs, levels=11, cmap=_cmap)
 
             # redraw color bar
             if self.cbar is not None:
@@ -556,6 +554,8 @@ class PlotterMPL(BasePlotter):
 
         # draw data
         plt.draw()
+        plt.tight_layout()
+        # plt.subplots_adjust(top=0.99, bottom=0.06, left=0.06, right=0.99)
 
         # display plot
         if hold:
