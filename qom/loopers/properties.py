@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.properties'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-06-15'
-__updated__ = '2020-10-21'
+__updated__ = '2020-10-22'
 
 # dependencies
 import copy
@@ -14,10 +14,10 @@ import logging
 import numpy as np
 
 # dev dependencies
-from qom.numerics import calculators
-from qom.ui import figure
+from qom.numerics.calculators import get_grad
+from qom.ui import Figure
 from qom.ui.axes import MultiAxis, StaticAxis
-from qom.utils import misc
+from qom.utils.misc import get_index_threshold
 
 # module logger
 logger = logging.getLogger(__name__)
@@ -92,7 +92,7 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
     if plot:
         if plot_params.get('type', None) is None:
             plot_params['type'] = 'line'
-        plotter = figure.Plotter(plot_params, X=X)
+        figure = Figure(plot_params, X=X)
 
     # display initialization
     logger.info('Initializing {prop_name} property calculation...\t\n'.format(prop_name=prop_name))
@@ -122,12 +122,12 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
 
         # update plot
         if plot and plot_prog:
-            plotter.update(X_p, P, head=True, hold=False)
+            figure.update(X_p, P, head=True, hold=False)
     
     # display completion
     logger.info('----------------Property Values Obtained----------------\t\n')
     
-    thres_idx = misc.get_index_threshold(P, thres_mode)
+    thres_idx = get_index_threshold(P, thres_mode)
 
     Thres = {}
     Thres['value'] = P[thres_idx[0]]
@@ -138,7 +138,7 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
 
     # update plot
     if plot:
-        plotter.update(X_p, P)
+        figure.update(X_p, P)
 
     # axes dictionary
     Axes = {}
@@ -194,7 +194,7 @@ def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
     if plot:
         if plot_params.get('type', None) is None:
             plot_params['type'] = 'lines'
-        plotter = figure.Plotter(plot_params, X=X, Z=Z)
+        figure = Figure(plot_params, X=X, Z=Z)
 
     # display initialization
     logger.info('Initializing {prop_name} property calculation...\t\n'.format(prop_name=prop_name))
@@ -229,12 +229,12 @@ def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
 
         # update plot
         if plot and plot_prog:
-            plotter.update(X_p, P, head=True, hold=False)
+            figure.update(X_p, P, head=True, hold=False)
     
     # display completion
     logger.info('----------------Property Values Obtained----------------\t\n')
     
-    thres_idx = misc.get_index_threshold(P, thres_mode)
+    thres_idx = get_index_threshold(P, thres_mode)
 
     Thres = {}
     Thres['value'] = P[thres_idx[0]][thres_idx[1]]
@@ -246,7 +246,7 @@ def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
 
     # update plot
     if plot:
-        plotter.update(X_p, P)
+        figure.update(X_p, P)
 
     # axes dictionary
     Axes = {}
@@ -306,7 +306,7 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
     if plot:
         if plot_params.get('type', None) is None:
             plot_params['type'] = 'pcolormesh'
-        plotter = figure.Plotter(plot_params, X=X, Y=Y)
+        figure = Figure(plot_params, X=X, Y=Y)
 
     # display initialization
     logger.info('Initializing {prop_name} property calculation...\t\n'.format(prop_name=prop_name))
@@ -339,12 +339,12 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
 
         # update plot
         if plot and plot_prog:
-            plotter.update(zs=P, head=True, hold=False)
+            figure.update(zs=P, hold=False)
     
     # display completion
     logger.info('----------------Property Values Obtained----------------\t\n')
     
-    thres_idx = misc.get_index_threshold(P, thres_mode)
+    thres_idx = get_index_threshold(P, thres_mode)
 
     Thres = {}
     Thres['value'] = P[thres_idx[0]][thres_idx[1]]
@@ -356,7 +356,7 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
 
     # update plot
     if plot:
-        plotter.update(zs=P)
+        figure.update(zs=P)
 
     # axes dictionary
     Axes = {}
@@ -407,7 +407,7 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
         # get properties
         P_values, Thres, Axes = properties_1D(prop_model, prop_params)
         # calculate gradients
-        Grads = np.gradient(P_values, Axes['X'].val)
+        Grads = np.gradient(P_values, Axes['X'])
         X = StaticAxis(prop_params['X'])
     elif grad_axis == 'Y':
         # get properties
@@ -423,7 +423,7 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
     if plot:
         if plot_params.get('type', None) is None:
             plot_params['type'] = 'line'
-        plotter = figure.Plotter(plot_params, X=X)
+        figure = Figure(plot_params, X=X)
 
     # display initialization
     logger.info('Initializing {prop_name} gradient calculation...\t\n'.format(prop_name=prop_name))
@@ -455,7 +455,7 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
             grad = Grads[i] / grad_params['divisor']
         elif grad_axis == 'Y':
             # get gradient at particular value
-            grad = calculators.get_grad(P_values[i], Axes['X'].val[i], grad_params)
+            grad = get_grad(P_values[i], Axes['X'][i], grad_params)
 
         # update lists for line plot
         X_g[i] = X.val[i]
@@ -463,7 +463,7 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
         
         # update plot
         if plot and plot_prog:
-            plotter.update(X_g, G, head=True, hold=False)
+            figure.update(X_g, G, head=True, hold=False)
     
     # display completion
     logger.info('----------------Gradient Values Obtained----------------\t\n')
@@ -471,7 +471,7 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
     # # display gradient values
     # logger.info('Gradient values: {G}\n'.format(G=G))
     
-    thres_idx = misc.get_index_threshold(G, thres_mode)
+    thres_idx = get_index_threshold(G, thres_mode)
 
     Thres = {}
     Thres['value'] = G[thres_idx[0]]
@@ -482,7 +482,7 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
 
     # update plot
     if plot:
-        plotter.update(X_g, G)
+        figure.update(X_g, G)
 
     # axes dictionary
     Axes = {}
@@ -538,7 +538,7 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
     if plot:
         if plot_params.get('type', None) is None:
             plot_params['type'] = 'lines'
-        plotter = figure.Plotter(plot_params, X=X, Z=Z)
+        figure = Figure(plot_params, X=X, Z=Z)
 
     # for variation in Z
     for j in range(Z.dim):
@@ -553,7 +553,7 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
         if grad_axis == 'X':
             P_values, Thres, Axes = properties_1D(prop_model, prop_params)
             # calculate gradients
-            Grads = np.gradient(P_values, Axes['X'].val)
+            Grads = np.gradient(P_values, Axes['X'])
         elif grad_axis == 'Y':
             # get properties
             P_values, Thres, Axes = properties_2D(prop_model, prop_params)
@@ -586,7 +586,7 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
                 grad = Grads[i] / grad_params['divisor']
             elif grad_axis == 'Y':
                 # get gradient at particular value
-                grad = calculators.get_grad(P_values[i], Axes['X'].val[i], grad_params)
+                grad = get_grad(P_values[i], Axes['X'][i], grad_params)
 
             # update lists for line plot
             X_g[j][i] = X.val[i]
@@ -595,7 +595,7 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
             
             # update plot
             if plot and plot_prog:
-                plotter.update(X_g, G, head=True, hold=False)
+                figure.update(X_g, G, head=True, hold=False)
     
         # display completion
         logger.info('----------------Gradient Values Obtained----------------\t\n')
@@ -603,7 +603,7 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
     # # display gradient values
     # logger.info('Gradient values: {G}\n'.format(G=G))
     
-    thres_idx = misc.get_index_threshold(G, thres_mode)
+    thres_idx = get_index_threshold(G, thres_mode)
 
     Thres = {}
     Thres['value'] = G[thres_idx[0]][thres_idx[1]]
@@ -615,7 +615,7 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
 
     # update plot
     if plot:
-        plotter.update(X_g, G)
+        figure.update(X_g, G)
 
     # axes dictionary
     Axes = {}
@@ -678,7 +678,7 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
     if plot:
         if plot_params.get('type', None) is None:
             plot_params['type'] = 'pcolormesh'
-        plotter = figure.Plotter(plot_params, X=X, Y=Y)
+        figure = Figure(plot_params, X=X, Y=Y)
 
     # display initialization
     logger.info('Initializing {prop_name} gradient calculation...\t\n'.format(prop_name=prop_name))
@@ -715,7 +715,7 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
             
         # update plot
         if plot and plot_prog:
-            plotter.update(zs=G, head=True, hold=False)
+            figure.update(zs=G, hold=False)
     
     # display completion
     logger.info('----------------Gradient Values Obtained----------------\t\n')
@@ -723,7 +723,7 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
     # # display gradient values
     # logger.info('Gradient values: {Grads}\t\n'.format(Grads=Grads))
     
-    thres_idx = misc.get_index_threshold(G, thres_mode)
+    thres_idx = get_index_threshold(G, thres_mode)
 
     Thres = {}
     Thres['value'] = G[thres_idx[0]][thres_idx[1]]
@@ -735,7 +735,7 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
 
     # update plot
     if plot:
-        plotter.update(zs=G)
+        figure.update(zs=G)
 
     # axes dictionary
     Axes = {}

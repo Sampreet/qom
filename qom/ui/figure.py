@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.figure'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-06-16'
-__updated__ = '2020-10-21'
+__updated__ = '2020-10-22'
 
 # dependencies
 import logging
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 # TODO: Rename to Figure.
 
-class Plotter():
+class Figure():
     """Class to plot figures.
     
     Properties
@@ -53,7 +53,7 @@ class Plotter():
         self.__plotter = plotter
 
     def __init__(self, plot_params, X, Y=None, Z=None):
-        """Class constructor for Plotter.
+        """Class constructor for Figure.
         
         Parameters
         ----------

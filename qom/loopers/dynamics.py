@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.dynamics'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-21'
-__updated__ = '2020-10-03'
+__updated__ = '2020-10-22'
 
 # dependencies
 import logging
@@ -16,8 +16,8 @@ import os
 # dev dependencies
 from qom.measures import correlations, differences
 from qom.numerics import solvers
-from qom.ui import figure
-from qom.utils import axis
+from qom.ui import Figure
+from qom.ui.axes import MultiAxis, StaticAxis
 
 # modules logger
 logger = logging.getLogger(__name__)
@@ -75,7 +75,7 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
             Dynamics of the variables for all systems.
 
         Axes : dict
-            Axes points used to calculate the dynamics as :class:`qom.utils.axis.DynamicAxis`.
+            Axes points used to calculate the dynamics as lists.
     """
 
     # extract frequently used variables
@@ -93,17 +93,17 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
         _file_d_prefix += '_' + meas_params['arg_str']
 
     # time axis
-    T = axis.StaticAxis(dyna_params['T'])
+    T = StaticAxis(dyna_params['T'])
 
     # directory and file names for storing data
-    _dir += '\\' + model.code + '\\dynamics\\' + str(T.values[0]) + '_' + str(T.values[-1]) + '_' + str(len(T.values)) + '\\'
+    _dir += '\\' + model.code + '\\dynamics\\' + str(T.val[0]) + '_' + str(T.val[-1]) + '_' + str(T.dim) + '\\'
 
     # variables parameter
     X = None
     if 'X' in meas_params:
-        X = axis.StaticAxis(meas_params['X'])
+        X = MultiAxis(meas_params['X'])
         var_params = {
-            X.var: X.values
+            X.var: X.val
         }
         _v, _c = model.get_ivc_multi(var_params)
     else:
@@ -178,8 +178,7 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
                 _c[key] = _c_todo[key]
 
     # initialize axis
-    _T_d = axis.DynamicAxis([len(T.values)])
-    _T_d.values = T.values 
+    _T_d = T.val 
 
     # all variables
     V_all = list()
@@ -195,7 +194,7 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
         func = getattr(model, 'f_multi_' + solver_type)
 
         # calculate dynamics
-        _, V = solvers.solve_ode_scipy(func, solver_type, T.values, _v, _c)
+        _, V = solvers.solve_ode_scipy(func, solver_type, T.val, _v, _c)
 
         # display completion
         logger.info('----------------System Dynamics Obtained----------------\n')
@@ -208,12 +207,12 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
             # extract dynamics of individual system
             # update lists
             _V_s = V[:, _n_v * i : _n_v * i + _n_v]
-            _D_s = axis.DynamicAxis([len(T.values)])
+            _D_s = np.zeros([T.dim])
             # calculate measures for individual system
             if meas_params['type'] == 'corr':
-                _D_s.values = correlations.calculate(_V_s, meas_params)
+                _D_s = correlations.calculate(_V_s, meas_params)
             elif meas_params['type'] == 'diff':
-                _D_s.values = differences.calculate(_V_s, meas_params)
+                _D_s = differences.calculate(_V_s, meas_params)
 
             # if caching is enabled
             if _cache:
@@ -226,17 +225,17 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
                 # save system dynamics data to file
                 np.save(_dir + _file_v, np.array(_V_s))
                 # save measure dynamics data to file
-                np.save(_dir + _file_d, np.array(_D_s.values)) 
+                np.save(_dir + _file_d, np.array(_D_s)) 
 
             else:
                 # update lists
                 V_all.append(_V_s)
-                D_all.append(_D_s.values)  
+                D_all.append(_D_s.val)  
 
                 # display plot
                 if plot:
-                    plotter = figure.Plotter(plot_params, X=T)
-                    plotter.update(_T_d, _D_s)
+                    figure = Figure(plot_params, X=T)
+                    figure.update(_T_d, _D_s)
             
         # display completion
         logger.info('----------------Measure Dynamics Obtained---------------\n') 
@@ -247,22 +246,21 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
     if _cache:
         for i in range(_n_s):
             _V_s = np.load(_dir + _file_vs[i] + '.npy').tolist()
-            _D_s = axis.DynamicAxis([len(T.values)])
-            _D_s.values = np.load(_dir + _file_ds[i] + '.npy').tolist()
+            _D_s = np.load(_dir + _file_ds[i] + '.npy').tolist()
             V_all.append(_V_s)
-            D_all.append(_D_s.values)
+            D_all.append(_D_s)
 
             # display plot
             if plot:
                 if X != None:
                     plot_params['legend'] = X.legends[i]
-                plotter = figure.Plotter(plot_params, X=T)
-                plotter.update(_T_d, _D_s)
+                figure = Figure(plot_params, X=T)
+                figure.update(_T_d, _D_s)
 
     # axes dictionary
     Axes = {}
     Axes['T'] = _T_d
     if X != None:
-        Axes['X'] = X
+        Axes['X'] = X.val
 
     return D_all, V_all, Axes    

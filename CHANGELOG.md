@@ -1,7 +1,21 @@
 # Changelog
 
+## v0.5.0 - 2020/10/22 - 00 - Revamped Figure
+* Updated `qom/ui/loopers` modules with axis classes.
+* Added axis classes to `qom/ui/axes`:
+    * `DynamicAxis` handles variable axis.
+    * `MultiAxis` handles multi 1D plots.
+    * `StaticAxis` handles the static axes.
+* Updated `qom/ui/plotters`:
+    * Changed `BasePlotter` to handle axis classes.
+    * Added `MPLPlotter` to handle `matplotlib` and axis classes.
+    * Moved previous versions to `qom_legacy/ui/plotters`.
+* Renamed `Plotter` to `Figure` class in `qom/ui/figure` module.
+* Moved `qom/utils/axis` module to `qom_legacy/utils`.
+* Updated `examples/qom_loopers_properties`.
+
 ## v0.4.9 - 2020/10/19 - 00 - Minor Fixes
-* Minor fixes to  `qom/ui/plotters` and `qom/utils`.
+* Minor fixes to `qom/ui/plotters` and `qom/utils`.
 * Initialized axes classes in `qom_experimental/ui/axes`.
 
 ## v0.4.9 - 2020/10/09 - 00 - Added Contour Plot
