@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.figure'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-06-16'
-__updated__ = '2020-10-06'
+__updated__ = '2020-10-21'
 
 # dependencies
 import logging
@@ -17,7 +17,7 @@ from qom.ui.plotters import *
 # module logger
 logger = logging.getLogger(__name__)
 
-# TODO: Add platform-based features.
+# TODO: Rename to Figure.
 
 class Plotter():
     """Class to plot figures.
@@ -60,13 +60,13 @@ class Plotter():
             plot_params : dict
                 Parameters of the plot.
 
-            X : :class:`qom.utils.axis.StaticAxis`
+            X : :class:`qom.ui.axes.*`
                 X-axis data.
 
-            Y : :class:`qom.utils.axis.StaticAxis`, optional
+            Y : :class:`qom.ui.axes.*`, optional
                 Y-axis data.
 
-            Z : :class:`qom.utils.axis.StaticAxis`, optional
+            Z : :class:`qom.ui.axes.*`, optional
                 Z-axis data.
         """
         
@@ -78,24 +78,24 @@ class Plotter():
         }
         
         # matplotlib plotter
-        self.plotter = PlotterMPL(plot_params, Axes) 
+        self.plotter = MPLPlotter(plot_params, Axes) 
 
         # display initialization
         logger.info('----------------------------Figure Initialized-------------------\t\n')
 
-    def update(self, X=None, Y=None, Z=None, head=False, hold=True):
+    def update(self, xs=None, ys=None, zs=None, head=False, hold=True):
         """Function to update plot.
         
         Parameters
         ----------
-            X : list, optional
-                X-axis data as :class:`qom.utils.axis.DynamicAxis`.
+            xs : list or numpy.ndarray, optional
+                X-axis data.
                 
-            Y : list, optional
-                Y-axis data as :class:`qom.utils.axis.DynamicAxis`.
+            ys : list or numpy.ndarray, optional
+                Y-axis data.
                 
-            Z : list, optional
-                Z-axis data as :class:`qom.utils.axis.DynamicAxis`.
+            zs : list or numpy.ndarray, optional
+                Z-axis data.
 
             head : boolean, optional
                 Option to display the head for line-type plots. Default is False.
@@ -105,7 +105,7 @@ class Plotter():
         """
 
         # update plot
-        self.__plotter.update(X, Y, Z, head)
+        self.__plotter.update(xs, ys, zs, head)
             
         # update log
         logger.info('------------------------------Figure Updated---------------------\t\n')

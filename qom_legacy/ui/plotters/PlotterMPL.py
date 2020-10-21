@@ -3,10 +3,10 @@
  
 """Class to handle matplotlib plots."""
 
-__name__    = 'qom.ui.plotters.PlotterMPL'
+__name__    = 'qom_legacy.ui.plotters.PlotterMPL'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2020-10-19'
+__updated__ = '2020-10-21'
 
 # dependencies
 from matplotlib.colors import Normalize
@@ -17,8 +17,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # dev dependencies
-from qom.ui.plotters.BasePlotter import BasePlotter
-from qom.utils.axis import StaticAxis
+from qom_legacy.ui.plotters.BasePlotter import BasePlotter
+from qom_legacy.utils.axis import StaticAxis
 from qom.utils.misc import get_limits
 
 # module logger

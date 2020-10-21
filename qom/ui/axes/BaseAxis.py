@@ -3,10 +3,10 @@
  
 """Class to interface axes."""
 
-__name__    = 'qom_experimental.ui.axes.BaseAxis'
+__name__    = 'qom.ui.axes.BaseAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-10'
-__updated__ = '2020-10-19'
+__updated__ = '2020-10-21'
 
 # dependencies
 import logging
@@ -14,6 +14,8 @@ import numpy as np
 
 # module logger
 logger = logging.getLogger(__name__)
+
+# TODO: Randomize colors, styles and sizes.
 
 class BaseAxis():
     """Class to interface axes.
@@ -37,6 +39,13 @@ class BaseAxis():
         unit : list
             Display unit of the axis.
 
+        bound : str
+            Option to check user-defined bounds:
+                'none' : Not bounded.
+                'lower' : Lower bound.
+                'upper' : Upper bound.
+                'both' : Both lower and upper bound.
+ 
         ticks : list
             Values of the axis ticks.
 
@@ -180,6 +189,38 @@ class BaseAxis():
         self.__unit = unit
 
     @property
+    def bound(self):
+        """Property bound.
+
+        Returns
+        -------
+            bound : str
+                Option to check user-defined bounds:
+                    'none' : Not bounded.
+                    'lower' : Lower bound.
+                    'upper' : Upper bound.
+                    'both' : Both lower and upper bound.
+        """
+
+        return self.__bound
+
+    @bound.setter
+    def bound(self, bound):
+        """Setter for bound.
+
+        Parameters
+        ----------
+            bound : str
+                Option to check user-defined bounds:
+                    'none' : Not bounded.
+                    'lower' : Lower bound.
+                    'upper' : Upper bound.
+                    'both' : Both lower and upper bound.
+        """
+
+        self.__bound = bound
+
+    @property
     def ticks(self):
         """Property ticks.
 
@@ -196,6 +237,7 @@ class BaseAxis():
         """Setter for ticks.
 
         Parameters
+        ----------
             ticks : list
                 Ticks of the axis.
         """
@@ -219,6 +261,7 @@ class BaseAxis():
         """Setter for tick_labels.
 
         Parameters
+        ----------
             tick_labels : list
                 Tick labels of the axis.
         """
@@ -367,7 +410,7 @@ class BaseAxis():
             }
 
         # validate parameter
-        assert type(axis_data) is dict, "Axis data is not a dictionary."
+        assert type(axis_data) is dict, 'Axis data is not a dictionary.'
 
         # frequently used variables
         _min = -1
@@ -380,6 +423,8 @@ class BaseAxis():
             self.val = _val
         else:
             self.val = self.init_array(axis_data.get('min', _min), axis_data.get('max', _max), axis_data.get('dim', _dim))
+        _min = min(self.val)
+        _max = max(self.val)
 
         # set dim
         self.dim = len(self.val)
@@ -391,43 +436,29 @@ class BaseAxis():
         _ticks = axis_data.get('ticks', [])
         if type(_ticks) is list and len(_ticks) != 0:
             self.ticks = _ticks
+            self.bound = 'both'
         else:
-            self.ticks = self.init_array(axis_data.get('tick_min', self.val[0]), axis_data.get('tick_max', self.val[-1]), axis_data.get('tick_dim', self.dim))
+            self.ticks = self.init_array(axis_data.get('tick_min', _min), axis_data.get('tick_max', _max), axis_data.get('tick_dim', _dim))
+            if 'tick_min' in axis_data and 'tick_max' in axis_data:
+                self.bound = 'both'
+            elif 'tick_min' in axis_data:
+                self.bound = 'lower'
+            elif 'tick_max' in axis_data:
+                self.bound = 'upper'
+            else:
+                self.bound = 'none'
 
         # set tick labels
         _tick_labels = axis_data.get('tick_labels', [])
         if type(_tick_labels) is list and len(_tick_labels) != 0:
             self.tick_labels = _tick_labels
+            self.bound = 'both'
         else:
             self.tick_labels = self.ticks 
 
         # supersede tick labels over ticks
         if len(self.tick_labels) != len(self.ticks):
-            self.ticks = self.init_array(axis_data.get('tick_min', self.val[0]), axis_data.get('tick_max', self.val[-1]), len(self.tick_labels))
-
-        # set colors
-        _colors = axis_data.get('colors', [])
-        if type(_colors) is list or len(_colors) != 0:
-            self.colors = _colors
-        else:
-            self.colors = ['r' for i in range(len(self.val))]
-            return
-
-        # set styles
-        _styles = axis_data.get('styles', [])
-        if type(_styles) is list or len(_styles) != 0:
-            self.styles = _styles
-        else:
-            self.styles = ['-' for i in range(len(self.val))]
-            return
-
-        # set sizes
-        _sizes = axis_data.get('sizes', [])
-        if type(_sizes) is list or len(_sizes) != 0:
-            self.sizes = _sizes
-        else:
-            self.sizes = ['-' for i in range(len(self.val))]
-            return
+            self.ticks = self.init_array(1, len(self.tick_labels), len(self.tick_labels))
 
     def init_array(self, mini, maxi, num):
         """Function to initialize an array given a range and number of elements.

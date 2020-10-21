@@ -3,17 +3,17 @@
  
 """Class to handle a dynamic axis."""
 
-__name__    = 'qom_experimental.ui.axes.DynamicAxis'
+__name__    = 'qom.ui.axes.DynamicAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-17'
-__updated__ = '2020-10-19'
+__updated__ = '2020-10-21'
 
 # dependencies
 import logging
 import numpy as np
 
 # dev dependencies
-from qom_experimental.ui.axes.BaseAxis import BaseAxis
+from qom.ui.axes.BaseAxis import BaseAxis
 
 # module logger
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ class DynamicAxis(BaseAxis):
     Inherits :class:`qom.ui.axes.BaseAxis`.
     """
 
-    def __init__(self, axis_data):
+    def __init__(self, axis_data={}):
         """Class constructor for DynamicAxis.
 
         Parameters
@@ -40,10 +40,10 @@ class DynamicAxis(BaseAxis):
         self.var = axis_data.get('var', 'dynamic_axis')
 
         # set name
-        self.name = axis_data.get('name', self.var)
+        self.name = axis_data.get('name', '')
 
         # set unit
         self.unit = axis_data.get('unit', '')
 
         # set label
-        self.label = self.name + ' (' + self.unit + ')'
+        self.label = self.name + ' (' + self.unit + ')' if self.unit != '' else self.name
