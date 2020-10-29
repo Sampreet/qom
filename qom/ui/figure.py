@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Module to display figures."""
+"""Class to plot figures."""
 
-__name__    = 'qom.ui.figure'
+__name__    = 'qom.ui.Figure'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-06-16'
-__updated__ = '2020-10-22'
+__updated__ = '2020-10-23'
 
 # dependencies
 import logging

@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.5.0 - 2020/10/23 - 00 - Minor Fixes.
+* Updated `examples/qom_looper_properties`.
+* Renamed `qom/ui/figure` to `qom/ui/Figure`.
+* Minor fixes to `qom/ui/plotters`.
+
 ## v0.5.0 - 2020/10/22 - 00 - Revamped Figure
 * Updated `qom/ui/loopers` modules with axis classes.
 * Added axis classes to `qom/ui/axes`:

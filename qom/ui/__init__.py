@@ -1,1 +1,1 @@
-from qom.ui.figure import Figure
+from qom.ui.Figure import Figure

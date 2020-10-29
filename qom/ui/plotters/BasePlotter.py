@@ -3,13 +3,14 @@
  
 """Class to interface plots."""
 
-__name__    = 'qom_legacy.ui.plotters.BasePlotter'
+__name__    = 'qom.ui.plotters.BasePlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-06'
-__updated__ = '2020-10-09'
+__updated__ = '2020-10-23'
 
 # dependencies
 import logging
+import numpy as np
 import seaborn as sns
 
 # dev dependencies
@@ -169,7 +170,7 @@ class BasePlotter():
         _supported_axes = [list, dict, DynamicAxis, MultiAxis, StaticAxis]
         # X-axis
         _X = Axes.get('X', StaticAxis())
-        assert type(_X) in _supported_axes or _X is None, 'Axes should either be lists or qom.ui.axes.* or None'
+        assert type(_X) in _supported_axes or _X is None, 'Axes should either be lists, dicts or qom.ui.axes.* or None'
         if _X is None:
             _X = {}
         elif type(_X) is list:
@@ -178,7 +179,7 @@ class BasePlotter():
             _X = StaticAxis(_X)
         # y-axis
         _Y = Axes.get('Y', DynamicAxis() if _type in self.plot_types_1D else StaticAxis())
-        assert type(_Y) in _supported_axes or _Y is None, 'Axes should either be lists or qom.ui.axes.* or None'
+        assert type(_Y) in _supported_axes or _Y is None, 'Axes should either be lists, dicts or qom.ui.axes.* or None'
         if _Y is None:
             _Y = {}
         elif type(_Y) is list:
@@ -187,7 +188,7 @@ class BasePlotter():
             _Y = DynamicAxis({'val': _Y}) if _type in self.plot_types_1D else StaticAxis({'val': _Y})
         # z-axis
         _Z = Axes.get('Z', MultiAxis() if _type in self.plot_types_1D else DynamicAxis())
-        assert type(_Z) in _supported_axes or _Z is None, 'Axes should either be lists or qom.ui.axes.* or None'
+        assert type(_Z) in _supported_axes or _Z is None, 'Axes should either be lists, dicts or qom.ui.axes.* or None'
         if _Z is None:
             _Z = {}
         elif type(_Z) is list:
@@ -253,3 +254,55 @@ class BasePlotter():
         }
 
         return _font_dict
+
+    def get_limits(self, mini, maxi, res=2):
+        """Function to get limits from the minimum and maximum values of an array upto a certain resolution.
+
+        Parameters
+        ----------
+            mini : list  
+                Minimum value of the array.
+            
+            maxi : list  
+                Maximum value of the array.
+
+            res : int
+                Resolution after the first significant digit in the decimal number system.
+
+        Returns
+        -------
+            mini : float
+                Formatted minimum value.
+
+            maxi : float
+                Formatted maximum value.
+
+            prec : int
+                Precision of rounding off.
+        """
+
+        # get minimum maximum
+        _mini = mini
+        _maxi = maxi
+        _mult_min = 10**res
+        _mult_max = 10**res
+
+        # handle negative values
+        if _mini < 0:
+            _mini *= - 1
+        if _maxi < 0:
+            _maxi *= - 1
+
+        # update multiplier
+        if _mini != 0 :
+            _mult_min = 10**(np.ceil(-np.log10(_mini)) + res - 1)
+        if _maxi != 0:
+            _mult_max = 10**(np.ceil(-np.log10(_maxi)) + res - 1)
+        _mult = min(10**res, min(_mult_min, _mult_max))
+
+        # round off
+        _mini = np.floor(mini * _mult) / _mult
+        _maxi = np.ceil(maxi * _mult) / _mult
+        _prec = int(np.round(np.log10(_mult)))
+
+        return _mini, _maxi, _prec

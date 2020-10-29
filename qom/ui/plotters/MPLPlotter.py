@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2020-10-21'
+__updated__ = '2020-10-23'
 
 # dependencies
 from matplotlib.colors import Normalize
@@ -19,11 +19,11 @@ import numpy as np
 # dev dependencies
 from qom.ui.axes.StaticAxis import StaticAxis
 from qom.ui.plotters.BasePlotter import BasePlotter
-from qom.utils.misc import get_limits
 
 # module logger
 logger = logging.getLogger(__name__)
 
+# TODO: Change attributes to properties.
 # TODO: Add annotations.
 # TODO: Options for lower and upper bounds.
 # TODO: Options for `ticklabel_format`.
@@ -339,7 +339,7 @@ class MPLPlotter(BasePlotter):
 
         # set limits
         _mini, _maxi = min(_minis), max(_maxis)
-        _mini, _maxi, _prec = get_limits(_mini, _maxi, res=1)
+        _mini, _maxi, _prec = super().get_limits(_mini, _maxi, res=1)
         _ticks = self.axes['Y'].ticks
         _tick_labels = self.axes['Y'].tick_labels
         if self.axes['Y'].bound == 'none':
@@ -370,7 +370,7 @@ class MPLPlotter(BasePlotter):
         # handle NaN values
         _no_nan = [z if z == z else 0 for z in _rave]
         _mini, _maxi = min(_no_nan), max(_no_nan)
-        _mini, _maxi, _ = get_limits(_mini, _maxi, res=1)
+        _mini, _maxi, _ = super().get_limits(_mini, _maxi, res=1)
 
         # contour and contourf plots
         if 'contour' in _type:
@@ -430,7 +430,7 @@ class MPLPlotter(BasePlotter):
         _X, _Y = np.meshgrid(self.axes['X'].val, self.axes['Y'].val)
         _Z = np.array(zs) if type(zs) is list else zs
         _mini, _maxi = min(_Z.ravel()), max(_Z.ravel())
-        _mini, _maxi, _ = get_limits(_mini, _maxi, res=1)
+        _mini, _maxi, _ = super().get_limits(_mini, _maxi, res=1)
 
         # surface plot
         if 'surface'in _type:
