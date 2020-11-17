@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.5.1 - 2020/11/17 - 00 - Intermediate Commit.
+* Updated `qom/loopers/measures` and `qom/loopers/properties` modules.
+* Minor fixes to `qom/ui/plotters`.
+
 ## v0.5.0 - 2020/10/23 - 00 - Minor Fixes.
 * Updated `examples/qom_looper_properties`.
 * Renamed `qom/ui/figure` to `qom/ui/Figure`.

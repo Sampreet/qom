@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.measures'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-23'
-__updated__ = '2020-10-22'
+__updated__ = '2020-11-17'
 
 # dependencies
 import logging
@@ -76,13 +76,13 @@ def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
     """
 
     # extract frequently used variables
-    avg_mode    = meas_params['avg_mode']
-    avg_type    = meas_params['avg_type']
+    span_mode    = meas_params['span_mode']
+    calc_mode    = meas_params['calc_mode']
     thres_mode  = meas_params.get('thres_mode', 'max_min')
     plot_prog   = plot_params.get('progress', False) if plot_params != None else False
 
     # get dynamics
-    D_all, _, Axes = dynamics.dynamics_measure(model, dyna_params, meas_params)
+    D_all, _, Axes = dynamics.dynamics_measure(model, dyna_params, meas_params, plot_prog, plot_params)
     X = StaticAxis({'val': Axes['X']})
 
     # initialize variables
@@ -110,21 +110,23 @@ def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
         # initialize value
         m = 0
 
-        # calculate average value
-        if avg_mode == 'all':
-            m = np.mean(D_all[i])
-        elif avg_mode == 'end' and avg_type == 'min_max':
+        # calculate span
+        if span_mode == 'all':
+            arr = D_all[i]
+        elif span_mode == 'end':
             arr = D_all[i][-meas_params['span']:]
-            m = (max(arr) + min(arr)) / 2
-        elif avg_mode == 'range' and avg_type == 'min_max':
+        elif span_mode == 'range':
             arr = D_all[i][meas_params['start']:meas_params['stop']]
-            m = (max(arr) + min(arr)) / 2
-        elif avg_mode == 'end' and avg_type == 'mean':
-            arr = D_all[i][-meas_params['span']:]
+
+        # calculate measures
+        if calc_mode == 'mean':
             m = np.mean(arr)
-        elif avg_mode == 'range' and avg_type == 'mean':
-            arr = D_all[i][meas_params['start']:meas_params['stop']]
-            m = np.mean(arr)
+        elif calc_mode == 'max':
+            m = np.max(arr)
+        elif calc_mode == 'min':
+            m = np.min(arr)
+        elif calc_mode == 'min_max':
+            m = (np.max(arr) + np.min(arr)) / 2
     
         # update list
         X_m[i] = X.val[i]
@@ -189,8 +191,8 @@ def measures_1D_multi(model, dyna_params, meas_params, plot=False, plot_params=N
     """
 
     # extract frequently used variables
-    avg_mode    = meas_params['avg_mode']
-    avg_type    = meas_params['avg_type']
+    span_mode    = meas_params['span_mode']
+    calc_mode    = meas_params['calc_mode']
     thres_mode  = meas_params.get('thres_mode', 'max_min')
     plot_prog   = plot_params.get('progress', False) if plot_params != None else False
     X           = StaticAxis(meas_params['X'])
@@ -217,7 +219,7 @@ def measures_1D_multi(model, dyna_params, meas_params, plot=False, plot_params=N
         model.params[Z.var] = Z.val[j]
 
         # get dynamics
-        D_all, _, Axes = dynamics.dynamics_measure(model, dyna_params, meas_params)
+        D_all, _, Axes = dynamics.dynamics_measure(model, dyna_params, meas_params, plot_prog, plot_params)
 
         # for variation in X
         for i in range(X.dim):
@@ -230,21 +232,23 @@ def measures_1D_multi(model, dyna_params, meas_params, plot=False, plot_params=N
             # initialize value
             m = 0
 
-            # calculate average value
-            if avg_mode == 'all':
-                m = np.mean(D_all[i])
-            elif avg_mode == 'end' and avg_type == 'min_max':
+            # calculate span
+            if span_mode == 'all':
+                arr = D_all[i]
+            elif span_mode == 'end':
                 arr = D_all[i][-meas_params['span']:]
-                m = (max(arr) + min(arr)) / 2
-            elif avg_mode == 'range' and avg_type == 'min_max':
+            elif span_mode == 'range':
                 arr = D_all[i][meas_params['start']:meas_params['stop']]
-                m = (max(arr) + min(arr)) / 2
-            elif avg_mode == 'end' and avg_type == 'mean':
-                arr = D_all[i][-meas_params['span']:]
+
+            # calculate measures
+            if calc_mode == 'mean':
                 m = np.mean(arr)
-            elif avg_mode == 'range' and avg_type == 'mean':
-                arr = D_all[i][meas_params['start']:meas_params['stop']]
-                m = np.mean(arr)
+            elif calc_mode == 'max':
+                m = np.max(arr)
+            elif calc_mode == 'min':
+                m = np.min(arr)
+            elif calc_mode == 'min_max':
+                m = (np.max(arr) + np.min(arr)) / 2
         
             # update list
             X_m[j][i] = X.val[i]
@@ -312,8 +316,8 @@ def measures_2D(model, dyna_params, meas_params, plot, plot_params):
     """
 
     # extract frequently used variables
-    avg_mode    = meas_params['avg_mode']
-    avg_type    = meas_params['avg_type']
+    span_mode    = meas_params['span_mode']
+    calc_mode    = meas_params['calc_mode']
     thres_mode  = meas_params.get('thres_mode', 'max_min')
     plot_prog   = plot_params.get('progress', False) if plot_params != None else False
     X           = StaticAxis(meas_params['X'])
@@ -343,7 +347,7 @@ def measures_2D(model, dyna_params, meas_params, plot, plot_params):
         model.params[Y.var] = Y.val[j]
 
         # get dynamics
-        D_all, _, Axes = dynamics.dynamics_measure(model, dyna_params, meas_params)
+        D_all, _, Axes = dynamics.dynamics_measure(model, dyna_params, meas_params, plot_prog, plot_params)
 
         # for variation in X
         for i in range(X.dim):
@@ -355,21 +359,23 @@ def measures_2D(model, dyna_params, meas_params, plot, plot_params):
             # initialize value
             m = 0
 
-            # calculate average value
-            if avg_mode == 'all':
-                m = np.mean(D_all[i])
-            elif avg_mode == 'end' and avg_type == 'min_max':
+            # calculate span
+            if span_mode == 'all':
+                arr = D_all[i]
+            elif span_mode == 'end':
                 arr = D_all[i][-meas_params['span']:]
-                m = (max(arr) + min(arr)) / 2
-            elif avg_mode == 'range' and avg_type == 'min_max':
+            elif span_mode == 'range':
                 arr = D_all[i][meas_params['start']:meas_params['stop']]
-                m = (max(arr) + min(arr)) / 2
-            elif avg_mode == 'end' and avg_type == 'mean':
-                arr = D_all[i][-meas_params['span']:]
+
+            # calculate measures
+            if calc_mode == 'mean':
                 m = np.mean(arr)
-            elif avg_mode == 'range' and avg_type == 'mean':
-                arr = D_all[i][meas_params['start']:meas_params['stop']]
-                m = np.mean(arr)
+            elif calc_mode == 'max':
+                m = np.max(arr)
+            elif calc_mode == 'min':
+                m = np.min(arr)
+            elif calc_mode == 'min_max':
+                m = (np.max(arr) + np.min(arr)) / 2
         
             # update list
             X_m[j][i] = X.val[i]

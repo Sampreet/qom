@@ -23,7 +23,7 @@ from qom.utils.misc import get_index_threshold
 logger = logging.getLogger(__name__)
 
 # TODO: Handle scatter plots for gradient functions.
-# TODO: Handle multi-value points for 2D functions.
+# TODO: Handle multi-value points for 1D and 2D functions.
 # TODO: Implement 3D plots.
 # TODO: Verify parametes.
 
@@ -113,8 +113,11 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
 
         # update lists for scatter plot
         if type(p) == list:
-            X_p += [X.val[i] for l in range(len(p))]
-            P += p
+            X_p[i] = X.val[i]
+            P[i] = p[0]
+            if len(p) > 1:
+                X_p = np.concatenate((X_p, [X.val[i] for l in range(len(p) - 1)]))
+                P = np.concatenate((P, p[1:]))
         # update lists for line plot
         else:
             X_p[i] = X.val[i]
@@ -131,7 +134,7 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
 
     Thres = {}
     Thres['value'] = P[thres_idx[0]]
-    Thres[X.var] = X.val[thres_idx[0]]
+    Thres[X.var] = X_p[thres_idx[0]]
 
     # display threshold values
     logger.info('Threshold values: {Thres}\t\n'.format(Thres=Thres))

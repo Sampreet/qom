@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.BasePlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-06'
-__updated__ = '2020-10-23'
+__updated__ = '2020-11-17'
 
 # dependencies
 import logging
@@ -160,6 +160,7 @@ class BasePlotter():
             },
             'cbar': {
                 'show': plot_params.get('show_cbar', True),
+                'title': plot_params.get('cbar_title', ''),
                 'label': plot_params.get('cbar_label', ''),
                 'ticks': plot_params.get('cbar_ticks', None),
                 'tick_labels': plot_params.get('cbar_tick_labels', None)

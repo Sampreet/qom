@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2020-10-23'
+__updated__ = '2020-11-17'
 
 # dependencies
 from matplotlib.colors import Normalize
@@ -191,9 +191,11 @@ class MPLPlotter(BasePlotter):
             else:
                 _sm = self.plot
             self.cbar = plt.colorbar(_sm)
-            # labels
+            # set title
+            self.cbar.ax.set_title(self.plot_params['cbar']['title'], fontproperties=self.__get_font_props(_font_dicts['label']))
+            # set label
             self.cbar.ax.set_xlabel(self.plot_params['cbar']['label'], labelpad=_font_dicts['tick']['size'] + 12, fontproperties=self.__get_font_props(_font_dicts['label']))
-            # ticks
+            # set ticks
             _ticks = self.plot_params['cbar']['ticks']
             if _ticks is None:
                 _ticks = np.linspace(0, 1, 6)
@@ -238,9 +240,11 @@ class MPLPlotter(BasePlotter):
         # add color bar
         if self.plot_params['cbar']['show']:
             self.cbar = plt.colorbar(self.plot)
-            # labels
+            # set title
+            self.cbar.ax.set_title(self.plot_params['cbar']['title'], fontproperties=self.__get_font_props(_font_dicts['label']))
+            # set label
             self.cbar.ax.set_xlabel(self.plot_params['cbar']['label'], labelpad=_font_dicts['tick']['size'] + 12, fontproperties=self.__get_font_props(_font_dicts['label']))
-            # ticks
+            # set ticks
             plt.setp(self.cbar.ax.get_yticklabels(), fontproperties=self.__get_font_props(_font_dicts['tick']))
             _ticks = self.plot_params['cbar']['ticks']
             if _ticks is not None:
@@ -370,7 +374,7 @@ class MPLPlotter(BasePlotter):
         # handle NaN values
         _no_nan = [z if z == z else 0 for z in _rave]
         _mini, _maxi = min(_no_nan), max(_no_nan)
-        _mini, _maxi, _ = super().get_limits(_mini, _maxi, res=1)
+        _mini, _maxi, _ = super().get_limits(_mini, _maxi, res=2)
 
         # contour and contourf plots
         if 'contour' in _type:
@@ -392,6 +396,8 @@ class MPLPlotter(BasePlotter):
                 _sm = plt.cm.ScalarMappable(cmap=_cmap, norm=Normalize(vmin=_mini, vmax=_maxi))
                 _sm.set_array([])
                 self.cbar = plt.colorbar(_sm, cax=self.cbar.ax)
+                # update title
+                self.cbar.ax.set_title(self.plot_params['cbar']['title'], fontproperties=self.__get_font_props(_font_dicts['label']))
                 # update label
                 self.cbar.ax.set_xlabel(self.plot_params['cbar']['label'], labelpad=_font_dicts['tick']['size'] + 12, fontproperties=self.__get_font_props(_font_dicts['label']))
                 # update ticks
