@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.BasePlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-06'
-__updated__ = '2020-11-17'
+__updated__ = '2020-12-02'
 
 # dependencies
 import logging
@@ -20,6 +20,7 @@ from qom.ui.axes import *
 logger = logging.getLogger(__name__)
 
 # TODO: Handle legends.
+# TODO: Fix get_limits.
 
 class BasePlotter():
     """Class to interface plots.
@@ -31,15 +32,23 @@ class BasePlotter():
                 'line' : Line plot.
                 'lines' : Multi-line plot.
                 'scatter' : Scatter plot.
-                'scatters' : Multi-scatter plot
+                'scatters' : Multi-scatter plot.
 
         plot_types_2D : list
             List of supported 2D plots:
+                'contour' : Contour plot.
+                'contourf' : Filled contour plot.
                 'pcolormesh' : Color plot.
         
         plot_types_3D : list
             List of supported 3D plots:
                 'surface' : Surface plot.
+                'surface_cx' : Surface plot with contours on y-z plane.
+                'surface_cy' : Surface plot with contours on z-x plane.
+                'surface_cz' : Surface plot with contours on x-y plane.
+
+        bins : int
+            Number of bins for color map.
 
         cmaps : dict 
             Dictionary of supported maps for 2D and 3D color plots.
@@ -114,6 +123,8 @@ class BasePlotter():
 
     def __init__(self, plot_params, Axes):
         """Class constructor for MPLPlotter.
+
+        Initializes `plot_params` and `axes` properties.
         
         Parameters
         ----------
@@ -156,46 +167,48 @@ class BasePlotter():
 
             },
             'legend': {
-                'show': plot_params.get('show_legend', False)
+                'show': plot_params.get('show_legend', False),
+                'location': plot_params.get('legend_location', 'best')
             },
             'cbar': {
                 'show': plot_params.get('show_cbar', True),
                 'title': plot_params.get('cbar_title', ''),
-                'label': plot_params.get('cbar_label', ''),
+                'x_label': plot_params.get('cbar_x_label', ''),
+                'y_label': plot_params.get('cbar_y_label', ''),
                 'ticks': plot_params.get('cbar_ticks', None),
-                'tick_labels': plot_params.get('cbar_tick_labels', None)
+                'tick_labels': plot_params.get('cbar_tick_labels', None),
             }
         }
         
-        # convert axes if supported
-        _supported_axes = [list, dict, DynamicAxis, MultiAxis, StaticAxis]
-        # X-axis
-        _X = Axes.get('X', StaticAxis())
-        assert type(_X) in _supported_axes or _X is None, 'Axes should either be lists, dicts or qom.ui.axes.* or None'
+        # list of supported axes
+        _supported_axes = [DynamicAxis, MultiAxis, StaticAxis]
+
+        # get X-axis
+        _X = Axes.get('X', {})
+        # handle NoneType
         if _X is None:
             _X = {}
-        elif type(_X) is list:
-            _X = {'val': _X}
-        if type(_X) is dict:
+        # if not in supported axis, convert to StaticAxis
+        if type(_X) not in _supported_axes:
             _X = StaticAxis(_X)
-        # y-axis
-        _Y = Axes.get('Y', DynamicAxis() if _type in self.plot_types_1D else StaticAxis())
-        assert type(_Y) in _supported_axes or _Y is None, 'Axes should either be lists, dicts or qom.ui.axes.* or None'
+
+        # get Y-axis
+        _Y = Axes.get('Y', {})
+        # handle NoneType
         if _Y is None:
             _Y = {}
-        elif type(_Y) is list:
-            _Y = {'val': _Y}
-        if type(_Y) is dict:
-            _Y = DynamicAxis({'val': _Y}) if _type in self.plot_types_1D else StaticAxis({'val': _Y})
-        # z-axis
-        _Z = Axes.get('Z', MultiAxis() if _type in self.plot_types_1D else DynamicAxis())
-        assert type(_Z) in _supported_axes or _Z is None, 'Axes should either be lists, dicts or qom.ui.axes.* or None'
+        # if not in supported axis, convert to DynamicAxis if 1D plot, else StaticAxis
+        if type(_Y) not in _supported_axes:
+            _Y = DynamicAxis(_Y) if _type in self.plot_types_1D else StaticAxis(_Y)
+
+        # get Z-axis
+        _Z = Axes.get('Z', {})
+        # handle NoneType
         if _Z is None:
             _Z = {}
-        elif type(_Z) is list:
-            _Z = {'val': _Z}
-        if type(_Z) is dict:
-            _Z = MultiAxis({'val': _Z}) if _type in self.plot_types_1D else DynamicAxis({'val': _Z})
+        # if not in supported axis, convert to MultiAxis if 1D plot, else DynamicAxis
+        if type(_Z) not in _supported_axes:
+            _Z = DynamicAxis(_Z) if _type in self.plot_types_1D else StaticAxis(_Z)
 
         # set axes
         self.axes = {
@@ -204,15 +217,19 @@ class BasePlotter():
             'Z': _Z
         }
 
-        # supersede plot_params over axis ticks
+        # supersede plot_params over axis data
         for axis in ['X', 'Y', 'Z']:
+            # set axis label
             _label = self.plot_params[axis]['label']
             if _label != '':
                 self.axes[axis].label = _label
+            # set ticks and tick labels
             _ticks = self.plot_params[axis]['ticks']
             if _ticks is not None:
                 self.axes[axis].ticks = _ticks
                 self.axes[axis].bound = 'both'
+                self.axes[axis].tick_labels = _ticks
+            # update tick labels
             _tick_labels = self.plot_params[axis]['tick_labels']
             if _tick_labels is not None:
                 self.axes[axis].tick_labels = _tick_labels
@@ -227,8 +244,8 @@ class BasePlotter():
 
             text_type : str
                 Type of text:
-                    label : for axes labels.
-                    tick : for axes ticks.
+                    'label' : for axes labels.
+                    'tick' : for axes ticks.
 
         Returns
         -------
@@ -242,9 +259,10 @@ class BasePlotter():
         _variant = plot_params.get(text_type + '_font_variant', 'normal')
         _weight = plot_params.get(text_type + '_font_weight', 500)
         _stretch = plot_params.get(text_type + '_font_stretch', 500)
-        _size = 16.0 if text_type == 'label' else 12.0
+        _size = 20.0 if text_type == 'label' else 16.0
         _size = plot_params.get(text_type + '_font_size', _size)
 
+        # font dictionary
         _font_dict = {
             'family': _family,
             'style': _style,
@@ -254,6 +272,7 @@ class BasePlotter():
             'size': _size
         }
 
+        # return
         return _font_dict
 
     def get_limits(self, mini, maxi, res=2):
@@ -306,4 +325,5 @@ class BasePlotter():
         _maxi = np.ceil(maxi * _mult) / _mult
         _prec = int(np.round(np.log10(_mult)))
 
+        # return
         return _mini, _maxi, _prec

@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2020-11-17'
+__updated__ = '2020-12-02'
 
 # dependencies
 from matplotlib.colors import Normalize
@@ -17,14 +17,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # dev dependencies
-from qom.ui.axes.StaticAxis import StaticAxis
 from qom.ui.plotters.BasePlotter import BasePlotter
 
 # module logger
 logger = logging.getLogger(__name__)
 
-# TODO: Change attributes to properties.
 # TODO: Add annotations.
+# TODO: Options for 3D plot parameters.
 # TODO: Options for lower and upper bounds.
 # TODO: Options for `ticklabel_format`.
 
@@ -33,9 +32,6 @@ class MPLPlotter(BasePlotter):
 
     Inherits :class:`qom.ui.plotters.BasePlotter`.
     """
-
-    plot = []
-    head = []
 
     def __init__(self, plot_params, Axes):
         """Class constructor for MPLPlotter.
@@ -93,12 +89,15 @@ class MPLPlotter(BasePlotter):
 
         # 3D plot
         else:
-            # update axes
+            # update label
             _mpl_axes.set_zlabel(self.axes['Z'].label, labelpad=12, fontdict=_font_dicts['label'])
+            # update tick properties
             plt.setp(_mpl_axes.get_zticklabels(), fontproperties=_font_props)
+            # update ticks
             _mpl_axes.set_zlim(min(self.axes['Z'].ticks), max(self.axes['Z'].ticks))
             _mpl_axes.set_zticks(self.axes['Z'].ticks)
             _mpl_axes.set_zticklabels(self.axes['Z'].tick_labels)
+
             # initializze 3D plot
             self.__init_3D()
 
@@ -116,6 +115,7 @@ class MPLPlotter(BasePlotter):
                 Font properties.
         """
 
+        # convert to FontProperties
         _font_props = FontProperties(
             family=font_dict['family'],
             style=font_dict['style'],
@@ -125,6 +125,7 @@ class MPLPlotter(BasePlotter):
             size=font_dict['size'],
         )
 
+        # return
         return _font_props
 
     def __init_1D(self):
@@ -134,6 +135,7 @@ class MPLPlotter(BasePlotter):
         _type = self.plot_params['type']
         _mpl_axes = plt.gca(projection=None)
         _dim = len(self.axes['Z'].legends)
+        # handle dimension for single-value plot
         if _type == 'line' or _type == 'scatter':
             _dim = 1
 
@@ -150,9 +152,9 @@ class MPLPlotter(BasePlotter):
         elif _type == 'scatter' or _type == 'scatters':
             self.plot = [_mpl_axes.scatter([], [], c=self.axes['Z'].colors[i], s=self.axes['Z'].sizes[i]) for i in range(_dim)]
 
-        # update legends
+        # legends
         if self.plot_params['legend']['show']:
-            _l = plt.legend(self.axes['Z'].legends, loc='best')            
+            _l = plt.legend(self.axes['Z'].legends, loc=self.plot_params['legend']['location'])            
             plt.setp(_l.texts, fontproperties=self.__get_font_props(self.plot_params['font_dicts']['label']))
 
     def __init_2D(self):
@@ -167,11 +169,13 @@ class MPLPlotter(BasePlotter):
         # initailize values
         _xs, _ys = np.meshgrid(self.axes['X'].val, self.axes['Y'].val)
         _zeros = np.zeros((self.axes['Y'].dim, self.axes['X'].dim))
+        _nan =  np.zeros((self.axes['Y'].dim, self.axes['X'].dim))
+        _nan[:] = np.NaN
 
         # contour plot
         if _type == 'contour':
             # _zeros[0] = 1
-            self.plot = _mpl_axes.contour(_xs, _ys, _zeros, levels=11, cmap=self.plot_params['cmap'])
+            self.plot = _mpl_axes.contour(_xs, _ys, _zeros, levels=self.bins, cmap=self.plot_params['cmap'])
 
         # contourf plot
         if _type == 'contourf':
@@ -179,27 +183,34 @@ class MPLPlotter(BasePlotter):
 
         # pcolormesh plot
         if _type == 'pcolormesh':
-            _nan =  np.zeros((self.axes['Y'].dim, self.axes['X'].dim))
-            _nan[:] = np.NaN
             self.plot = _mpl_axes.pcolormesh(_xs, _ys, _nan, shading='gouraud', cmap=_cmap)
 
-        # add color bar
+        # color bar
         if self.plot_params['cbar']['show']:
+            # handle type of plot
             if 'contour' in _type:
                 _sm = plt.cm.ScalarMappable(cmap=_cmap, norm=Normalize(vmin=0, vmax=0))
                 _sm.set_array([])
             else:
                 _sm = self.plot
             self.cbar = plt.colorbar(_sm)
+
             # set title
             self.cbar.ax.set_title(self.plot_params['cbar']['title'], fontproperties=self.__get_font_props(_font_dicts['label']))
-            # set label
-            self.cbar.ax.set_xlabel(self.plot_params['cbar']['label'], labelpad=_font_dicts['tick']['size'] + 12, fontproperties=self.__get_font_props(_font_dicts['label']))
+            # set labels
+            self.cbar.ax.set_xlabel(self.plot_params['cbar']['x_label'], labelpad=_font_dicts['tick']['size'] + 12, fontproperties=self.__get_font_props(_font_dicts['label']))
+            self.cbar.ax.set_ylabel(self.plot_params['cbar']['y_label'], labelpad=_font_dicts['tick']['size'] + 12, fontproperties=self.__get_font_props(_font_dicts['label']))
             # set ticks
             _ticks = self.plot_params['cbar']['ticks']
             if _ticks is None:
-                _ticks = np.linspace(0, 1, 6)
+                _mini, _maxi, _prec = super().get_limits(0.0, 1.0)
+                _ticks = np.around(np.linspace(_mini, _maxi, self.bins), decimals=_prec)
             self.cbar.set_ticks(_ticks)
+            # set tick labels
+            _tick_labels = self.plot_params['cbar']['tick_labels']
+            if _tick_labels is None:
+                _tick_labels = _ticks
+            self.cbar.set_ticklabels(_tick_labels)
             plt.setp(self.cbar.ax.get_yticklabels(), fontproperties=self.__get_font_props(_font_dicts['tick']))
         else:
             self.cbar = None
@@ -242,13 +253,21 @@ class MPLPlotter(BasePlotter):
             self.cbar = plt.colorbar(self.plot)
             # set title
             self.cbar.ax.set_title(self.plot_params['cbar']['title'], fontproperties=self.__get_font_props(_font_dicts['label']))
-            # set label
-            self.cbar.ax.set_xlabel(self.plot_params['cbar']['label'], labelpad=_font_dicts['tick']['size'] + 12, fontproperties=self.__get_font_props(_font_dicts['label']))
+            # set labels
+            self.cbar.ax.set_xlabel(self.plot_params['cbar']['x_label'], labelpad=_font_dicts['tick']['size'] + 12, fontproperties=self.__get_font_props(_font_dicts['label']))
+            self.cbar.ax.set_ylabel(self.plot_params['cbar']['y_label'], labelpad=_font_dicts['tick']['size'] + 12, fontproperties=self.__get_font_props(_font_dicts['label']))
             # set ticks
-            plt.setp(self.cbar.ax.get_yticklabels(), fontproperties=self.__get_font_props(_font_dicts['tick']))
             _ticks = self.plot_params['cbar']['ticks']
-            if _ticks is not None:
-                self.cbar.set_ticks(_ticks)
+            if _ticks is None:
+                _mini, _maxi, _prec = super().get_limits(0.0, 1.0)
+                _ticks = np.around(np.linspace(_mini, _maxi, self.bins), decimals=_prec)
+            self.cbar.set_ticks(_ticks)
+            # set tick labels
+            _tick_labels = self.plot_params['cbar']['tick_labels']
+            if _tick_labels is None:
+                _tick_labels = _ticks
+            self.cbar.set_ticklabels(_tick_labels)
+            plt.setp(self.cbar.ax.get_yticklabels(), fontproperties=self.__get_font_props(_font_dicts['tick']))
         else:
             self.cbar = None
 
@@ -343,11 +362,12 @@ class MPLPlotter(BasePlotter):
 
         # set limits
         _mini, _maxi = min(_minis), max(_maxis)
-        _mini, _maxi, _prec = super().get_limits(_mini, _maxi, res=1)
+        _mini, _maxi, _prec = super().get_limits(_mini, _maxi)
+        # update ticks and tick labels
         _ticks = self.axes['Y'].ticks
         _tick_labels = self.axes['Y'].tick_labels
         if self.axes['Y'].bound == 'none':
-            _ticks = np.linspace(_mini, _maxi, len(_mpl_axes.get_yticks()))
+            _ticks = np.around(np.linspace(_mini, _maxi, len(_mpl_axes.get_yticks())), decimals=_prec)
             _tick_labels = _ticks
         _mini = min(_ticks)
         _maxi = max(_ticks)
@@ -371,10 +391,10 @@ class MPLPlotter(BasePlotter):
         _font_dicts = self.plot_params['font_dicts']
         _rave = np.ravel(zs)
 
-        # handle NaN values
+        # initialize values
         _no_nan = [z if z == z else 0 for z in _rave]
         _mini, _maxi = min(_no_nan), max(_no_nan)
-        _mini, _maxi, _ = super().get_limits(_mini, _maxi, res=2)
+        _mini, _maxi, _prec = super().get_limits(_mini, _maxi)
 
         # contour and contourf plots
         if 'contour' in _type:
@@ -396,10 +416,12 @@ class MPLPlotter(BasePlotter):
                 _sm = plt.cm.ScalarMappable(cmap=_cmap, norm=Normalize(vmin=_mini, vmax=_maxi))
                 _sm.set_array([])
                 self.cbar = plt.colorbar(_sm, cax=self.cbar.ax)
+
                 # update title
                 self.cbar.ax.set_title(self.plot_params['cbar']['title'], fontproperties=self.__get_font_props(_font_dicts['label']))
-                # update label
-                self.cbar.ax.set_xlabel(self.plot_params['cbar']['label'], labelpad=_font_dicts['tick']['size'] + 12, fontproperties=self.__get_font_props(_font_dicts['label']))
+                # update labels
+                self.cbar.ax.set_xlabel(self.plot_params['cbar']['x_label'], labelpad=_font_dicts['tick']['size'] + 12, fontproperties=self.__get_font_props(_font_dicts['label']))
+                self.cbar.ax.set_ylabel(self.plot_params['cbar']['y_label'], labelpad=_font_dicts['tick']['size'] + 12, fontproperties=self.__get_font_props(_font_dicts['label']))
                 # update ticks
                 plt.setp(self.cbar.ax.get_yticklabels(), fontproperties=self.__get_font_props(_font_dicts['tick']))
 
@@ -412,10 +434,16 @@ class MPLPlotter(BasePlotter):
 
         # color bar
         if self.cbar is not None:
+            # update ticks
             _ticks = self.plot_params['cbar']['ticks']
             if _ticks is None:
-                _ticks = np.linspace(_mini, _maxi, len(self.cbar.get_ticks()))
+                _ticks = np.around(np.linspace(_mini, _maxi, self.bins), decimals=_prec)
             self.cbar.set_ticks(_ticks)
+            # update tick labels
+            _tick_labels = self.plot_params['cbar']['tick_labels']
+            if _tick_labels is None:
+                _tick_labels = _ticks
+            self.cbar.set_ticklabels(_tick_labels)
             self.cbar.draw_all()
 
     def __update_3D(self, zs):
@@ -433,10 +461,11 @@ class MPLPlotter(BasePlotter):
         _cmap = self.plot_params['cmap']
         _font_dicts = self.plot_params['font_dicts']
 
+        # initialize values
         _X, _Y = np.meshgrid(self.axes['X'].val, self.axes['Y'].val)
         _Z = np.array(zs) if type(zs) is list else zs
         _mini, _maxi = min(_Z.ravel()), max(_Z.ravel())
-        _mini, _maxi, _ = super().get_limits(_mini, _maxi, res=1)
+        _mini, _maxi, _prec = super().get_limits(_mini, _maxi)
 
         # surface plot
         if 'surface'in _type:
@@ -447,13 +476,13 @@ class MPLPlotter(BasePlotter):
             # projections
             if _type == 'surface_cz':
                 _offset = _maxi + 0.2 * (_maxi - _mini)
-                _proj_z = _mpl_axes.contour(_X, _Y, _Z, zdir='z', levels=11, offset=_offset, cmap=_cmap)
+                _proj_z = _mpl_axes.contour(_X, _Y, _Z, zdir='z', levels=self.bins, offset=_offset, cmap=_cmap)
 
             # update colorbar
             if self.cbar is not None:
                 self.cbar.update_normal(self.plot)
 
-        # set limits
+        # update ticks and tick labels
         _ticks = self.axes['Z'].ticks
         _tick_labels = self.axes['Z'].tick_labels
         if self.axes['Z'].bound == 'none':
@@ -461,17 +490,23 @@ class MPLPlotter(BasePlotter):
             _tick_labels = _ticks
         _mini = min(_ticks)
         _maxi = max(_ticks)
-        self.plot.set_clim(vmin=_mini, vmax=_maxi)
-        _mpl_axes.set_zlim(_mini, _maxi)
         _mpl_axes.set_zticks(_ticks)
         _mpl_axes.set_zticklabels(_tick_labels)
+        # update limits
+        self.plot.set_clim(vmin=_mini, vmax=_maxi)
+        _mpl_axes.set_zlim(_mini, _maxi)
 
         # color bar
         if self.cbar is not None:
             _ticks = self.plot_params['cbar']['ticks']
             if _ticks is None:
-                _ticks = np.linspace(_mini, _maxi, len(_mpl_axes.get_zticks()))
+                _ticks = np.around(np.linspace(_mini, _maxi, self.bins), decimals=_prec)
             self.cbar.set_ticks(_ticks)
+            # update tick labels
+            _tick_labels = self.plot_params['cbar']['tick_labels']
+            if _tick_labels is None:
+                _tick_labels = _ticks
+            self.cbar.set_ticklabels(_tick_labels)
             self.cbar.ax.set_autoscale_on(True)
             self.cbar.draw_all()
 

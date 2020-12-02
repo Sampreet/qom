@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.5.2 - 2020/12/02 - 00 - Exception Handling.
+* Minor fixes to `qom/loopers/dynamics` and `qom/loopers/measures` modules.
+* Exception handling in modules under `qom/ui`.
+
 ## v0.5.1 - 2020/11/17 - 00 - Intermediate Commit.
 * Updated `qom/loopers/measures` and `qom/loopers/properties` modules.
 * Minor fixes to `qom/ui/plotters`.

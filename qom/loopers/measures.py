@@ -125,7 +125,7 @@ def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
             m = np.max(arr)
         elif calc_mode == 'min':
             m = np.min(arr)
-        elif calc_mode == 'min_max':
+        elif calc_mode == 'max_min':
             m = (np.max(arr) + np.min(arr)) / 2
     
         # update list
@@ -247,7 +247,7 @@ def measures_1D_multi(model, dyna_params, meas_params, plot=False, plot_params=N
                 m = np.max(arr)
             elif calc_mode == 'min':
                 m = np.min(arr)
-            elif calc_mode == 'min_max':
+            elif calc_mode == 'max_min':
                 m = (np.max(arr) + np.min(arr)) / 2
         
             # update list
@@ -374,7 +374,7 @@ def measures_2D(model, dyna_params, meas_params, plot, plot_params):
                 m = np.max(arr)
             elif calc_mode == 'min':
                 m = np.min(arr)
-            elif calc_mode == 'min_max':
+            elif calc_mode == 'max_min':
                 m = (np.max(arr) + np.min(arr)) / 2
         
             # update list

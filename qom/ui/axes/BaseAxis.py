@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.axes.BaseAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-10'
-__updated__ = '2020-10-21'
+__updated__ = '2020-12-02'
 
 # dependencies
 import logging
@@ -19,8 +19,6 @@ logger = logging.getLogger(__name__)
 
 class BaseAxis():
     """Class to interface axes.
-
-    Inherited objects need to set the properties `var`, `name`, `unit`, `label` and `legends` individually.
 
     Properties
     ----------
@@ -391,26 +389,22 @@ class BaseAxis():
     def __init__(self, axis_data):
         """Class constructor for BaseAxis.
 
+        Initializes `val`, `dim`, `bound`, `ticks` and `tick_labels` properties. Inherited objects need to set the other properties individually.
+
         Parameters
         ----------
             axis_data : int or list or dict
                 Data for the axis.
         """
 
-        # if dimension
-        if type(axis_data) is int:
-            axis_data = {
-                'dim': axis_data
-            }
-
         # if values
-        elif type(axis_data) is list:
+        if type(axis_data) is list:
             axis_data = {
                 'val': axis_data
             }
 
         # validate parameter
-        assert type(axis_data) is dict, 'Axis data is not a dictionary.'
+        assert type(axis_data) is dict, 'Axis data should either be a `list` of values, or a `dict` containing "min", "max" and "dim" keys.'
 
         # frequently used variables
         _min = -1
@@ -419,40 +413,50 @@ class BaseAxis():
         
         # set val
         _val = axis_data.get('val', [])
+        # if values are defined
         if type(_val) is list and len(_val) != 0:
             self.val = _val
+        # else initizlize data
         else:
             self.val = self.init_array(axis_data.get('min', _min), axis_data.get('max', _max), axis_data.get('dim', _dim))
-        _min = min(self.val)
-        _max = max(self.val)
+
+        # if values are not of type string, reset range
+        if type(self.val[0]) is not str:
+            _min = min(self.val)
+            _max = max(self.val)
 
         # set dim
         self.dim = len(self.val)
 
-        # validate parameter
-        assert type(axis_data) is dict
+        # check axis bounds
+        if 'tick_min' in axis_data and 'tick_max' in axis_data:
+            self.bound = 'both'
+        elif 'tick_min' in axis_data:
+            self.bound = 'lower'
+        elif 'tick_max' in axis_data:
+            self.bound = 'upper'
+        else:
+            self.bound = 'none'
 
         # set ticks
         _ticks = axis_data.get('ticks', [])
+        # if ticks are defined
         if type(_ticks) is list and len(_ticks) != 0:
             self.ticks = _ticks
+            # update bound
             self.bound = 'both'
+        # else initialize ticks
         else:
             self.ticks = self.init_array(axis_data.get('tick_min', _min), axis_data.get('tick_max', _max), axis_data.get('tick_dim', _dim))
-            if 'tick_min' in axis_data and 'tick_max' in axis_data:
-                self.bound = 'both'
-            elif 'tick_min' in axis_data:
-                self.bound = 'lower'
-            elif 'tick_max' in axis_data:
-                self.bound = 'upper'
-            else:
-                self.bound = 'none'
 
         # set tick labels
         _tick_labels = axis_data.get('tick_labels', [])
+        # if ticks labels are defined
         if type(_tick_labels) is list and len(_tick_labels) != 0:
             self.tick_labels = _tick_labels
+            # update bound
             self.bound = 'both'
+        # else same as ticks
         else:
             self.tick_labels = self.ticks 
 

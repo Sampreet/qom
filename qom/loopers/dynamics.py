@@ -225,7 +225,7 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
                 # save system dynamics data to file
                 np.save(_dir + _file_v, np.array(_V_s))
                 # save measure dynamics data to file
-                np.save(_dir + _file_d, np.array(_D_s)) 
+                np.save(_dir + _file_d, np.array(_D_s))
 
             else:
                 # update lists
@@ -234,6 +234,7 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
 
                 # display plot
                 if plot:
+                    logger.info('Plotting the dynamics from {filename}...\n'.format(filename=_file_d))
                     figure = Figure(plot_params, X=T)
                     figure.update(_T_d, _D_s)
             
@@ -254,6 +255,7 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
             if plot:
                 if X != None:
                     plot_params['legend'] = X.legends[i]
+                logger.info('Plotting the dynamics from {filename}...\n'.format(filename=_file_ds[i]))
                 figure = Figure(plot_params, X=T)
                 figure.update(_T_d, _D_s)
 
