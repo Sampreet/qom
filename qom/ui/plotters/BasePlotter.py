@@ -208,7 +208,7 @@ class BasePlotter():
             _Z = {}
         # if not in supported axis, convert to MultiAxis if 1D plot, else DynamicAxis
         if type(_Z) not in _supported_axes:
-            _Z = DynamicAxis(_Z) if _type in self.plot_types_1D else StaticAxis(_Z)
+            _Z = MultiAxis(_Z) if _type in self.plot_types_1D else DynamicAxis(_Z)
 
         # set axes
         self.axes = {

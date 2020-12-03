@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.Figure'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-06-16'
-__updated__ = '2020-12-02'
+__updated__ = '2020-12-03'
 
 # dependencies
 import logging
@@ -50,7 +50,7 @@ class Figure():
 
         self.__plotter = plotter
 
-    def __init__(self, plot_params, X, Y={}, Z={}):
+    def __init__(self, plot_params, X, Y={}, Z={}, plotter_type='mpl'):
         """Class constructor for Figure.
         
         Parameters
@@ -76,7 +76,8 @@ class Figure():
         }
         
         # matplotlib plotter
-        self.plotter = MPLPlotter(plot_params, Axes) 
+        if plotter_type == 'mpl':
+            self.plotter = MPLPlotter(plot_params, Axes) 
 
         # display initialization
         logger.info('----------------------------Figure Initialized-------------------\t\n')

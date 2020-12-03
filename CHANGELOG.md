@@ -1,14 +1,19 @@
 # Changelog
 
-## v0.5.2 - 2020/12/02 - 00 - Exception Handling.
+## v0.5.2 - 2020/12/03 - 00 - Routh-Hurwitz Criterion
+* Added `qom/numerics/RHCriterion` module.
+* Fixed axis error in `qom/ui/plotters/BasePlotter` module.
+* Minor changes to `qom/ui/Figure` module.
+
+## v0.5.2 - 2020/12/02 - 00 - Exception Handling
 * Minor fixes to `qom/loopers/dynamics` and `qom/loopers/measures` modules.
 * Exception handling in modules under `qom/ui`.
 
-## v0.5.1 - 2020/11/17 - 00 - Intermediate Commit.
+## v0.5.1 - 2020/11/17 - 00 - Intermediate Commit
 * Updated `qom/loopers/measures` and `qom/loopers/properties` modules.
 * Minor fixes to `qom/ui/plotters`.
 
-## v0.5.0 - 2020/10/23 - 00 - Minor Fixes.
+## v0.5.0 - 2020/10/23 - 00 - Minor Fixes
 * Updated `examples/qom_looper_properties`.
 * Renamed `qom/ui/figure` to `qom/ui/Figure`.
 * Minor fixes to `qom/ui/plotters`.
