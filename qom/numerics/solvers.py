@@ -6,7 +6,7 @@
 __name__    = 'qom.numerics.solvers'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-27'
-__updated__ = '2020-09-27'
+__updated__ = '2020-12-04'
 
 # dependencies
 import logging
@@ -16,30 +16,25 @@ import scipy.integrate as si
 logger = logging.getLogger(__name__)
 
 def solve_ode_scipy(func, solver_type, ts, iv, c):
-    """Function to calculate the dynamics of variables for a given model using :class:`scipy.integrate.ode`.
+    """Function to calculate the dynamics of variables for a given system using :class:`scipy.integrate.ode`.
 
     Parameters
     ----------
-        func : callable
-            Function for the model.
-        
-        solver_type : dict
-            Parameters for the calculation of dynamics.
-        
-        ts : list
-            Times at which dynamics are required.
-        
-        iv : list
-            Initial values of variables.
-        
-        c : list
-            Constants for the model.
+    func : callable
+        Function for the system.
+    solver_type : dict
+        Parameters for the calculation of dynamics.
+    ts : list
+        Times at which dynamics are required.
+    iv : list
+        Initial values of variables.
+    c : list
+        Constants for the system.
 
     Returns
     -------
     ts : list
         Times at which dynamics are calculated.
-
     vs : list
         Dynamics of the variables.
     """

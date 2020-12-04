@@ -6,7 +6,7 @@
 __name__    = 'qom.utils.misc'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-27'
-__updated__ = '2020-10-09'
+__updated__ = '2020-12-04'
 
 # dependencies
 import logging
@@ -22,13 +22,13 @@ def get_index_monotonic_mean(values):
     
     Parameters
     ----------
-        values : list
-            Values of the data.
+    values : list
+        Values of the data.
 
     Returns
     -------
-        idx : list
-            Indices of the mid points.
+    idx : list
+        Indices of the mid points.
     """
     
     # list of signum values
@@ -55,13 +55,13 @@ def get_index_monotonic_max_min(values):
     
     Parameters
     ----------
-        values : list
-            Values of the data.
+    values : list
+        Values of the data.
 
     Returns
     -------
-        idx : list
-            Indices of the local maximas points.
+    idx : list
+        Indices of the local maximas points.
     """
     
     # list of signum values
@@ -88,20 +88,19 @@ def get_index_threshold(values, thres_mode='max_min'):
 
     Parameters
     ----------
-        values : list
-            Values of the variable.
-
-        thres_mode : str
-            Mode of threshold index calculation:
-                min_min : Minimum index where minimum is observed.
-                min_max : Maximum index where minimum is observed.
-                max_min : Minimum index where minimum is observed.
-                max_max : Maximum index where minimum is observed.
+    values : list
+        Values of the variable.
+    thres_mode : str
+        Mode of threshold index calculation:
+            * 'min_min' : Minimum index where minimum is observed.
+            * 'min_max' : Maximum index where minimum is observed.
+            * 'max_min' : Minimum index where minimum is observed.
+            * 'max_max' : Maximum index where minimum is observed.
 
     Returns
     -------
-        res : list
-            Indices of the threshold.
+    res : list
+        Indices of the threshold.
     """
 
     # indices of minimas and maximas
@@ -128,25 +127,21 @@ def get_limits(mini, maxi, res=2):
 
     Parameters
     ----------
-        mini : list  
-            Minimum value of the array.
-        
-        maxi : list  
-            Maximum value of the array.
-
-        res : int
-            Resolution after the first significant digit in the decimal number system.
+    mini : list  
+        Minimum value of the array.
+    maxi : list  
+        Maximum value of the array.
+    res : int
+        Resolution after the first significant digit in the decimal number system.
 
     Returns
     -------
-        mini : float
-            Formatted minimum value.
-
-        maxi : float
-            Formatted maximum value.
-
-        prec : int
-            Precision of rounding off.
+    mini : float
+        Formatted minimum value.
+    maxi : float
+        Formatted maximum value.
+    prec : int
+        Precision of rounding off.
     """
 
     # get minimum maximum
@@ -173,6 +168,7 @@ def get_limits(mini, maxi, res=2):
     _maxi = np.ceil(maxi * _mult) / _mult
     _prec = int(np.round(np.log10(_mult)))
 
+    # return
     return _mini, _maxi, _prec
 
 

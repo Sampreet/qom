@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Looper functions for properties."""
+"""Module containing looper functions for properties."""
 
 __name__    = 'qom.loopers.properties'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-06-15'
-__updated__ = '2020-10-22'
+__updated__ = '2020-12-04'
 
 # dependencies
 import copy
@@ -27,53 +27,47 @@ logger = logging.getLogger(__name__)
 # TODO: Implement 3D plots.
 # TODO: Verify parametes.
 
-def calculate(model, data):
+def calculate(system, data):
     """Wrapper function to switch functions for calculation of properties.
     
     Parameters
     ----------
-        model : :class:`Model`
-            Model of the system.
-
-        data : dict
-            Data for the calculation.
+    system : :class:`qom.systems.*`
+        System for the calculation.
+    data : dict
+        Data for the calculation.
 
     Returns
     -------
-        data : list
-            Data of the propreties calculated.
+    data : list
+        Data of the propreties calculated.
     """
 
     # get properties
-    return globals()[data['prop_params']['func']](model, data['prop_params'], data.get('plot', False), data.get('plot_params', None))
+    return globals()[data['prop_params']['func']](system, data['prop_params'], data.get('plot', False), data.get('plot_params', None))
 
-def properties_1D(model, prop_params, plot=False, plot_params=None):
+def properties_1D(system, prop_params, plot=False, plot_params=None):
     """Function to calculate properties versus a continuous variable.
     
     Parameters
     ----------
-        model : :class:`Model`
-            Model of the system.
-
-        prop_params : dict
-            Parameters for the property.
-
-        plot : boolean, optional
-            Option to plot the property.
-
-        plot_params : dict, optional
-            Parameters for the plot.
+    system : :class:`qom.systems.*`
+        System for the calculation.
+    prop_params : dict
+        Parameters for the property.
+    plot : boolean, optional
+        Option to plot the property.
+    plot_params : dict, optional
+        Parameters for the plot.
 
     Returns
     -------
-        P : list
-            Properties calculated.
-
-        Thres : dict
-            Threshold values of the variables used.
-
-        Axes : dict
-            Axes points used to calculate the properties as lists.
+    P : list
+        Properties calculated.
+    Thres : dict
+        Threshold values of the variables used.
+    Axes : dict
+        Axes points used to calculate the properties as lists.
     """
 
     # extract frequently used variables
@@ -105,11 +99,11 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
         if int(progress * 1000) % 10 == 0:
             logger.info('Calculating the property values: Progress = {progress:3.2f}'.format(progress=progress))
 
-        # update model
-        model.params[X.var] = X.val[i]
+        # update system
+        system.params[X.var] = X.val[i]
 
-        # get property from model
-        p = getattr(model, prop_code)()
+        # get property from system
+        p = getattr(system, prop_code)()
 
         # update lists for scatter plot
         if type(p) == list:
@@ -150,33 +144,28 @@ def properties_1D(model, prop_params, plot=False, plot_params=None):
     # return data
     return P.tolist(), Thres, Axes
 
-def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
+def properties_1D_multi(system, prop_params, plot=False, plot_params=None):
     """Function to calculate properties versus a continuous variable for multiple discrete variables.
     
     Parameters
     ----------
-        model : :class:`Model`
-            Model of the system.
-
-        prop_params : dict
-            Parameters for the property.
-
-        plot : boolean, optional
-            Option to plot the property.
-
-        plot_params : dict, optional
-            Parameters for the plot.
+    system : :class:`qom.systems.*`
+        System for the calculation.
+    prop_params : dict
+        Parameters for the property.
+    plot : boolean, optional
+        Option to plot the property.
+    plot_params : dict, optional
+        Parameters for the plot.
 
     Returns
     -------
-        P : list
-            Properties calculated.
-
-        Thres : dict
-            Threshold values of the variables used.
-
-        Axes : dict
-            Axes points used to calculate the properties as lists.
+    P : list
+        Properties calculated.
+    Thres : dict
+        Threshold values of the variables used.
+    Axes : dict
+        Axes points used to calculate the properties as lists.
     """
 
     # extract frequently used variables
@@ -212,12 +201,12 @@ def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
             if int(progress * 1000) % 10 == 0:
                 logger.info('Calculating the property values: Progress = {progress:3.2f}'.format(progress=progress))
 
-            # update model
-            model.params[X.var] = X.val[i]
-            model.params[Z.var] = Z.val[j]
+            # update system
+            system.params[X.var] = X.val[i]
+            system.params[Z.var] = Z.val[j]
 
-            # get property from model
-            p = getattr(model, prop_code)()
+            # get property from system
+            p = getattr(system, prop_code)()
 
             # update lists for multi-scatter plot
             if type(p) == list:
@@ -259,33 +248,28 @@ def properties_1D_multi(model, prop_params, plot=False, plot_params=None):
     # return data
     return P.tolist(), Thres, Axes
 
-def properties_2D(model, prop_params, plot=False, plot_params=None):
+def properties_2D(system, prop_params, plot=False, plot_params=None):
     """Function to calculate properties versus two continuous variables.
     
     Parameters
     ----------
-        model : :class:`Model`
-            Model of the system.
-
-        prop_params : dict
-            Parameters for the property.
-
-        plot : boolean, optional
-            Option to plot the property.
-
-        plot_params : dict, optional
-            Parameters for the plot.
+    system : :class:`qom.systems.*`
+        System for the calculation.
+    prop_params : dict
+        Parameters for the property.
+    plot : boolean, optional
+        Option to plot the property.
+    plot_params : dict, optional
+        Parameters for the plot.
 
     Returns
     -------
-        P : list
-            Properties calculated.
-
-        Thres: dict
-            Threshold values of the variables used.
-
-        Axes : dict
-            Axes points used to calculate the properties as lists.
+    P : list
+        Properties calculated.
+    Thres: dict
+        Threshold values of the variables used.
+    Axes : dict
+        Axes points used to calculate the properties as lists.
     """
 
     # extract frequently used variables
@@ -324,12 +308,12 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
             if int(progress * 1000) % 10 == 0:
                 logger.info('Calculating the property values: Progress = {progress:3.2f}'.format(progress=progress))
 
-            # update model
-            model.params[X.var] = X.val[i]
-            model.params[Y.var] = Y.val[j]
+            # update system
+            system.params[X.var] = X.val[i]
+            system.params[Y.var] = Y.val[j]
 
-            # get property from model
-            p = getattr(model, prop_code)()
+            # get property from system
+            p = getattr(system, prop_code)()
 
             if type(p) == list:
                 if thres_mode.find('max_') != -1:
@@ -369,33 +353,28 @@ def properties_2D(model, prop_params, plot=False, plot_params=None):
     # return data
     return P.tolist(), Thres, Axes
 
-def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
+def properties_grad_1D(system, prop_params, plot=False, plot_params=None):
     """Function to calculate a gradient of properties versus a continuous variable for multiple discrete variables.
     
     Parameters
     ----------
-        model : :class:`Model`
-            Model of the system.
-
-        prop_params : dict
-            Parameters for the property.
-
-        plot : boolean, optional
-            Option to plot the property.
-
-        plot_params : dict, optional
-            Parameters for the plot.
+    system : :class:`qom.systems.*`
+        System for the calculation.
+    prop_params : dict
+        Parameters for the property.
+    plot : boolean, optional
+        Option to plot the property.
+    plot_params : dict, optional
+        Parameters for the plot.
 
     Returns
     -------
-        G : list
-            Gradients calculated.
-
-        Thres : dict
-            Threshold values of the variables used.
-
-        Axes : dict
-            Axes points used to calculate the gradients as lists.
+    G : list
+        Gradients calculated.
+    Thres : dict
+        Threshold values of the variables used.
+    Axes : dict
+        Axes points used to calculate the gradients as lists.
     """
 
     # extract frequently used variables
@@ -403,18 +382,18 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
     grad_axis   = prop_params.get('grad_axis', 'X')
     thres_mode  = prop_params.get('thres_mode', 'max_min')
     plot_prog   = plot_params.get('progress', False) if plot_params != None else False
-    prop_model  = copy.deepcopy(model)
+    prop_system  = copy.deepcopy(system)
 
     # switch variables for property function
     if grad_axis == 'X':
         # get properties
-        P_values, Thres, Axes = properties_1D(prop_model, prop_params)
+        P_values, Thres, Axes = properties_1D(prop_system, prop_params)
         # calculate gradients
         Grads = np.gradient(P_values, Axes['X'])
         X = StaticAxis(prop_params['X'])
     elif grad_axis == 'Y':
         # get properties
-        P_values, Thres, Axes = properties_2D(prop_model, prop_params)
+        P_values, Thres, Axes = properties_2D(prop_system, prop_params)
         X = StaticAxis(prop_params['Y'])
 
     # initialize variables
@@ -439,11 +418,11 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
         if int(progress * 1000) % 10 == 0:
             logger.info('Calculating the gradient values: Progress = {progress:3.2f}'.format(progress=progress))
 
-        # update model for gradient calculation
-        model.params[X.var] = X.val[i]
+        # update system for gradient calculation
+        system.params[X.var] = X.val[i]
 
-        # get parameters from model
-        _f_grad_params = getattr(model, 'get_grad_params', None)
+        # get parameters from system
+        _f_grad_params = getattr(system, 'get_grad_params', None)
         if _f_grad_params is not None:
             grad_params = _f_grad_params()
         else:
@@ -494,33 +473,28 @@ def properties_grad_1D(model, prop_params, plot=False, plot_params=None):
     # return data
     return G.tolist(), Thres, Axes
 
-def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
+def properties_grad_1D_multi(system, prop_params, plot=False, plot_params=None):
     """Function to calculate a gradient of properties versus a continuous variable for multiple discrete variables.
     
     Parameters
     ----------
-        model : :class:`Model`
-            Model of the system.
-
-        prop_params : dict
-            Parameters for the property.
-
-        plot : boolean, optional
-            Option to plot the property.
-
-        plot_params : dict, optional
-            Parameters for the plot.
+    system : :class:`qom.systems.*`
+        System for the calculation.
+    prop_params : dict
+        Parameters for the property.
+    plot : boolean, optional
+        Option to plot the property.
+    plot_params : dict, optional
+        Parameters for the plot.
 
     Returns
     -------
-        G : list
-            Gradients calculated.
-
-        Thres : dict
-            Threshold values of the variables used.
-
-        Axes : dict
-            Axes points used to calculate the gradients as lists.
+    G : list
+        Gradients calculated.
+    Thres : dict
+        Threshold values of the variables used.
+    Axes : dict
+        Axes points used to calculate the gradients as lists.
     """
 
     # extract frequently used variables
@@ -548,18 +522,18 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
         # display initialization
         logger.info('Initializing {prop_name} gradient calculation for {legend}\t\n'.format(prop_name=prop_name, legend=Z.legends[j]))
 
-        # update model for property calculation
-        prop_model = copy.deepcopy(model)
-        prop_model.params[Z.var] = Z.val[j]
+        # update system for property calculation
+        prop_system = copy.deepcopy(system)
+        prop_system.params[Z.var] = Z.val[j]
 
         # switch variables for property function
         if grad_axis == 'X':
-            P_values, Thres, Axes = properties_1D(prop_model, prop_params)
+            P_values, Thres, Axes = properties_1D(prop_system, prop_params)
             # calculate gradients
             Grads = np.gradient(P_values, Axes['X'])
         elif grad_axis == 'Y':
             # get properties
-            P_values, Thres, Axes = properties_2D(prop_model, prop_params)
+            P_values, Thres, Axes = properties_2D(prop_system, prop_params)
 
         # for variation in X 
         for i in range(X.dim):
@@ -569,12 +543,12 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
             if int(progress * 1000) % 10 == 0:
                 logger.info('Calculating the gradient values: Progress = {progress:3.2f}'.format(progress=progress))
 
-            # update model for gradient calculation
-            model.params[X.var] = X.val[i]
-            model.params[Z.var] = Z.val[j]
+            # update system for gradient calculation
+            system.params[X.var] = X.val[i]
+            system.params[Z.var] = Z.val[j]
 
-            # get parameters from model
-            _f_grad_params = getattr(model, 'get_grad_params', None)
+            # get parameters from system
+            _f_grad_params = getattr(system, 'get_grad_params', None)
             if _f_grad_params is not None:
                 grad_params = _f_grad_params()
             else:
@@ -628,43 +602,38 @@ def properties_grad_1D_multi(model, prop_params, plot=False, plot_params=None):
     # return data
     return G.tolist(), Thres, Axes
 
-def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
+def properties_grad_2D(system, prop_params, plot=False, plot_params=None):
     """Function to calculate a gradient of properties versus two continuous variables.
     
     Parameters
     ----------
-        model : :class:`Model`
-            Model of the system.
-
-        prop_params : dict
-            Parameters for the property.
-
-        plot : boolean, optional
-            Option to plot the property.
-
-        plot_params : dict, optional
-            Parameters for the plot.
+    system : :class:`qom.systems.*`
+        System for the calculation.
+    prop_params : dict
+        Parameters for the property.
+    plot : boolean, optional
+        Option to plot the property.
+    plot_params : dict, optional
+        Parameters for the plot.
 
     Returns
     -------
-        G : list
-            Gradients calculated.
-
-        Thres : dict
-            Threshold values of the variables used.
-
-        Axes : dict
-            Axes points used to calculate the gradients as lists.
+    G : list
+        Gradients calculated.
+    Thres : dict
+        Threshold values of the variables used.
+    Axes : dict
+        Axes points used to calculate the gradients as lists.
     """
 
     # extract frequently used variables
     prop_name   = prop_params['name']
     thres_mode  = prop_params.get('thres_mode', 'max_min')
     plot_prog   = plot_params.get('progress', False) if plot_params != None else False
-    prop_model  = copy.deepcopy(model)
+    prop_system  = copy.deepcopy(system)
 
     # get properties
-    P_values, Thres, Axes = properties_2D(prop_model, prop_params)
+    P_values, Thres, Axes = properties_2D(prop_system, prop_params)
     X = StaticAxis(prop_params['X'])
     Y = StaticAxis(prop_params['Y'])
 
@@ -694,11 +663,11 @@ def properties_grad_2D(model, prop_params, plot=False, plot_params=None):
         if int(progress * 1000) % 10 == 0:
             logger.info('Calculating the gradient values: Progress = {progress:3.2f}'.format(progress=progress))
 
-        # update model for gradient calculation
-        model.params[Y.var] = Y.val[j]
+        # update system for gradient calculation
+        system.params[Y.var] = Y.val[j]
 
-        # get parameters from model
-        _f_grad_params = getattr(model, 'get_grad_params', None)
+        # get parameters from system
+        _f_grad_params = getattr(system, 'get_grad_params', None)
         if _f_grad_params is not None:
             grad_params = _f_grad_params()
         else:

@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.log'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-02-05'
-__updated__ = '2020-09-23'
+__updated__ = '2020-12-04'
 
 # dependencies
 import datetime as dt
@@ -20,16 +20,15 @@ def init_log(log_format='full', debug=False):
     
     Parameters
     ----------    
-        log_format : str
-            Format type for output to console.
-
-        debug : boolean, optional
-            Option to enable DEBUG log level.
+    log_format : str
+        Format type for output to console.
+    debug : boolean, optional
+        Option to enable DEBUG log level.
         
     Returns
     -------
-        logger : :class:`logging.Logger`
-            Logger for output to console.
+    logger : :class:`logging.Logger`
+        Logger for output to console.
     """
 
     # get logger
@@ -52,13 +51,13 @@ def get_formatter(log_format='full'):
     
     Parameters
     ----------    
-        log_format : str, optional
-            Format type for output to console.
+    log_format : str, optional
+        Format type for output to console.
 
     Returns
     -------
-        formatter : :class:`logging.Formatter`
-            Formatter for stream handler.
+    formatter : :class:`logging.Formatter`
+        Formatter for stream handler.
     """
 
     # default format
@@ -74,13 +73,13 @@ def get_handler(formatter):
     
     Parameters
     ----------    
-        formatter : :class:`logging.Formatter`
-            Formatter for stream handler.
+    formatter : :class:`logging.Formatter`
+        Formatter for stream handler.
 
     Returns
     -------
-        handler : :class:`logging.StreamHandler`
-            Stream handler for console logger.
+    handler : :class:`logging.StreamHandler`
+        Stream handler for console logger.
     """
     
     # get stream handler
@@ -103,16 +102,15 @@ class FullFormatter(logging.Formatter):
 
         Parameters
         ----------
-            record : :class:`logging.LogRecord`
-                Current record to log.
-
-            datefmt : str
-                Date format for log.
+        record : :class:`logging.LogRecord`
+            Current record to log.
+        datefmt : str
+            Date format for log.
         
         Returns
         -------
-            f_time : str
-                Formatted time.
+        f_time : str
+            Formatted time.
         """
 
         # current time

@@ -6,7 +6,7 @@
 __name__    = 'qom.measures.differences'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-08-24'
-__updated__ = '2020-09-27'
+__updated__ = '2020-12-04'
 
 # dependencies
 import logging
@@ -20,16 +20,15 @@ def calculate(V, meas_params):
     
     Parameters
     ----------
-        V : list
-            Values of the variables.
-
-        meas_params : dict
-            Parameters for the calculation.
+    V : list
+        Values of the variables.
+    meas_params : dict
+        Parameters for the calculation.
 
     Returns
     -------
-        M : float
-            Measures calculated.
+    M : float
+        Measures calculated.
     """
 
     # extract frequently used variables
@@ -48,25 +47,22 @@ def phase_match_cos(V, mode_i, mode_j, quad='mode'):
 
     Parameters
     ----------
-        V : list
-            Values of the variables.
-
-        mode_i : *int*
-            Position of ith mode.
-
-        mode_j : *int*
-            Position of jth mode.
-
-        quad : str
-            Option of the quadrature selection:
-                mode:   Default mode.
-                pos :   Position quadrature.
-                mom :   Momentum quadrature.
+    V : list
+        Values of the variables.
+    mode_i : int
+        Position of ith mode.
+    mode_j : int
+        Position of jth mode.
+    quad : str
+        Option of the quadrature selection:
+            * 'mode':   Default mode.
+            * 'pos' :   Position quadrature.
+            * 'mom' :   Momentum quadrature.
 
     Returns
     -------
-        M : float
-            Phase difference measures using cosine matching.
+    M : float
+        Phase difference measures using cosine matching.
     """
 
     # initialize variables

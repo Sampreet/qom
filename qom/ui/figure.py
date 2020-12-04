@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.Figure'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-06-16'
-__updated__ = '2020-12-03'
+__updated__ = '2020-12-04'
 
 # dependencies
 import logging
@@ -19,54 +19,31 @@ logger = logging.getLogger(__name__)
 
 class Figure():
     """Class to plot figures.
-    
-    Properties
+        
+    Parameters
     ----------
-        plotter : :class:`qom.ui.plotters.*`
-            Plotter class. 
+    plot_params : dict
+        Parameters of the plot.
+    X : :class:`qom.ui.axes.*`
+        X-axis data.
+    Y : :class:`qom.ui.axes.*`, optional
+        Y-axis data.
+    Z : :class:`qom.ui.axes.*`, optional
+        Z-axis data.
     """
 
     @property
     def plotter(self):
-        """Property plotter.
-
-        Returns
-        -------
-            plotter : :class:`qom.ui.plotters.*`
-                Plotter class.
-        """
+        """:class:`qom.ui.plotters.*`: Plotter class."""
 
         return self.__plotter
     
     @plotter.setter
     def plotter(self, plotter):
-        """Setter for plotter.
-
-        Parameters
-        ----------
-            plotter : :class:`qom.ui.plotters.*`
-                Plotter class.
-        """
-
         self.__plotter = plotter
 
     def __init__(self, plot_params, X, Y={}, Z={}, plotter_type='mpl'):
-        """Class constructor for Figure.
-        
-        Parameters
-        ----------
-            plot_params : dict
-                Parameters of the plot.
-
-            X : :class:`qom.ui.axes.*`
-                X-axis data.
-
-            Y : :class:`qom.ui.axes.*`, optional
-                Y-axis data.
-
-            Z : :class:`qom.ui.axes.*`, optional
-                Z-axis data.
-        """
+        """Class constructor for Figure."""
         
         # initialize plot
         Axes = {
@@ -87,20 +64,16 @@ class Figure():
         
         Parameters
         ----------
-            xs : list or numpy.ndarray, optional
-                X-axis data.
-                
-            ys : list or numpy.ndarray, optional
-                Y-axis data.
-                
-            zs : list or numpy.ndarray, optional
-                Z-axis data.
-
-            head : boolean, optional
-                Option to display the head for line-type plots. Default is False.
-
-            hold : boolean, optional
-                Option to hold the plot. Default is True.
+        xs : list or numpy.ndarray, optional
+            X-axis data.
+        ys : list or numpy.ndarray, optional
+            Y-axis data.
+        zs : list or numpy.ndarray, optional
+            Z-axis data.
+        head : boolean, optional
+            Option to display the head for line-type plots. Default is False.
+        hold : boolean, optional
+            Option to hold the plot. Default is True.
         """
 
         # update plot

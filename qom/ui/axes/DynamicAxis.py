@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.axes.DynamicAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-17'
-__updated__ = '2020-10-21'
+__updated__ = '2020-12-04'
 
 # dependencies
 import logging
@@ -22,16 +22,15 @@ class DynamicAxis(BaseAxis):
     """Class to handle a dynamic axis.
 
     Inherits :class:`qom.ui.axes.BaseAxis`.
+
+    Parameters
+    ----------
+    axis_data : int or list or dict
+        Data for the axis.
     """
 
     def __init__(self, axis_data={}):
-        """Class constructor for DynamicAxis.
-
-        Parameters
-        ----------
-            axis_data : int or list or dict
-                Data for the axis.
-        """
+        """Class constructor for DynamicAxis."""
 
         # initialize super class
         super().__init__(axis_data)

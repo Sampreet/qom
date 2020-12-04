@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Class to handle Routh-Hurwitz criterion.
+"""Class to handle Routh-Hurwitz criterion [1].
 
 References:
-[1] E. X. DeJesus and C. Kaufman, **Routh-Hurwitz Criterion in the Examination of Eigenvalues of a System of Nonlinear Ordinary Differential Equations**, Phys. Rev. A *35* (12), 5288 (1987)."""
+
+[1] E. X. DeJesus and C. Kaufman, *Routh-Hurwitz Criterion in the Examination of Eigenvalues of a System of Nonlinear Ordinary Differential Equations*, Phys. Rev. A **35** (12), 5288 (1987)."""
 
 __name__    = 'qom.numerics.RHCriterion'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-03'
-__updated__ = '2020-12-03'
+__updated__ = '2020-12-04'
 
 # dependencies
 import logging
@@ -22,103 +23,46 @@ logger = logging.getLogger(__name__)
 class RHCriterion():
     """Class to handle Routh-Hurwitz criterion.
 
-    References:
-    [1] E. X. DeJesus and C. Kaufman, **Routh-Hurwitz Criterion in the Examination of Eigenvalues of a System of Nonlinear Ordinary Differential Equations**, Phys. Rev. A *35* (12), 5288 (1987).
-    
-    Properties
-    ----------
-        order : int
-            Order of the characteristic equation.
-
-        coeffs : list
-            Coefficients of the characteristic equation.
-            
-        seq : list
-            Sequence of determinants of the sub-matrices.
-    """
-
-    @property
-    def order(self):
-        """Property order.
-
-        Returns
-        -------
-            order : int
-                Order of the characteristic equation.
-        """
-
-        return self.__order
-    
-    @order.setter
-    def order(self, order):
-        """Setter for order.
+        Initializes `order` and `coeffs` properties.
 
         Parameters
         ----------
-            order : int
-                Order of the characteristic equation.
+        A : `numpy.matrix` or list
+            Drift matrix. 
         """
-
-        self.__order = order
 
     @property
     def coeffs(self):
-        """Property coeffs.
-
-        Returns
-        -------
-            coeffs : list
-                Coefficients of the characteristic equation.
-        """
+        """list: Coefficients of the characteristic equation."""
 
         return self.__coeffs
     
     @coeffs.setter
     def coeffs(self, coeffs):
-        """Setter for coeffs.
-
-        Parameters
-        ----------
-            coeffs : list
-                Coefficients of the characteristic equation.
-        """
-
         self.__coeffs = coeffs
 
     @property
-    def seq(self):
-        """Property seq.
+    def order(self):
+        """int: Order of the characteristic equation."""
 
-        Returns
-        -------
-            seq : list
-                Sequence of determinants of the sub-matrices.
-        """
+        return self.__order
+    
+    @order.setter
+    def order(self, order):
+        self.__order = order
+
+    @property
+    def seq(self):
+        """list: Sequence of determinants of the sub-matrices."""
 
         return self.__seq
     
     @seq.setter
     def seq(self, seq):
-        """Setter for seq.
-
-        Parameters
-        ----------
-            seq : list
-                Sequence of determinants of the sub-matrices.
-        """
-
         self.__seq = seq
 
     def __init__(self, A):
-        """Class constructor for RHCriterion.
-
-        Initializes `order` and `coeffs` properties.
-
-        Parameters
-        ----------
-            A : `numpy.matrix` or list
-               Drift matrix. 
-        """
+        """Class constructor for RHCriterion."""
 
         # validate shape
         _shape = np.shape(A)
@@ -172,8 +116,8 @@ class RHCriterion():
 
         Returns
         -------
-            idxs : list
-                Indices of the sequence where the element changes sign.
+        idxs : list
+            Indices of the sequence where the element changes sign.
         """
 
         # initialize values

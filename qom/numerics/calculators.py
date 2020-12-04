@@ -6,7 +6,7 @@
 __name__    = 'qom.numerics.calculators'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-27'
-__updated__ = '2020-09-27'
+__updated__ = '2020-12-04'
 
 # dependencies
 import logging
@@ -25,19 +25,17 @@ def get_grad(ys, xs, grad_params):
     
     Parameters
     ----------
-        ys : list
-            Values of the dataset.
-
-        xs : list
-            Positions of the dataset.
-
-        grad_params : dict
-            Options for the position.
+    ys : list
+        Values of the dataset.
+    xs : list
+        Positions of the dataset.
+    grad_params : dict
+        Options for the position.
 
     Returns
     -------
-        grad : float
-            Value of the gradient at the position.
+    grad : float
+        Value of the gradient at the position.
     """
 
     # calculate gradients

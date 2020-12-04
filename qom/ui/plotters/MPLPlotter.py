@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2020-12-02'
+__updated__ = '2020-12-04'
 
 # dependencies
 from matplotlib.colors import Normalize
@@ -31,19 +31,17 @@ class MPLPlotter(BasePlotter):
     """Class to handle matplotlib plots.
 
     Inherits :class:`qom.ui.plotters.BasePlotter`.
+        
+    Parameters
+    ----------
+    plot_params : dict
+        Parameters of the plot.
+    Axes : dict
+        Axes used for the plot as :class:`qom.utils.axis.StaticAxis`.
     """
 
     def __init__(self, plot_params, Axes):
-        """Class constructor for MPLPlotter.
-        
-        Parameters
-        ----------
-            plot_params : dict
-                Parameters of the plot.
-
-            Axes : dict
-                Axes used for the plot as :class:`qom.utils.axis.StaticAxis`.
-        """
+        """Class constructor for MPLPlotter."""
 
         # initialize super class
         super().__init__(plot_params, Axes)
@@ -106,13 +104,13 @@ class MPLPlotter(BasePlotter):
          
         Parameters
         ----------
-            font_dict : dict
-                Dictionary of font properties.
+        font_dict : dict
+            Dictionary of font properties.
 
         Returns
         -------
-            font_props : :class:`matplotlib.font_manager.FontProperties`
-                Font properties.
+        font_props : :class:`matplotlib.font_manager.FontProperties`
+            Font properties.
         """
 
         # convert to FontProperties
@@ -276,17 +274,14 @@ class MPLPlotter(BasePlotter):
         
         Parameters
         ----------
-            xs : list or numpy.ndarray, optional
-                X-axis data.
-                
-            ys : list or numpy.ndarray, optional
-                Y-axis data.
-                
-            zs : list or numpy.ndarray, optional
-                Z-axis data.
-
-            head : boolean, optional
-                Option to display the head for line-type plots. Default is False.
+        xs : list or numpy.ndarray, optional
+            X-axis data.
+        ys : list or numpy.ndarray, optional
+            Y-axis data.
+        zs : list or numpy.ndarray, optional
+            Z-axis data.
+        head : boolean, optional
+            Option to display the head for line-type plots. Default is False.
         """
 
         # extract frequently used variables
@@ -312,14 +307,12 @@ class MPLPlotter(BasePlotter):
         
         Parameters
         ----------
-            xs : list or numpy.ndarray
-                X-axis values.
-                
-            ys : list or numpy.ndarray
-                Y-axis values.
-
-            head : boolean
-                Option to display the head for line-type plots.
+        xs : list or numpy.ndarray
+            X-axis values.
+        ys : list or numpy.ndarray
+            Y-axis values.
+        head : boolean
+            Option to display the head for line-type plots.
         """
 
         # frequently used variables
@@ -380,8 +373,8 @@ class MPLPlotter(BasePlotter):
         
         Parameters
         ----------
-            zs : list or numpy.ndarray
-                Z-axis values.
+        zs : list or numpy.ndarray
+            Z-axis values.
         """
 
         # frequently used variables
@@ -451,8 +444,8 @@ class MPLPlotter(BasePlotter):
         
         Parameters
         ----------
-            zs : list or numpy.ndarray
-                Z-axis values.
+        zs : list or numpy.ndarray
+            Z-axis values.
         """
 
         # frequently used variables
@@ -515,8 +508,8 @@ class MPLPlotter(BasePlotter):
 
         Parameters
         ----------
-            hold : boolean, optional
-                Option to hold the plot. Default is True.
+        hold : boolean, optional
+            Option to hold the plot. Default is True.
         """
 
         # draw data

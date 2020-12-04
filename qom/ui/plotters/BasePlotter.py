@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.BasePlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-06'
-__updated__ = '2020-12-02'
+__updated__ = '2020-12-04'
 
 # dependencies
 import logging
@@ -25,41 +25,14 @@ logger = logging.getLogger(__name__)
 class BasePlotter():
     """Class to interface plots.
 
-    Attributes
+    Initializes `plot_params` and `axes` properties.
+    
+    Parameters
     ----------
-        plot_types_1D : list
-            List of supported 1D plots:
-                'line' : Line plot.
-                'lines' : Multi-line plot.
-                'scatter' : Scatter plot.
-                'scatters' : Multi-scatter plot.
-
-        plot_types_2D : list
-            List of supported 2D plots:
-                'contour' : Contour plot.
-                'contourf' : Filled contour plot.
-                'pcolormesh' : Color plot.
-        
-        plot_types_3D : list
-            List of supported 3D plots:
-                'surface' : Surface plot.
-                'surface_cx' : Surface plot with contours on y-z plane.
-                'surface_cy' : Surface plot with contours on z-x plane.
-                'surface_cz' : Surface plot with contours on x-y plane.
-
-        bins : int
-            Number of bins for color map.
-
-        cmaps : dict 
-            Dictionary of supported maps for 2D and 3D color plots.
-
-    Properties
-    ----------
-        axes : :class:`qom.ui.axes.*`
-            Axes for the figure.
-
-        plot_params : dict
-            Parameters of the plot.
+    plot_params : dict
+        Parameters of the plot.
+    Axes : dict
+        Axes used for the plot as :class:`qom.utils.axis.StaticAxis`.
     """
 
     # attributes
@@ -75,65 +48,26 @@ class BasePlotter():
 
     @property
     def axes(self):
-        """Property axes.
-
-        Returns
-        -------
-            axes : :class:`qom.ui.axes.*`
-                Axes for the figure.
-        """
+        """:class:`qom.ui.axes.*`: Axes for the figure."""
 
         return self.__axes
     
     @axes.setter
     def axes(self, axes):
-        """Setter for axes.
-
-        Parameters
-        ----------
-            axes : :class:`qom.ui.axes.*`
-                Axes for the figure.
-        """
-
         self.__axes = axes
 
     @property
     def plot_params(self):
-        """Property plot_params.
-
-        Returns
-        -------
-            plot_params : dict
-                Parameters of the plot.
-        """
+        """dict: Parameters of the plot."""
 
         return self.__plot_params
     
     @plot_params.setter
     def plot_params(self, plot_params):
-        """Setter for plot_params.
-
-        Parameters
-        ----------
-            plot_params : dict
-                Parameters of the plot.
-        """
-
         self.__plot_params = plot_params
 
     def __init__(self, plot_params, Axes):
-        """Class constructor for MPLPlotter.
-
-        Initializes `plot_params` and `axes` properties.
-        
-        Parameters
-        ----------
-            plot_params : dict
-                Parameters of the plot.
-
-            Axes : dict
-                Axes used for the plot as :class:`qom.utils.axis.StaticAxis`.
-        """
+        """Class constructor for MPLPlotter."""
 
         # frequently used variables
         _type = plot_params.get('type', 'line')
@@ -239,18 +173,17 @@ class BasePlotter():
 
         Parameters
         ----------
-            plot_params : dict
-                Plot parameters passed.
-
-            text_type : str
-                Type of text:
-                    'label' : for axes labels.
-                    'tick' : for axes ticks.
+        plot_params : dict
+            Plot parameters passed.
+        text_type : str
+            Type of text:
+                * 'label' : for axes labels.
+                * 'tick' : for axes ticks.
 
         Returns
         -------
-            font_dict : dict
-                Dictionary of font properties.
+        font_dict : dict
+            Dictionary of font properties.
         """
 
         # properties
@@ -280,25 +213,21 @@ class BasePlotter():
 
         Parameters
         ----------
-            mini : list  
-                Minimum value of the array.
-            
-            maxi : list  
-                Maximum value of the array.
-
-            res : int
-                Resolution after the first significant digit in the decimal number system.
+        mini : list  
+            Minimum value of the array.
+        maxi : list  
+            Maximum value of the array.
+        res : int
+            Resolution after the first significant digit in the decimal number system.
 
         Returns
         -------
-            mini : float
-                Formatted minimum value.
-
-            maxi : float
-                Formatted maximum value.
-
-            prec : int
-                Precision of rounding off.
+        mini : float
+            Formatted minimum value.
+        maxi : float
+            Formatted maximum value.
+        prec : int
+            Precision of rounding off.
         """
 
         # get minimum maximum

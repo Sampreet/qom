@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.axes.BaseAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-10'
-__updated__ = '2020-12-02'
+__updated__ = '2020-12-04'
 
 # dependencies
 import logging
@@ -20,382 +20,151 @@ logger = logging.getLogger(__name__)
 class BaseAxis():
     """Class to interface axes.
 
-    Properties
+    Initializes `val`, `dim`, `bound`, `ticks` and `tick_labels` properties. Inherited objects need to set the other properties individually.
+
+    Parameters
     ----------
-        var : str
-            Variable of the axis.
-
-        val : list
-            Values of the variable.
-        
-        dim : int
-            Dimension of the axis.
-
-        name : str
-            Display name of the axis.
-
-        unit : list
-            Display unit of the axis.
-
-        bound : str
-            Option to check user-defined bounds:
-                'none' : Not bounded.
-                'lower' : Lower bound.
-                'upper' : Upper bound.
-                'both' : Both lower and upper bound.
- 
-        ticks : list
-            Values of the axis ticks.
-
-        tick_labels : list
-            Labels of the axis ticks.
-
-        label : str
-            Label of the axis.
-
-        legends : list 
-            Legends for the values.
-
-        colors : list 
-            Colors for plots.
-
-        styles : list
-            Styles of the plots.
-
-        sizes : list
-            Sizes of the plots.
+        axis_data : int or list or dict
+            Data for the axis.
     """
 
     @property
     def var(self):
-        """Property var.
-
-        Returns
-        -------
-            var : str
-                Variable of the axis.
-        """
+        """str: Variable of the axis."""
 
         return self.__var
 
     @var.setter
     def var(self, var):
-        """Setter for var.
-
-        Parameters
-        ----------
-            var : str
-                Variable of the axis.
-        """
-
         self.__var = var
 
     @property
     def val(self):
-        """Property val.
-
-        Returns
-        -------
-            val : list
-                Values of the axis.
-        """
+        """list: Values of the axis."""
 
         return self.__val
 
     @val.setter
     def val(self, val):
-        """Setter for val.
-
-        Parameters
-        ----------
-            val : list
-                Values of the axis.
-        """
-
         self.__val = val
 
     @property
     def dim(self):
-        """Property dim.
-
-        Returns
-        -------
-            dim : int
-                Dimension of the axis.
-        """
+        """int: Dimension of the axis."""
 
         return self.__dim
 
     @dim.setter
     def dim(self, dim):
-        """Setter for dim.
-
-        Parameters
-        ----------
-            dim : int
-                Dimension of the axis.
-        """
-
         self.__dim = dim
 
     @property
     def name(self):
-        """Property name.
-
-        Returns
-        -------
-            name : str
-                Display name of the axis.
-        """
+        """str: Display name of the axis."""
 
         return self.__name
 
     @name.setter
     def name(self, name):
-        """Setter for name.
-
-        Parameters
-        ----------
-            name : str
-                Display name of the axis.
-        """
-
         self.__name = name
 
     @property
     def unit(self):
-        """Property unit.
-
-        Returns
-        -------
-            unit : str
-                Unit of the axis.
-        """
+        """str: Unit of the axis."""
 
         return self.__unit
 
     @unit.setter
     def unit(self, unit):
-        """Setter for unit.
-
-        Parameters
-        ----------
-            unit : str
-                Unit of the axis.
-        """
-
         self.__unit = unit
 
     @property
     def bound(self):
-        """Property bound.
-
-        Returns
-        -------
-            bound : str
-                Option to check user-defined bounds:
-                    'none' : Not bounded.
-                    'lower' : Lower bound.
-                    'upper' : Upper bound.
-                    'both' : Both lower and upper bound.
+        """str: Option to check user-defined bounds:
+            * 'none' : Not bounded.
+            * 'lower' : Lower bound.
+            * 'upper' : Upper bound.
+            * 'both' : Both lower and upper bound.
         """
 
         return self.__bound
 
     @bound.setter
     def bound(self, bound):
-        """Setter for bound.
-
-        Parameters
-        ----------
-            bound : str
-                Option to check user-defined bounds:
-                    'none' : Not bounded.
-                    'lower' : Lower bound.
-                    'upper' : Upper bound.
-                    'both' : Both lower and upper bound.
-        """
-
         self.__bound = bound
 
     @property
     def ticks(self):
-        """Property ticks.
-
-        Returns
-        -------
-            ticks : list
-                Ticks of the axis.
-        """
+        """list: Ticks of the axis."""
 
         return self.__ticks
 
     @ticks.setter
     def ticks(self, ticks):
-        """Setter for ticks.
-
-        Parameters
-        ----------
-            ticks : list
-                Ticks of the axis.
-        """
-
         self.__ticks = ticks
 
     @property
     def tick_labels(self):
-        """Property tick_labels.
-
-        Returns
-        -------
-            ticks : list
-                Tick labels of the axis.
-        """
+        """list: Tick labels of the axis."""
 
         return self.__tick_labels
 
     @tick_labels.setter
     def tick_labels(self, tick_labels):
-        """Setter for tick_labels.
-
-        Parameters
-        ----------
-            tick_labels : list
-                Tick labels of the axis.
-        """
-
         self.__tick_labels = tick_labels
 
     @property
     def label(self):
-        """Property label.
-
-        Returns
-        -------
-            label : str
-                Label of the axis.
-        """
+        """str: Label of the axis."""
 
         return self.__label
 
     @label.setter
     def label(self, label):
-        """Setter for label.
-
-        Parameters
-        ----------
-            label : str
-                Label of the axis.
-        """
-
         self.__label = label
 
     @property
     def legends(self):
-        """Property legends.
-
-        Returns
-        -------
-            legends : list 
-                Legends of the axis.
-        """
+        """list: Legends of the axis."""
 
         return self.__legends
 
     @legends.setter
     def legends(self, legends):
-        """Setter for legends.
-
-        Parameters
-        ----------
-            legends : list 
-                Legends of the axis.
-        """
-
         self.__legends = legends
 
     @property
     def colors(self):
-        """Property colors.
-
-        Returns
-        -------
-            colors : list
-                Colors for plots.
-        """
+        """list: Colors for plots."""
 
         return self.__colors
 
     @colors.setter
     def colors(self, colors):
-        """Setter for colors.
-
-        Parameters
-        ----------
-            colors : list
-                Colors for plots.
-        """
-
         self.__colors = colors
 
     @property
     def styles(self):
-        """Property styles.
-
-        Returns
-        -------
-            styles : list
-                Styles of the plots.
-        """
+        """list: Styles of the plots."""
 
         return self.__styles
 
     @styles.setter
     def styles(self, styles):
-        """Setter for styles.
-
-        Parameters
-        ----------
-            styles : list
-                Styles of the plots.
-        """
-
         self.__styles = styles
 
     @property
     def sizes(self):
-        """Property sizes.
-
-        Returns
-        -------
-            sizes : list
-                Sizes of the plots.
-        """
+        """list: Sizes of the plots."""
 
         return self.__sizes
 
     @sizes.setter
     def sizes(self, sizes):
-        """Setter for sizes.
-
-        Parameters
-        ----------
-            sizes : list
-                Sizes of the plots.
-        """
-
         self.__sizes = sizes
 
     def __init__(self, axis_data):
-        """Class constructor for BaseAxis.
-
-        Initializes `val`, `dim`, `bound`, `ticks` and `tick_labels` properties. Inherited objects need to set the other properties individually.
-
-        Parameters
-        ----------
-            axis_data : int or list or dict
-                Data for the axis.
-        """
+        """Class constructor for BaseAxis."""
 
         # if values
         if type(axis_data) is list:
@@ -469,12 +238,12 @@ class BaseAxis():
 
         Parameters
         ----------
-            mini : int
-                Minimum value of the range.
-            maxi : int 
-                Maximum value of the range.
-            num : int
-                Number of elements to consider.
+        mini : int
+            Minimum value of the range.
+        maxi : int 
+            Maximum value of the range.
+        num : int
+            Number of elements to consider.
         """
     
         values = (mini + np.arange(num) * (maxi - mini) / (num - 1))

@@ -1,6 +1,12 @@
 # Changelog
 
-## v0.5.2 - 2020/12/03 - 00 - Routh-Hurwitz Criterion
+## v0.5.4 - 2020/12/04 - 00 - Added Sphinx Docs
+* Added Sphinx API documentation sources and builders to `docs`.
+* Updated documentation of all packages to NumPy style docstrings.
+* Initialized optomechanical systems in `qom/systems` package.
+* Changed all occurences of `model` to `system`.
+
+## v0.5.3 - 2020/12/03 - 00 - Routh-Hurwitz Criterion
 * Added `qom/numerics/RHCriterion` module.
 * Fixed axis error in `qom/ui/plotters/BasePlotter` module.
 * Minor changes to `qom/ui/Figure` module.

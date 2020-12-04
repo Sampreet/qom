@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""Looper functions for dynamics."""
+"""Module containing looper functions for dynamics."""
 
 __name__    = 'qom.loopers.dynamics'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-21'
-__updated__ = '2020-10-22'
+__updated__ = '2020-12-04'
 
 # dependencies
 import logging
@@ -26,56 +26,49 @@ logger = logging.getLogger(__name__)
 # TODO: Optimize the workflow for `dynamics_measure`.
 # TODO: Verify parametes.
 
-def calculate(model, data):
+def calculate(system, data):
     """Wrapper function to switch functions for calculation of dynamcis.
 
     Parameters
     ----------
-        model : :class:`Model`
-            Model of the systems.
-
-        data : dict
-            System data for the calculation.
+    system : :class:`qom.systems.*`
+        System for the calculation.
+    data : dict
+        System data for the calculation.
 
     Returns
     -------
-        data : list 
-            Data of the dynamics calculated.
+    data : list 
+        Data of the dynamics calculated.
     """
 
     # get dynamics
-    return globals()[data['dyna_params']['func']](model, data['dyna_params'], data['meas_params'], data.get('plot', False), data.get('plot_params', None))
+    return globals()[data['dyna_params']['func']](system, data['dyna_params'], data['meas_params'], data.get('plot', False), data.get('plot_params', None))
 
-def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=None):
+def dynamics_measure(system, dyna_params, meas_params, plot=False, plot_params=None):
     """Function to calculate the dynamics of a measure for multiple systems.
 
     Parameters
     ----------
-        model : :class:`Model`
-            Model for the systems.
-        
-        dyna_params : dict
-            Parameters for the calculation of dynamics.
-        
-        meas_params : dict
-            Parameters for the calculation of measures.
-
-        plot : boolean, optional
-            Option to plot the dynamics.
-
-        plot_params : dict, optional
-            Parameters for the plot.
+    system : :class:`qom.systems.*`
+        System for the calculation.
+    dyna_params : dict
+        Parameters for the calculation of dynamics.
+    meas_params : dict
+        Parameters for the calculation of measures.
+    plot : boolean, optional
+        Option to plot the dynamics.
+    plot_params : dict, optional
+        Parameters for the plot.
 
     Returns
     -------
-        D_all : list
-            Dynamics of the measures for all systems.
-
-        V_all : list
-            Dynamics of the variables for all systems.
-
-        Axes : dict
-            Axes points used to calculate the dynamics as lists.
+    D_all : list
+        Dynamics of the measures for all systems.
+    V_all : list
+        Dynamics of the variables for all systems.
+    Axes : dict
+        Axes points used to calculate the dynamics as lists.
     """
 
     # extract frequently used variables
@@ -96,7 +89,7 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
     T = StaticAxis(dyna_params['T'])
 
     # directory and file names for storing data
-    _dir += '\\' + model.code + '\\dynamics\\' + str(T.val[0]) + '_' + str(T.val[-1]) + '_' + str(T.dim) + '\\'
+    _dir += '\\' + system.code + '\\dynamics\\' + str(T.val[0]) + '_' + str(T.val[-1]) + '_' + str(T.dim) + '\\'
 
     # variables parameter
     X = None
@@ -105,9 +98,9 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
         var_params = {
             X.var: X.val
         }
-        _v, _c = model.get_ivc_multi(var_params)
+        _v, _c = system.get_ivc_multi(var_params)
     else:
-        _v, _c = model.get_ivc_multi()
+        _v, _c = system.get_ivc_multi()
 
     # constants
     _n_s = _c['n_s']
@@ -186,12 +179,12 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
     D_all = list()
 
     # display initialization
-    logger.info('Calculating dynamics for {model_name}...\n\tMeasure Parameters:\n\t\t{meas_params}\n\tDynamics Parameters:\n\t\t{dyna_params}\n'.format(model_name=model.name, meas_params=meas_params, dyna_params=dyna_params))
+    logger.info('Calculating dynamics for {system_name}...\n\tMeasure Parameters:\n\t\t{meas_params}\n\tDynamics Parameters:\n\t\t{dyna_params}\n'.format(system_name=system.name, meas_params=meas_params, dyna_params=dyna_params))
     
     if _c['n_s'] != 0:
         # solver function
         solver_type = dyna_params['solver_type']
-        func = getattr(model, 'f_multi_' + solver_type)
+        func = getattr(system, 'f_multi_' + solver_type)
 
         # calculate dynamics
         _, V = solvers.solve_ode_scipy(func, solver_type, T.val, _v, _c)

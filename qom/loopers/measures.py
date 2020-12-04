@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Looper functions for measures."""
+"""Module containing looper functions for measures."""
 
 __name__    = 'qom.loopers.measures'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-23'
-__updated__ = '2020-11-17'
+__updated__ = '2020-12-04'
 
 # dependencies
 import logging
@@ -23,56 +23,49 @@ logger = logging.getLogger(__name__)
 
 # TODO: Verify parametes.
 
-def calculate(model, data):
+def calculate(system, data):
     """Wrapper function to switch functions for calculation of measures.
     
     Parameters
     ----------
-        model : :class:`Model`
-            Model of the system.
-
-        data : dict
-            Data for the calculation.
+    system : :class:`qom.systems.*`
+        System for the calculation.
+    data : dict
+        Data for the calculation.
 
     Returns
     -------
-        data : list
-            Data of the measures calculated.
+    data : list
+        Data of the measures calculated.
     """
 
     # get properties
-    return globals()[data['meas_params']['func']](model, data['dyna_params'], data['meas_params'], data.get('plot', False), data.get('plot_params', None))
+    return globals()[data['meas_params']['func']](system, data['dyna_params'], data['meas_params'], data.get('plot', False), data.get('plot_params', None))
 
-def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
+def measures_1D(system, dyna_params, meas_params, plot=False, plot_params=None):
     """Function to calculate measures versus a continuous variable.
     
     Parameters
     ----------
-        model : :class:`Model`
-            Model of the systems.
-        
-        dyna_params : dict
-            Parameters for the dynamics.
-        
-        meas_params : dict
-            Parameters for the measures.
-
-        plot : boolean, optional
-            Option to plot the measures.
-
-        plot_params : dict, optional
-            Parameters for the plot.
+    system : :class:`qom.systems.*`
+        System for the calculation.
+    dyna_params : dict
+        Parameters for the dynamics.
+    meas_params : dict
+        Parameters for the measures.
+    plot : boolean, optional
+        Option to plot the measures.
+    plot_params : dict, optional
+        Parameters for the plot.
 
     Returns
     -------
-        M : list
-            Measures calculated.
-
-        Thres : dict
-            Threshold values of the variables used.
-
-        Axes : dict
-            Axes points used to calculate the properties as lists.
+    M : list
+        Measures calculated.
+    Thres : dict
+        Threshold values of the variables used.
+    Axes : dict
+        Axes points used to calculate the properties as lists.
     """
 
     # extract frequently used variables
@@ -82,7 +75,7 @@ def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
     plot_prog   = plot_params.get('progress', False) if plot_params != None else False
 
     # get dynamics
-    D_all, _, Axes = dynamics.dynamics_measure(model, dyna_params, meas_params, plot_prog, plot_params)
+    D_all, _, Axes = dynamics.dynamics_measure(system, dyna_params, meas_params, plot_prog, plot_params)
     X = StaticAxis({'val': Axes['X']})
 
     # initialize variables
@@ -158,36 +151,30 @@ def measures_1D(model, dyna_params, meas_params, plot=False, plot_params=None):
     # return data
     return M.tolist(), Thres, Axes
 
-def measures_1D_multi(model, dyna_params, meas_params, plot=False, plot_params=None):
+def measures_1D_multi(system, dyna_params, meas_params, plot=False, plot_params=None):
     """Function to calculate measures versus a continuous variable for multiple discrete variables.
     
     Parameters
     ----------
-        model : :class:`Model`
-            Model of the systems.
-        
-        dyna_params : dict
-            Parameters for the dynamics.
-        
-        meas_params : dict
-            Parameters for the measures.
-
-        plot : boolean, optional
-            Option to plot the measures.
-
-        plot_params : dict, optional
-            Parameters for the plot.
+    system : :class:`qom.systems.*`
+        System for the calculation.
+    dyna_params : dict
+        Parameters for the dynamics.
+    meas_params : dict
+        Parameters for the measures.
+    plot : boolean, optional
+        Option to plot the measures.
+    plot_params : dict, optional
+        Parameters for the plot.
 
     Returns
     -------
-        M : list
-            Measures calculated.
-
-        Thres : dict
-            Threshold values of the variables used.
-
-        Axes : dict
-            Axes points used to calculate the properties as lists.
+    M : list
+        Measures calculated.
+    Thres : dict
+        Threshold values of the variables used.
+    Axes : dict
+        Axes points used to calculate the properties as lists.
     """
 
     # extract frequently used variables
@@ -215,11 +202,11 @@ def measures_1D_multi(model, dyna_params, meas_params, plot=False, plot_params=N
 
     # for variation in Z
     for j in range(Z.dim):
-        # update model
-        model.params[Z.var] = Z.val[j]
+        # update system
+        system.params[Z.var] = Z.val[j]
 
         # get dynamics
-        D_all, _, Axes = dynamics.dynamics_measure(model, dyna_params, meas_params, plot_prog, plot_params)
+        D_all, _, Axes = dynamics.dynamics_measure(system, dyna_params, meas_params, plot_prog, plot_params)
 
         # for variation in X
         for i in range(X.dim):
@@ -283,36 +270,30 @@ def measures_1D_multi(model, dyna_params, meas_params, plot=False, plot_params=N
     # return data
     return M.tolist(), Thres, Axes
 
-def measures_2D(model, dyna_params, meas_params, plot, plot_params):
+def measures_2D(system, dyna_params, meas_params, plot, plot_params):
     """Function to calculate measures versus two continuous variables.
     
     Parameters
     ----------
-        model : :class:`Model`
-            Model of the systems.
-        
-        dyna_params : dict
-            Parameters for the dynamics.
-        
-        meas_params : dict
-            Parameters for the measures.
-
-        plot : boolean, optional
-            Option to plot the measures.
-
-        plot_params : dict, optional
-            Parameters for the plot.
+    system : :class:`qom.systems.*`
+        System for the calculation.
+    dyna_params : dict
+        Parameters for the dynamics.
+    meas_params : dict
+        Parameters for the measures.
+    plot : boolean, optional
+        Option to plot the measures.
+    plot_params : dict, optional
+        Parameters for the plot.
 
     Returns
     -------
-        M : list
-            Measures calculated.
-
-        Thres : dict
-            Threshold values of the variables used.
-
-        Axes : dict
-            Axes points used to calculate the measures as lists.
+    M : list
+        Measures calculated.
+    Thres : dict
+        Threshold values of the variables used.
+    Axes : dict
+        Axes points used to calculate the measures as lists.
     """
 
     # extract frequently used variables
@@ -343,11 +324,11 @@ def measures_2D(model, dyna_params, meas_params, plot, plot_params):
 
     # for variation in Y
     for j in range(Y.dim):
-        # update model
-        model.params[Y.var] = Y.val[j]
+        # update system
+        system.params[Y.var] = Y.val[j]
 
         # get dynamics
-        D_all, _, Axes = dynamics.dynamics_measure(model, dyna_params, meas_params, plot_prog, plot_params)
+        D_all, _, Axes = dynamics.dynamics_measure(system, dyna_params, meas_params, plot_prog, plot_params)
 
         # for variation in X
         for i in range(X.dim):

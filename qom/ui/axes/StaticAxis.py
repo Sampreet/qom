@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.axes.StaticAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-17'
-__updated__ = '2020-10-21'
+__updated__ = '2020-12-04'
 
 # dependencies
 import logging
@@ -24,16 +24,15 @@ class StaticAxis(BaseAxis):
     """Class to handle a static axis.
 
     Inherits :class:`qom.utils.axes.BaseAxis`.
+
+    Parameters
+    ----------
+    axis_data : int or list or dict
+        Data for the axis.
     """
 
     def __init__(self, axis_data={}):
-        """Class constructor for StaticAxis.
-
-        Parameters
-        ----------
-            axis_data : int or list or dict
-                Data for the axis.
-        """
+        """Class constructor for StaticAxis."""
 
         # initialize super class
         super().__init__(axis_data)

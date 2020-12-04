@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.axes.MultiAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-10'
-__updated__ = '2020-12-02'
+__updated__ = '2020-12-04'
 
 # TODO: set color and style variants.
 
@@ -24,16 +24,15 @@ class MultiAxis(BaseAxis):
     """Class to handle a multi-value axis.
 
     Inherits :class:`qom.ui.axes.BaseAxis`.
+
+    Parameters
+    ----------
+    axis_data : int or list or dict
+        Data for the axis.
     """
 
     def __init__(self, axis_data={}):
-        """Class constructor for MultiAxis.
-
-        Parameters
-        ----------
-            axis_data : int or list or dict
-                Data for the axis.
-        """
+        """Class constructor for MultiAxis."""
 
         # initialize super class
         super().__init__(axis_data)
