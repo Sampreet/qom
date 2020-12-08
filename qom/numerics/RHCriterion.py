@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Class to handle Routh-Hurwitz criterion [1].
+"""Class to handle Routh-Hurwitz criterion.
 
 References:
 
@@ -10,7 +10,7 @@ References:
 __name__    = 'qom.numerics.RHCriterion'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-03'
-__updated__ = '2020-12-04'
+__updated__ = '2020-12-05'
 
 # dependencies
 import logging
@@ -21,19 +21,27 @@ import sympy as sp
 logger = logging.getLogger(__name__)
 
 class RHCriterion():
-    """Class to handle Routh-Hurwitz criterion.
+    r"""Class to handle Routh-Hurwitz criterion.
 
-        Initializes `order` and `coeffs` properties.
+    Initializes `coeffs`, `n` and `seq` properties. At least one of the parameters, preferably "coeffs", should be non-None.
 
-        Parameters
-        ----------
-        A : `numpy.matrix` or list
-            Drift matrix. 
-        """
+    An eigenvalue equation in :math:`\lambda` is obtained by equating :math:`\det(\lambda I_{n} - A_{n \times n})` to zero.
+
+    Parameters
+    ----------
+    A : list or numpy.matrix, optional
+        Drift matrix. 
+    coeffs : list, optional
+        Coefficients of the characteristic equation.
+    """
 
     @property
     def coeffs(self):
-        """list: Coefficients of the characteristic equation."""
+        r"""list: Coefficients of the characteristic equation given by,
+
+        .. math::
+            a_{0} \lambda^{n} + a_{1} \lambda^{n - 1} + ... + a_{n} = 0
+        """
 
         return self.__coeffs
     
@@ -42,18 +50,28 @@ class RHCriterion():
         self.__coeffs = coeffs
 
     @property
-    def order(self):
+    def n(self):
         """int: Order of the characteristic equation."""
 
-        return self.__order
+        return self.__n
     
-    @order.setter
-    def order(self, order):
-        self.__order = order
+    @n.setter
+    def n(self, n):
+        self.__n = n
 
     @property
     def seq(self):
-        """list: Sequence of determinants of the sub-matrices."""
+        r"""list: Sequence of terms :math:`T_{k} = \det(M_{k})`, where :math:`M_{k}` is the square sub-matrix of :math:`M` comprising of its first :math:`k` rows and columns, with :math:`T_{0} = 1`.
+        
+        The matrix :math:`M` is defined as [1],
+
+        .. math::
+            M_{ij} = 
+            \begin{cases} 
+            a_{2i - j}, ~ \mathrm{if} ~ 0 \le 2 i - j \le n \\
+            0, ~ \mathrm{otherwise}
+            \end{cases}
+        """
 
         return self.__seq
     
@@ -61,74 +79,81 @@ class RHCriterion():
     def seq(self, seq):
         self.__seq = seq
 
-    def __init__(self, A):
+    def __init__(self, A=None, coeffs=None):
         """Class constructor for RHCriterion."""
 
-        # validate shape
-        _shape = np.shape(A)
-        assert _shape[0] == _shape[1], 'A should be a square matrix.'
+        # validate parameters
+        assert A is not None or coeffs is not None, 'At least one of the parameters "A" and "coeffs" should be non-None'
 
-        # set order
-        self.order = _shape[0]
+        # if drift matrix
+        if A is not None:
+            # validate shape
+            _shape = np.shape(A)
+            assert _shape[0] == _shape[1], 'A should be a square matrix.'
+            # set order
+            self.n = _shape[0]
 
-        # convert to sympy matrix
-        _A = sp.Matrix(A)
-        # eigenvalues
-        _lamb = sp.symbols('\\lambda', complex=True)
-        # eigenvalue equation
-        _mat_eig = _lamb * sp.eye(self.order) - _A
-        # characteristic equation
-        _eqn_chr = _mat_eig.det(method='berkowitz').expand().collect(_lamb)
+            # convert to sympy matrix
+            _A = sp.Matrix(A)
+            # eigenvalues
+            _lamb = sp.symbols('\\lambda', complex=True)
+            # eigenvalue equation
+            _mat_eig = _lamb * sp.eye(self.n) - _A
+            # characteristic equation
+            _eqn_chr = _mat_eig.det(method='berkowitz').expand().collect(_lamb)
 
-        # set coefficients
-        self.coeffs = list()
-        _temp = 0
-        for o in range(self.order):
-            self.coeffs.append(_eqn_chr.coeff(_lamb**(self.order - o)))
-            _temp += self.coeffs[o] * _lamb**(self.order - o)
-        self.coeffs.append(_eqn_chr - _temp)
-        # convert to numpy constants
-        for i in range(len(self.coeffs)):
-            self.coeffs[i] = np.complex(sp.re(self.coeffs[i]), sp.im(self.coeffs[i]))
+            # set coefficients
+            self.coeffs = list()
+            _temp = 0
+            for o in range(self.n):
+                self.coeffs.append(_eqn_chr.coeff(_lamb**(self.n - o)))
+                _temp += self.coeffs[o] * _lamb**(self.n - o)
+            self.coeffs.append(_eqn_chr - _temp)
+            # convert to numpy constants
+            for i in range(len(self.coeffs)):
+                self.coeffs[i] = np.complex(sp.re(self.coeffs[i]), sp.im(self.coeffs[i]))
+        # if coefficients
+        if coeffs is not None:
+            # set order
+            self.n = len(coeffs) - 1
+            # set coefficients
+            self.coeffs = coeffs
 
         # set Ts
-        self.__set_Ts()
+        self._set_Ts()
 
-    def __set_Ts(self):
+    def _set_Ts(self):
         """Method to set the determinants of the sub-matrices."""
 
         # get M
-        _M = np.zeros((self.order, self.order), dtype=np.complex)
-        for i in range(self.order):
-            for j in range(self.order):
-                if 2 * i - j >= 0 and 2 * i - j <= self.order:
+        _M = np.zeros((self.n, self.n), dtype=np.complex)
+        for i in range(self.n):
+            for j in range(self.n):
+                if 2 * i - j >= 0 and 2 * i - j <= self.n:
                     _M[i][j] = self.coeffs[2 * i - j]
 
         # set seq
         self.seq = list()
         self.seq.append(self.coeffs[0])
-        for i in range(1, self.order + 1):
+        for i in range(1, self.n + 1):
             _sub_mat = _M[:i, :i]
             self.seq.append(np.linalg.det(_sub_mat))
 
-    def check(self):
-        """Method to check Routh-Hurwitz criterion.
+    def get_indices(self):
+        r"""Method to obtain the indices where the sequence, :math:`\{T_{0}, T_{1}, ..., T_{n}\}` changes sign. 
 
         Returns
         -------
         idxs : list
-            Indices of the sequence where the element changes sign.
+            Indices where the sequence changes sign.
         """
 
         # initialize values
-        _prev_sign = np.sign(self.seq[0])
         idxs = list()
 
         # iterate
-        for i in range(1, self.order + 1):
-            _curr_sign = np.sign(self.seq[i] / self.seq[i - 1])
-            if _curr_sign != _prev_sign:
-                _prev_sign = _curr_sign
+        for i in range(1, self.n + 1):
+            if np.sign(self.seq[i] / self.seq[i - 1]) == -1:
                 idxs.append(i)
 
         # return

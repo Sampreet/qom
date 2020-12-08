@@ -5,7 +5,7 @@ with open('README.md', 'r') as file_readme:
 
 setup(
     name='qom-toolbox',
-    version='0.5.4',
+    version='0.5.5',
     author='Sampreet Kalita',
     author_email='sampreet.kalita@hotmail.com',
     desctiption='Quantum Optomechanics Toolbox',
@@ -14,13 +14,13 @@ setup(
     url='http://github.com/sampreet/qom',
     packages= find_packages(),
     classifiers=[
-          'Programming Language :: Python :: 3',
-          'Development Status :: 2 - Pre-Alpha',
-          'Intended Audience :: Science/Research',
-          'License :: OSI Approved :: MIT License',
-          'Operating System :: OS Independent',
-          'Topic :: Scientific/Engineering'
-          ],
+        'Programming Language :: Python :: 3',
+        'Development Status :: 2 - Pre-Alpha',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: OS Independent',
+        'Topic :: Scientific/Engineering'
+    ],
     license='MIT',
     install_requires=[
         'matplotlib>=3.0',

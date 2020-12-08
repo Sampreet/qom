@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.5.5 - 2020/12/08 - 00 - Updated Modules
+* Added support for coefficient initialization in `qom/numerics/RHCriterion` module.
+* Updated `qom/systems/BaseSystem` with option to select basic or cubic solutions for mean optical amplitude and occupancy.
+
 ## v0.5.4 - 2020/12/04 - 00 - Added Sphinx Docs
 * Added Sphinx API documentation sources and builders to `docs`.
 * Updated documentation of all packages to NumPy style docstrings.

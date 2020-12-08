@@ -10,15 +10,17 @@ References:
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2020-12-04'
+__updated__ = '2020-12-05'
 
 # dependencies
+from typing import Union
 import logging
 import numpy as np
 import scipy.constants as sc
 
 # module logger
 logger = logging.getLogger(__name__)
+tfloat = Union[float, np.float]
 
 class BaseSystem():
     """Class to interface an optomechanical system.
@@ -59,117 +61,127 @@ class BaseSystem():
     def params(self, params):
         self.__params = params
 
-    def __init__(self, data):
+    def __init__(self, data: dict):
         """Class constructor for BaseSystem."""
 
-        # validate parameters
-        assert type(data) is dict, 'Data should be a `dict`'
+    def get_mean_optical_amplitude(self, lambda_l: tfloat, mu: tfloat, gamma_o: tfloat, P_l: tfloat, Delta: tfloat, C: tfloat=0, mode='basic'):
+        r"""Method to obtain the mean optical amplitude.
 
-    def get_intracavity_photon_number_basic(self, lambda_l, mu, gamma_o, P_l, Delta):
-        r"""Method to obtain the intracavity photon number.
-
-        The steady state is assumed to be of the form [1],
+        The optical steady state is assumed to be of the form [1],
 
         .. math::
-        
             \alpha_{s} = \frac{\eta_{l}}{\frac{\gamma_{o}}{2} - \iota \Delta}
 
-        where :math:`\eta_{l} = \sqrt{\mu \gamma_{o} P_{l} / (\hbar \omega_{l})}`, with :math:`\omega_{l} = 2 \pi c / \lambda_{l}`.
+        where :math:`\Delta = \Delta_{l} + C |\alpha_{s}|^{2}`, :math:`\eta_{l} = \sqrt{\mu \gamma_{o} P_{l} / (\hbar \omega_{l})}`, with :math:`\omega_{l} = 2 \pi c / \lambda_{l}`.
 
         Parameters
         ----------
-        lambda_l : float
+        lambda_l : float or numpy.float
             Wavelength of the laser.  
-        mu : float
+        mu : float or numpy.float
             Laser-cavity coupling parameter.
-        gamma_o : float
+        gamma_o : float or numpy.float
             Optical decay rate.
-        P_l : float
+        P_l : float or numpy.float
             Power of the laser.
-        Delta : float
-            Effective detuning.
+        Delta : float or numpy.float
+            Effective detuning if mode is 'basic', else detuning of the laser.
+        G : float or numpy.float
+            Frequency pull parameter.
+        C : float or numpy.float, optional
+            Coefficient of :math:`|\alpha_{s}|^{2}`.
+        mode : str, optional
+            Mode of calculation of intracavity photon number:
+                * 'basic' : Assuming constant effective detuning.
+                * 'cubic' : Cubic variation with laser detuning.
         
         Returns
         -------
-        N_o : float
-            Intracavity photon number.
+        alpha_s : float or numpy.float or list
+            Mean optical amplitude.
         """
 
-        # validate parameters
-        assert type(lambda_l) is float, 'Wavelength should be of type `float`'
-        assert type(mu) is float, 'Laser-cavity coupling parameter should be of type `float`'
-        assert type(gamma_o) is float, 'Optical decay rate should be of type `float`'
-        assert type(P_l) is float, 'Power of the laser should be of type `float`'
-        assert type(Delta) is float, 'Effective detuning should be of type `float`'
+        # basic mode
+        if mode == 'basic':
+            # get amplitude of the laser
+            omega_l = 2 * np.pi * sc.c / lambda_l
+            eta_l = np.sqrt(mu * gamma_o * P_l / sc.hbar / omega_l)
+            # mean optical amplitude
+            alpha_s = eta_l / (gamma_o / 2 - 1j * Delta)
+        
+        # cubic mode
+        elif mode == 'cubic':
+            # get mean optical occupancy
+            N_o = self.get_mean_optical_occupancy(lambda_l, mu, gamma_o, P_l, Delta, C, 'cubic')
+            # mean optical amplitude
+            alpha_s = np.sqrt(N_o).tolist()
 
-        # get amplitude of the laser
-        omega_l = 2 * np.pi * sc.c / lambda_l
-        eta_l = np.sqrt(mu * gamma_o * P_l / sc.hbar / omega_l)
+        # return
+        return alpha_s
 
-        # get steady state amplitude
-        alpha_s = eta_l / (gamma_o / 2 - 1j * Delta)
+    def get_mean_optical_occupancy(self, lambda_l: tfloat, mu: tfloat, gamma_o: tfloat, P_l: tfloat, Delta: tfloat, C: tfloat=0, mode='basic'):
+        r"""Method to obtain the mean optical occupancy.
 
-        # return intracavity photon number
-        return np.real(np.conjugate(alpha_s) * alpha_s)
-
-    def get_intracavity_photon_number_cubic(self, lambda_l, mu, gamma_o, P_l, Delta_l, C):
-        r"""Method to obtain the intracavity photon number.
-
-        The steady states are assumed to be of the form [1],
+        The mean optical occupancy can be written as [1],
 
         .. math::
-        
-            \alpha_{s} = \frac{\eta_{l}}{\frac{\gamma_{o}}{2} - \iota (\Delta_{l} + C |\alpha_{s}|^{2})}
+            N_{o} = |\alpha_{s}|^{2} = \frac{\eta_{l}^{2}}{\frac{\gamma_{o}^{2}}{4} + \Delta^{2}}
 
-        where :math:`\eta_{l} = \sqrt{\mu \gamma_{o} P_{l} / (\hbar \omega_{l})}`, with :math:`\omega_{l} = 2 \pi c / \lambda_{l}`.
+        where :math:`\Delta = \Delta_{l} + C N_{o}`, :math:`\eta_{l} = \sqrt{\mu \gamma_{o} P_{l} / (\hbar \omega_{l})}`, with :math:`\omega_{l} = 2 \pi c / \lambda_{l}`.
 
         Parameters
         ----------
-        lambda_l : float
+        lambda_l : float or numpy.float
             Wavelength of the laser.
-        mu : float
+        mu : float or numpy.float
             Laser-cavity coupling parameter.
-        gamma_o : float
+        gamma_o : float or numpy.float
             Optical decay rate.
-        P_l : float
+        P_l : float or numpy.float
             Power of the laser.
-        Delta_l : float
-            Detuning of the laser.
-        C : float
-            Coefficient of :math:`|\alpha_{s}|^{2}`.
+        Delta : float or numpy.float
+            Effective detuning if mode is 'basic', else detuning of the laser.
+        C : float or numpy.float, optional
+            Coefficient of :math:`N_{o}` in the expression of :math:`\Delta`.
+        mode : str, optional
+            Mode of calculation of intracavity photon number:
+                * 'basic' : Assuming constant effective detuning.
+                * 'cubic' : Cubic variation with laser detuning.
         
         Returns
         -------
-        N_o : float
-            Intracavity photon number.
+        N_o : float or numpy.float or list
+            Mean optical amplitude.
         """
 
-        # validate parameters
-        assert type(lambda_l) is float, 'Wavelength should be of type `float`'
-        assert type(mu) is float, 'Laser-cavity coupling parameter should be of type `float`'
-        assert type(gamma_o) is float, 'Optical decay rate should be of type `float`'
-        assert type(P_l) is float, 'Power of the laser should be of type `float`'
-        assert type(Delta_l) is float, 'Detuning of the laser should be of type `float`'
-        assert type(C) is float or type(C) is np.complex, 'Constant should be of type `float`'
+        # basic mode
+        if mode == 'basic':
+            # get mean optical amplitude
+            alpha_s = self.get_mean_optical_amplitude(lambda_l, mu, gamma_o, P_l, Delta)
+            # mean optical occupancy
+            N_o = np.conjugate(alpha_s) * alpha_s
 
-        # get amplitude of the laser
-        omega_l = 2 * np.pi * sc.c / lambda_l
-        eta_l = np.sqrt(mu * gamma_o * P_l / sc.hbar / omega_l)
+        # cubic mode
+        elif mode == 'cubic':
+            # get amplitude of the laser
+            omega_l = 2 * np.pi * sc.c / lambda_l
+            eta_l = np.sqrt(mu * gamma_o * P_l / sc.hbar / omega_l)
 
-        # get coefficients
-        coeff_0 = 4 * C**2
-        coeff_1 = 8 * Delta_l * C
-        coeff_2 = 4 * Delta_l**2 + gamma_o**2
-        coeff_3 = - 4 * eta_l
+            # get coefficients
+            coeff_0 = 4 * C**2
+            coeff_1 = 8 * C * Delta
+            coeff_2 = 4 * Delta**2 + gamma_o**2
+            coeff_3 = - 4 * eta_l**2
 
-        # get roots
-        roots = np.roots([coeff_0, coeff_1, coeff_2, coeff_3])
+            # get roots
+            roots = np.roots([coeff_0, coeff_1, coeff_2, coeff_3])
 
-        # retain real roots
-        N_o = list()
-        for root in roots:
-            if np.imag(root) == 0.0:
-                N_o.append(root)
+            # mean optical occupancy
+            N_o = list()
+            # retain real roots
+            for root in roots:
+                if np.imag(root) == 0.0:
+                    N_o.append(np.real(root))
 
-        # return intracavity photon number
+        # return
         return N_o
