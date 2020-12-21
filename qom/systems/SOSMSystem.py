@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.SOSMSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2020-12-04'
+__updated__ = '2020-12-21'
 
 # dependencies
 import logging
@@ -24,17 +24,16 @@ class SOSMSystem(BaseSystem):
         
     Parameters
     ----------
-    data : dict
-        Data for the system.
+    params : dict
+        Parameters for the system.
     """
 
-    def __init__(self, data):
+    def __init__(self, params):
         """Class constructor for SOSMSystem."""
 
         # initialize super class
-        super().__init__(data)
+        super().__init__(params)
 
-        # initialize properties
-        self.name = data.get('name', 'SOSMSystem')
-        self.code = data.get('code', 'sosms')
-        self.params = data.get('params', {})
+        # set attributes
+        self.code = 'sosms'
+        self.name = 'SOSMSystem'

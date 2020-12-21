@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.5.6 - 2020/12/21 - 00 - Templated Loopers
+* Updated `qom/loopers`:
+    * Added `BaseLooper` with multithreading and multiprocessing methods.
+    * Added `XLooper`, `XYLooper` and `XZLooper` for 1D and 2D looping.
+    * Removed `init_log` method from `__init__`.
+* Updated `qom/systems` modules.
+
 ## v0.5.5 - 2020/12/21 - 00 - Minor Fixes
 * Fixed `qom/numerics/RHCriterion` module with 0-based indexing.
 * Updated `qom/systems/BaseSystem` module data types.

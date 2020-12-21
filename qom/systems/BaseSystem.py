@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Class to interface an optomechanical system."""
+"""Class to interface optomechanical systems."""
 
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2020-12-05'
+__updated__ = '2020-12-21'
 
 # dependencies
 from typing import Union
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 t_float = Union[float, np.float32, np.float64]
 
 class BaseSystem():
-    """Class to interface an optomechanical system.
+    """Class to interface optomechanical systems.
 
     References:
 
@@ -27,8 +27,8 @@ class BaseSystem():
 
     Parameters
     ----------
-    data : dict
-        Data for the system.
+    params : dict
+        Parameters for the system.
     """
 
     @property
@@ -53,7 +53,7 @@ class BaseSystem():
 
     @property
     def params(self):
-        """dict: Base Parameters of the model."""
+        """dict: Parameters for the system."""
 
         return self.__params
 
@@ -61,10 +61,11 @@ class BaseSystem():
     def params(self, params):
         self.__params = params
 
-    def __init__(self, data: dict):
+    def __init__(self, params: dict):
         """Class constructor for BaseSystem."""
 
-        # TODO: Validate data
+        # set params
+        self.params = params
 
     def get_mean_optical_amplitude(self, lambda_l: t_float, mu: t_float, gamma_o: t_float, P_l: t_float, Delta: t_float, C: t_float=0, mode='basic'):
         r"""Method to obtain the mean optical amplitude.
