@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Class to interface an optomechanical system.
-
-References:
-
-[1] M. Aspelmeyer, T. J. Kippenberg, and F. Marquardt, *Cavity Optomechanics*, Review of Modern Physics **86** (4), 1931 (2014)."""
+"""Class to interface an optomechanical system."""
 
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
@@ -20,10 +16,14 @@ import scipy.constants as sc
 
 # module logger
 logger = logging.getLogger(__name__)
-tfloat = Union[float, np.float]
+t_float = Union[float, np.float32, np.float64]
 
 class BaseSystem():
     """Class to interface an optomechanical system.
+
+    References:
+
+    [1] M. Aspelmeyer, T. J. Kippenberg, and F. Marquardt, *Cavity Optomechanics*, Review of Modern Physics **86** (4), 1931 (2014).
 
     Parameters
     ----------
@@ -64,7 +64,9 @@ class BaseSystem():
     def __init__(self, data: dict):
         """Class constructor for BaseSystem."""
 
-    def get_mean_optical_amplitude(self, lambda_l: tfloat, mu: tfloat, gamma_o: tfloat, P_l: tfloat, Delta: tfloat, C: tfloat=0, mode='basic'):
+        # TODO: Validate data
+
+    def get_mean_optical_amplitude(self, lambda_l: t_float, mu: t_float, gamma_o: t_float, P_l: t_float, Delta: t_float, C: t_float=0, mode='basic'):
         r"""Method to obtain the mean optical amplitude.
 
         The optical steady state is assumed to be of the form [1],
@@ -119,7 +121,7 @@ class BaseSystem():
         # return
         return alpha_s
 
-    def get_mean_optical_occupancy(self, lambda_l: tfloat, mu: tfloat, gamma_o: tfloat, P_l: tfloat, Delta: tfloat, C: tfloat=0, mode='basic'):
+    def get_mean_optical_occupancy(self, lambda_l: t_float, mu: t_float, gamma_o: t_float, P_l: t_float, Delta: t_float, C: t_float=0, mode='basic'):
         r"""Method to obtain the mean optical occupancy.
 
         The mean optical occupancy can be written as [1],

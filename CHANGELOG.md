@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.5.5 - 2020/12/21 - 00 - Minor Fixes
+* Fixed `qom/numerics/RHCriterion` module with 0-based indexing.
+* Updated `qom/systems/BaseSystem` module data types.
+
 ## v0.5.5 - 2020/12/08 - 00 - Updated Modules
 * Added support for coefficient initialization in `qom/numerics/RHCriterion` module.
 * Updated `qom/systems/BaseSystem` with option to select basic or cubic solutions for mean optical amplitude and occupancy.

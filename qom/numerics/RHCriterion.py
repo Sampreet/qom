@@ -1,24 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Class to handle Routh-Hurwitz criterion.
-
-References:
-
-[1] E. X. DeJesus and C. Kaufman, *Routh-Hurwitz Criterion in the Examination of Eigenvalues of a System of Nonlinear Ordinary Differential Equations*, Phys. Rev. A **35** (12), 5288 (1987)."""
+"""Class to handle Routh-Hurwitz criterion."""
 
 __name__    = 'qom.numerics.RHCriterion'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-03'
-__updated__ = '2020-12-05'
+__updated__ = '2020-12-18'
 
 # dependencies
+from typing import Union
 import logging
 import numpy as np
 import sympy as sp
 
 # module logger
 logger = logging.getLogger(__name__)
+t_array = Union[list, np.matrix, np.ndarray]
 
 class RHCriterion():
     r"""Class to handle Routh-Hurwitz criterion.
@@ -27,17 +25,21 @@ class RHCriterion():
 
     An eigenvalue equation in :math:`\lambda` is obtained by equating :math:`\det(\lambda I_{n} - A_{n \times n})` to zero.
 
+    References:
+
+    [1] E. X. DeJesus and C. Kaufman, *Routh-Hurwitz Criterion in the Examination of Eigenvalues of a System of Nonlinear Ordinary Differential Equations*, Phys. Rev. A **35** (12), 5288 (1987).
+
     Parameters
     ----------
-    A : list or numpy.matrix, optional
+    A : list or numpy.matrix or numpy.ndarray, optional
         Drift matrix. 
-    coeffs : list, optional
+    coeffs : list or numpy.ndarray, optional
         Coefficients of the characteristic equation.
     """
 
     @property
     def coeffs(self):
-        r"""list: Coefficients of the characteristic equation given by,
+        r"""list or numpy.ndarray: Coefficients of the characteristic equation given by,
 
         .. math::
             a_{0} \lambda^{n} + a_{1} \lambda^{n - 1} + ... + a_{n} = 0
@@ -46,7 +48,7 @@ class RHCriterion():
         return self.__coeffs
     
     @coeffs.setter
-    def coeffs(self, coeffs):
+    def coeffs(self, coeffs: t_array):
         self.__coeffs = coeffs
 
     @property
@@ -56,12 +58,12 @@ class RHCriterion():
         return self.__n
     
     @n.setter
-    def n(self, n):
+    def n(self, n: int):
         self.__n = n
 
     @property
     def seq(self):
-        r"""list: Sequence of terms :math:`T_{k} = \det(M_{k})`, where :math:`M_{k}` is the square sub-matrix of :math:`M` comprising of its first :math:`k` rows and columns, with :math:`T_{0} = 1`.
+        r"""list or numpy.ndarray: Sequence of terms :math:`T_{k} = \det(M_{k})`, where :math:`M_{k}` is the square sub-matrix of :math:`M` comprising of its first :math:`k` rows and columns, with :math:`T_{0} = a_{0}`.
         
         The matrix :math:`M` is defined as [1],
 
@@ -71,15 +73,17 @@ class RHCriterion():
             a_{2i - j}, ~ \mathrm{if} ~ 0 \le 2 i - j \le n \\
             0, ~ \mathrm{otherwise}
             \end{cases}
+        
+        where the indices of :math:`M` are 1-based.
         """
 
         return self.__seq
     
     @seq.setter
-    def seq(self, seq):
+    def seq(self, seq: t_array):
         self.__seq = seq
 
-    def __init__(self, A=None, coeffs=None):
+    def __init__(self, A: t_array=None, coeffs: t_array=None):
         """Class constructor for RHCriterion."""
 
         # validate parameters
@@ -90,28 +94,12 @@ class RHCriterion():
             # validate shape
             _shape = np.shape(A)
             assert _shape[0] == _shape[1], 'A should be a square matrix.'
+
             # set order
             self.n = _shape[0]
+            # set coeffs
+            self._set_coeffs(A)
 
-            # convert to sympy matrix
-            _A = sp.Matrix(A)
-            # eigenvalues
-            _lamb = sp.symbols('\\lambda', complex=True)
-            # eigenvalue equation
-            _mat_eig = _lamb * sp.eye(self.n) - _A
-            # characteristic equation
-            _eqn_chr = _mat_eig.det(method='berkowitz').expand().collect(_lamb)
-
-            # set coefficients
-            self.coeffs = list()
-            _temp = 0
-            for o in range(self.n):
-                self.coeffs.append(_eqn_chr.coeff(_lamb**(self.n - o)))
-                _temp += self.coeffs[o] * _lamb**(self.n - o)
-            self.coeffs.append(_eqn_chr - _temp)
-            # convert to numpy constants
-            for i in range(len(self.coeffs)):
-                self.coeffs[i] = np.complex(sp.re(self.coeffs[i]), sp.im(self.coeffs[i]))
         # if coefficients
         if coeffs is not None:
             # set order
@@ -122,15 +110,39 @@ class RHCriterion():
         # set Ts
         self._set_Ts()
 
+    def _set_coeffs(self, A: t_array):
+        """Method to set the coefficients of the characteristic equation."""
+
+        # convert to sympy matrix
+        _A = sp.Matrix(A)
+        # eigenvalues
+        _lamb = sp.symbols('\\lambda', complex=True)
+        # eigenvalue equation
+        _mat_eig = _lamb * sp.eye(self.n) - _A
+        # characteristic equation
+        _eqn_chr = _mat_eig.det(method='berkowitz').expand().collect(_lamb)
+
+        # set coefficients
+        self.coeffs = list()
+        _temp = 0
+        for o in range(self.n):
+            self.coeffs.append(_eqn_chr.coeff(_lamb**(self.n - o)))
+            _temp += self.coeffs[o] * _lamb**(self.n - o)
+        self.coeffs.append(_eqn_chr - _temp)
+        # convert to numpy constants
+        for i in range(len(self.coeffs)):
+            self.coeffs[i] = np.complex(sp.re(self.coeffs[i]), sp.im(self.coeffs[i]))
+
     def _set_Ts(self):
         """Method to set the determinants of the sub-matrices."""
 
         # get M
         _M = np.zeros((self.n, self.n), dtype=np.complex)
+        # handle 1-based indexing used in Ref. [1]
         for i in range(self.n):
             for j in range(self.n):
-                if 2 * i - j >= 0 and 2 * i - j <= self.n:
-                    _M[i][j] = self.coeffs[2 * i - j]
+                if 2 * i - j + 1 >= 0 and 2 * i - j + 1 <= self.n:
+                    _M[i][j] = self.coeffs[2 * i - j + 1]
 
         # set seq
         self.seq = list()
