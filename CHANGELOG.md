@@ -1,6 +1,16 @@
 # Changelog
 
-## v0.5.6 - 2020/12/21 - 00 - Templated Loopers
+## v0.5.7 - 2021/01/01 - 00 - Interfaced Gradients
+* Updated `qom/loopers`:
+    * Added `XYZLooper` for 3D looping.
+    * Updated `BaseLooper`, `XLooper` and `XYLooper` with gradient options.
+* Moved `qom/numerics/RHCriterion` to `qom/solvers/RHCSolver`.
+* Updated `qom/ui`:
+    * Minor fixes to `axes` modules.
+    * Updated `BasePlotter` and `MPLPlotter` with V-axis.
+    * Fixes to `Figure` and `log` modules.
+
+## v0.5.6 - 2020/12/21 - 01 - Templated Loopers
 * Updated `qom/loopers`:
     * Added `BaseLooper` with multithreading and multiprocessing methods.
     * Added `XLooper`, `XYLooper` and `XZLooper` for 1D and 2D looping.

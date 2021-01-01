@@ -6,25 +6,36 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2020-12-21'
+__updated__ = '2021-01-01'
 
 # dependencies
+from typing import Union
 import copy
 import logging
 import multiprocessing
 import numpy as np
 import threading
 
+# qom dependencies
+from qom.ui.plotters import MPLPlotter
+
 # module logger
 logger = logging.getLogger(__name__)
+
+# data types
+t_position = Union[str, int, float, np.float32, np.float64]
 
 class BaseLooper():
     """Class to interface loopers.
 
+    Initializes `axes`, `func` and `params` properties.
+
     Parameters
     ----------
+    func : function
+        Function to loop.
     params : dict
-        Parameters for the system, solver and figure.
+        Parameters for the system, looper and figure.
     """
 
     @property
@@ -38,8 +49,18 @@ class BaseLooper():
         self.__axes = axes
 
     @property
+    def func(self):
+        """func: Function to loop."""
+
+        return self.__func
+    
+    @func.setter
+    def func(self, func):
+        self.__func = func
+
+    @property
     def params(self):
-        """dict: Parameters for the system, solver and figure."""
+        """dict: Parameters for the system, looper and figure."""
 
         return self.__params
 
@@ -48,22 +69,24 @@ class BaseLooper():
         self.__params = params
 
     @property
-    def values(self):
-        """list: Calculated values."""
+    def results(self):
+        """list: Calculated results."""
 
-        return self.__values
+        return self.__results
     
-    @values.setter
-    def values(self, values):
-        self.__values = values
+    @results.setter
+    def results(self, results):
+        self.__results = results
 
-    def __init__(self, params: dict):
+    def __init__(self, func, params: dict):
         """Class constructor for BaseLooper."""
 
-        # validate params
+        # validate parameters
         assert 'system' in params, 'Parameter `params` should contain key `system` for system parameters'
-        assert 'solver' in params, 'Parameter `params` should contain key `solver` for solver parameters'
+        assert 'looper' in params, 'Parameter `params` should contain key `looper` for looper parameters'
 
+        # set attributes
+        self.func = func
         self.params = params
         self.axes = dict()
 
@@ -76,43 +99,105 @@ class BaseLooper():
             Name of the axis.
         """
 
-        # validate params
-        assert axis in self.params['solver'], 'Key `solver` should contain key `' + axis + '` for axis parameters'
+        # validate parameters
+        assert axis in self.params['looper'], 'Key `looper` should contain key `{}` for axis parameters'.format(axis)
         self.axes[axis] = dict()
 
         # extract frequently used variables
-        _axis = self.params['solver'][axis]
+        _axis = self.params['looper'][axis]
 
         # validate variable
-        assert 'var' in _axis, 'Key `' + axis + '` should contain key `var` for the name of the variable'
+        assert 'var' in _axis, 'Key `{}` should contain key `var` for the name of the variable'.format(axis)
         self.axes[axis]['var'] = _axis['var']
 
         # if axis values are provided
         _val = _axis.get('val', None)
-        if _val is not None and type(_val) == list:
+        if _val is not None and type(_val) is list:
             # set values
             self.axes[axis]['val'] = _val
 
         # generate values
         else:
             # validate range
-            assert 'min' in _axis and 'max' in _axis, 'Key `' + axis + '` should contain keys `min` and `max` to define axis range'
+            assert 'min' in _axis and 'max' in _axis, 'Key `{}` should contain keys `min` and `max` to define axis range'.format(axis)
 
             # set values
-            _val = np.linspace(_axis['min'], _axis['max'], _axis.get('dim', 101))
+            _val = np.linspace(_axis['min'], _axis['max'], _axis.get('dim', 101)).tolist()
             self.axes[axis]['val'] = _val
+    
+    def get_X_results(self, mode: str='serial', grad: bool=False):
+        """Method to obtain results for variation in X-axis.
+        
+        Parameters
+        ----------
+        mode : str, optional
+            Mode of execution, superseded by `mode` of looper parameters. Available modes are:
+                'serial': Single-thread computation.
+                'multithread': Multi-thread computation.
+                'multiprocess': Multi-processor computation.
+        grad : bool, optional
+            Option to calculate gradients.
 
-    def get_multithreaded_results(self, func, var, val):
+        Returns
+        -------
+        xs : list
+            Values of the X-axis.
+        vs : list
+            Calculated values.
+        """
+
+        # extract frequently used variables
+        system_params = self.params['system']
+        looper_mode = self.params['looper'].get('mode', mode)
+        x_var = self.axes['X']['var']
+        x_val = self.axes['X']['val']
+        x_dim = len(x_val)
+
+        # initialize axes
+        xs = list()
+        vs = list()
+        results = list()
+
+        # if multithreading is opted
+        if looper_mode == 'multithread':
+            # obtain sorted results
+            results = self.get_multithreaded_results(x_var, x_val)
+        else:
+            # iterate
+            for i in range(x_dim):
+                # calculate value
+                _val = x_val[i]
+                system_params[x_var] = _val
+                # calculate value
+                self.func(system_params, _val, logger, results)
+
+        # structure results
+        for i in range(x_dim):
+            _x = results[i][0]
+            _y = results[i][1]
+
+            # handle multi-value result
+            if type(_y) is list:
+                for j in range(len(_y)):
+                    xs.append(_x)
+                    vs.append(_y[j])
+            else:
+                xs.append(_x)
+                vs.append(_y)
+
+        # gradient opted
+        if grad:
+            vs = np.gradient(vs, xs)
+
+        return xs, vs
+
+    def get_multithreaded_results(self, var, val):
         """Method to obtain results of multithreaded execution of a given function.
 
         Parameters
         ----------
-        func : function
-            Function used to calculate.
-
         var : str
             Name of the variable.
-
         val : list
             Values of the variable.
         """
@@ -131,7 +216,7 @@ class BaseLooper():
             _system_params = copy.deepcopy(system_params)
             _system_params[var] = val[i]
             # create thread and pass parameters to function
-            _thread = threading.Thread(target=func, args=(_system_params, val[i], logger, results, ))
+            _thread = threading.Thread(target=self.func, args=(_system_params, val[i], logger, results, ))
             threads.append(_thread)
             # start thread
             _thread.start()
@@ -142,20 +227,20 @@ class BaseLooper():
             if _thread is not main_thread:
                 _thread.join()
 
-        # return sorted results
-        return sorted(results)
+        # sort results by first entry
+        results = sorted(results)
+
+        return results
 
     def get_multiprocessed_results(self, func, var, val):
-        """Method to obtain results of multiprocessed execution of a given function.
+        """Method to obtain results of multiprocessed execution of a given function. (*Under construction.*)
 
         Parameters
         ----------
         func : function
             Function used to calculate.
-
         var : str
             Name of the variable.
-
         val : list
             Values of the variable.
         """
@@ -176,8 +261,47 @@ class BaseLooper():
             # obtain results using multiprocessing pool
             results.append(pool.apply(func, args=(_system_params, val[i], logger)))
 
-        # return sorted results
-        return sorted(results)
+        # sort results by first entry
+        results = sorted(results)
+
+        return results
+
+    def get_index(self, axis_values: list, calc_values: list=None, position: t_position='mean', mono_idx: int=0):
+        """Function to calculate the index of a particular position in a list.
+        
+        Parameters
+        ----------
+        axis_values : list
+            Values of the axis.
+        calc_values : list, optional
+            Values of the calculation.
+        position: str or float, optional
+            A value denoting the position or a mode to calculate the position. For a mode other than 'mean', the `mono_idx` parameter should be filled. The different modes can be:
+                'mean': Mean of the axis values.
+                'mono_mean': Mean of the monotonic patches in calculated values.
+                'mono_min': Local minima of the monotonic patches.
+                'mono_max': Local maxima of the monotonic patches.
+        mono_idx: int, optional
+            Index of the monotonic patch.
+
+        Returns
+        -------
+        idx : list
+            Indices of the required positions.
+        """
+        
+        # fixed position
+        if not type(position) is str:
+            idx = abs(np.asarray(axis_values) - position).argmin()
+        # mean mode
+        elif position == 'mean':
+            idx = abs(np.asarray(axis_values) - np.mean(axis_values)).argmin()
+        # monotonic modes
+        else:
+            # TODO: handle monotonic modes
+            idx = 0
+
+        return idx
 
     def update_progress(self, pos, dim):
         """Method to update the progress of the calculation.
@@ -186,7 +310,6 @@ class BaseLooper():
         ----------
         pos : int
             Index of current iteration.
-        
         dim : int 
             Total number of iterations.
         """
@@ -196,3 +319,25 @@ class BaseLooper():
         # display progress
         if int(progress * 1000) % 10 == 0:
             logger.info('Calculating the values: Progress = {progress:3.2f}'.format(progress=progress))
+
+    def plot_results(self):
+        """Method to plot the results."""
+
+        # validate parameters
+        assert 'plotter' in self.params, 'Parameter `params` should contain key `plotter` for plotter parameters'
+        assert 'type' in self.params['plotter'], 'Parameter `plotter` should contain key `type`.'
+
+        # initialize plot
+        plotter = MPLPlotter(self.axes, self.params['plotter'])
+
+        # get plot axes
+        # TODO: handle exceptions
+        _xs = self.results['X']
+        _ys = self.results.get('Y', None)
+        _zs = self.results.get('Z', None)
+        _vs = self.results['V']
+        
+        # update plotter
+        plotter.update(_xs, _ys, _zs, _vs)
+        plotter.show(True)
+

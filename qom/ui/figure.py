@@ -6,16 +6,21 @@
 __name__    = 'qom.ui.Figure'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-06-16'
-__updated__ = '2020-12-04'
+__updated__ = '2021-01-01'
 
 # dependencies
+from typing import Union
 import logging
 
 # dev dependencies
+from qom.ui.axes import *
 from qom.ui.plotters import *
 
 # module logger
 logger = logging.getLogger(__name__)
+
+# data types
+t_axis = Union[list, DynamicAxis, StaticAxis, MultiAxis]
 
 class Figure():
     """Class to plot figures.
@@ -24,9 +29,9 @@ class Figure():
     ----------
     plot_params : dict
         Parameters of the plot.
-    X : :class:`qom.ui.axes.*`
+    X : list or :class:`qom.ui.axes.*`
         X-axis data.
-    Y : :class:`qom.ui.axes.*`, optional
+    Y : list or :class:`qom.ui.axes.*`, optional
         Y-axis data.
     Z : :class:`qom.ui.axes.*`, optional
         Z-axis data.
@@ -42,7 +47,7 @@ class Figure():
     def plotter(self, plotter):
         self.__plotter = plotter
 
-    def __init__(self, plot_params, X, Y={}, Z={}, plotter_type='mpl'):
+    def __init__(self, plot_params, X: t_axis, Y: t_axis=list(), Z: t_axis=list(), plotter_type='mpl'):
         """Class constructor for Figure."""
         
         # initialize plot

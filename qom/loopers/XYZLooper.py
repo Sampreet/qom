@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Class to interface a 2D looper."""
+"""Class to interface a 3D looper."""
 
-__name__    = 'qom.loopers.XYLooper'
+__name__    = 'qom.loopers.XYZLooper'
 __authors__ = ['Sampreet Kalita']
-__created__ = '2020-12-21'
+__created__ = '2020-12-28'
 __updated__ = '2021-01-01'
 
 # dependencies
@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 # data types
 t_position = Union[str, int, float, np.float32, np.float64]
 
-class XYLooper(BaseLooper):
-    """Class to interface a 2D looper.
+class XYZLooper(BaseLooper):
+    """Class to interface a 3D looper.
     
     Inherits :class:`qom.systems.BaseSystem`.
 
@@ -36,7 +36,7 @@ class XYLooper(BaseLooper):
     """
 
     def __init__(self, func, params: dict):
-        """Class constructor for XYLooper."""
+        """Class constructor for XYZLooper."""
 
         # initialize super class
         super().__init__(func, params)
@@ -44,12 +44,13 @@ class XYLooper(BaseLooper):
         # set axes
         self._set_axis('X')
         self._set_axis('Y')
+        self._set_axis('Z')
 
         # display initialization
-        logger.info('--------------------Looper Initialized-----------------\t\n')
+        logger.info('-------------------Looper Initialized-----------------\t\n')
 
     def loop(self, mode: str='serial', grad: bool=False, grad_position: t_position='all', grad_mono_idx: int=0, plot: bool=False):
-        """Method to calculate the output of a given function for each X-axis and Y-axis point.
+        """Method to calculate the output of a given function for each X-axis Y-axis and Z-axis point.
         
         Parameters
         ----------
@@ -76,6 +77,8 @@ class XYLooper(BaseLooper):
         # extract frequently used variables
         system_params = self.params['system']
         ys = self.axes['Y']['val']
+        zs = self.axes['Z']['val']
+        dim = len(ys) * len(zs)
 
         # supersede looper parameters
         grad = self.params['looper'].get('grad', grad)
@@ -86,42 +89,66 @@ class XYLooper(BaseLooper):
         # initialize axes
         _xs = list()
         _ys = list()
+        _zs = list()
         _vs = list()
 
-        # iterate Y-axis values
-        for k in range(len(ys)):
+        # iterate Y-axis and Z-axis values
+        for k in range(dim):
             # update progress
-            self.update_progress(k, len(ys))
+            self.update_progress(k, dim)
 
-            # update system parameter
-            system_params[self.axes['Y']['var']] = ys[k]
+            # get values
+            _y = ys[int(k % len(ys))]
+            _z = zs[int(k / len(ys))]
+
+            # update system parametes
+            system_params[self.axes['Y']['var']] = _y
+            system_params[self.axes['Z']['var']] = _z
 
             # get X-axis values
             _temp_xs, _temp_vs = self.get_X_results(mode, grad)
 
             # upate lists
             _xs.append(_temp_xs)
-            _ys.append([ys[k]] * len(_temp_xs))
+            _ys.append([_y] * len(_temp_xs))
+            _zs.append([_z] * len(_temp_xs))
             _vs.append(_temp_vs)
+
+        # reshape results
+        _, _x_dim = np.shape(_xs)
+        _xs = np.reshape(_xs, (len(zs), len(ys), _x_dim)).tolist()
+        _ys = np.reshape(_ys, (len(zs), len(ys), _x_dim)).tolist()
+        _zs = np.reshape(_zs, (len(zs), len(ys), _x_dim)).tolist()
+        _vs = np.reshape(_vs, (len(zs), len(ys), _x_dim)).tolist()
 
         # update attributes
         self.results = {}
         # gradient at approximate position
         if grad and not grad_position == 'all':
             self.results['X'] = list()
+            self.results['Y'] = list()
             self.results['V'] = list()
             for i in range(len(_xs)):
-                idx = self.get_index(_xs[i])
-                self.results['X'].append(_ys[i][idx])
-                self.results['V'].append(_vs[i][idx])
+                _temp_xs = list()
+                _temp_ys = list()
+                _temp_vs = list()
+                for j in range(len(_xs[i])):
+                    idx = self.get_index(_xs[i][j])
+                    _temp_xs.append(_ys[i][j][idx])
+                    _temp_ys.append(_zs[i][j][idx])
+                    _temp_vs.append(_vs[i][j][idx])
+                self.results['X'].append(_temp_xs)
+                self.results['Y'].append(_temp_ys)
+                self.results['V'].append(_temp_vs)
         # no gradient calculation or gradients at all positions
         else:
             self.results['X'] = _xs
             self.results['Y'] = _ys
+            self.results['Z'] = _zs
             self.results['V'] = _vs
 
         # display completion
-        logger.info('--------------------Values Obtained--------------------\t\n')
+        logger.info('-------------------Values Obtained--------------------\t\n')
 
         # plot results
         if plot:

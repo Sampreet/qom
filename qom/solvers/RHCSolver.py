@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Class to handle Routh-Hurwitz criterion."""
+"""Class to handle Routh-Hurwitz criterion solver."""
 
-__name__    = 'qom.numerics.RHCriterion'
+__name__    = 'qom.solvers.RHCSolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-03'
-__updated__ = '2020-12-18'
+__updated__ = '2021-01-01'
 
 # dependencies
 from typing import Union
@@ -16,10 +16,12 @@ import sympy as sp
 
 # module logger
 logger = logging.getLogger(__name__)
+
+# data types
 t_array = Union[list, np.matrix, np.ndarray]
 
-class RHCriterion():
-    r"""Class to handle Routh-Hurwitz criterion.
+class RHCSolver():
+    r"""Class to handle Routh-Hurwitz criterion solver.
 
     Initializes `coeffs`, `n` and `seq` properties. At least one of the parameters, preferably "coeffs", should be non-None.
 
@@ -165,8 +167,8 @@ class RHCriterion():
 
         # iterate
         for i in range(1, self.n + 1):
+            # add sign change index
             if np.sign(self.seq[i] / self.seq[i - 1]) == -1:
                 idxs.append(i)
 
-        # return
         return idxs

@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.axes.BaseAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-10'
-__updated__ = '2020-12-04'
+__updated__ = '2021-01-01'
 
 # dependencies
 import logging
@@ -24,59 +24,9 @@ class BaseAxis():
 
     Parameters
     ----------
-        axis_data : int or list or dict
+        params : dict
             Data for the axis.
     """
-
-    @property
-    def var(self):
-        """str: Variable of the axis."""
-
-        return self.__var
-
-    @var.setter
-    def var(self, var):
-        self.__var = var
-
-    @property
-    def val(self):
-        """list: Values of the axis."""
-
-        return self.__val
-
-    @val.setter
-    def val(self, val):
-        self.__val = val
-
-    @property
-    def dim(self):
-        """int: Dimension of the axis."""
-
-        return self.__dim
-
-    @dim.setter
-    def dim(self, dim):
-        self.__dim = dim
-
-    @property
-    def name(self):
-        """str: Display name of the axis."""
-
-        return self.__name
-
-    @name.setter
-    def name(self, name):
-        self.__name = name
-
-    @property
-    def unit(self):
-        """str: Unit of the axis."""
-
-        return self.__unit
-
-    @unit.setter
-    def unit(self, unit):
-        self.__unit = unit
 
     @property
     def bound(self):
@@ -94,24 +44,24 @@ class BaseAxis():
         self.__bound = bound
 
     @property
-    def ticks(self):
-        """list: Ticks of the axis."""
+    def colors(self):
+        """list: Colors for plots."""
 
-        return self.__ticks
+        return self.__colors
 
-    @ticks.setter
-    def ticks(self, ticks):
-        self.__ticks = ticks
+    @colors.setter
+    def colors(self, colors):
+        self.__colors = colors
 
     @property
-    def tick_labels(self):
-        """list: Tick labels of the axis."""
+    def dim(self):
+        """int: Dimension of the axis."""
 
-        return self.__tick_labels
+        return self.__dim
 
-    @tick_labels.setter
-    def tick_labels(self, tick_labels):
-        self.__tick_labels = tick_labels
+    @dim.setter
+    def dim(self, dim):
+        self.__dim = dim
 
     @property
     def label(self):
@@ -134,14 +84,24 @@ class BaseAxis():
         self.__legends = legends
 
     @property
-    def colors(self):
-        """list: Colors for plots."""
+    def name(self):
+        """str: Display name of the axis."""
 
-        return self.__colors
+        return self.__name
 
-    @colors.setter
-    def colors(self, colors):
-        self.__colors = colors
+    @name.setter
+    def name(self, name):
+        self.__name = name
+
+    @property
+    def sizes(self):
+        """list: Sizes of the plots."""
+
+        return self.__sizes
+
+    @sizes.setter
+    def sizes(self, sizes):
+        self.__sizes = sizes
 
     @property
     def styles(self):
@@ -154,26 +114,57 @@ class BaseAxis():
         self.__styles = styles
 
     @property
-    def sizes(self):
-        """list: Sizes of the plots."""
+    def tick_labels(self):
+        """list: Tick labels of the axis."""
 
-        return self.__sizes
+        return self.__tick_labels
 
-    @sizes.setter
-    def sizes(self, sizes):
-        self.__sizes = sizes
+    @tick_labels.setter
+    def tick_labels(self, tick_labels):
+        self.__tick_labels = tick_labels
 
-    def __init__(self, axis_data):
+    @property
+    def ticks(self):
+        """list: Ticks of the axis."""
+
+        return self.__ticks
+
+    @ticks.setter
+    def ticks(self, ticks):
+        self.__ticks = ticks
+
+    @property
+    def unit(self):
+        """str: Unit of the axis."""
+
+        return self.__unit
+
+    @unit.setter
+    def unit(self, unit):
+        self.__unit = unit
+
+    @property
+    def val(self):
+        """list: Values of the axis."""
+
+        return self.__val
+
+    @val.setter
+    def val(self, val):
+        self.__val = val
+
+    @property
+    def var(self):
+        """str: Variable of the axis."""
+
+        return self.__var
+
+    @var.setter
+    def var(self, var):
+        self.__var = var
+
+    def __init__(self, params):
         """Class constructor for BaseAxis."""
-
-        # if values
-        if type(axis_data) is list:
-            axis_data = {
-                'val': axis_data
-            }
-
-        # validate parameter
-        assert type(axis_data) is dict, 'Axis data should either be a `list` of values, or a `dict` containing "min", "max" and "dim" keys.'
 
         # frequently used variables
         _min = -1
@@ -181,15 +172,14 @@ class BaseAxis():
         _dim = 5
         
         # set val
-        _val = axis_data.get('val', [])
-        # if values are defined
-        if type(_val) is list and len(_val) != 0:
+        _val = params.get('val', list())
+        if type(_val) is list and len(_val) > 0:
             self.val = _val
-        # else initizlize data
         else:
-            self.val = self.init_array(axis_data.get('min', _min), axis_data.get('max', _max), axis_data.get('dim', _dim))
+            # initizlize values
+            self.val = self.init_array(params.get('min', _min), params.get('max', _max), params.get('dim', _dim))
 
-        # if values are not of type string, reset range
+        # reset range if not string
         if type(self.val[0]) is not str:
             _min = min(self.val)
             _max = max(self.val)
@@ -197,34 +187,20 @@ class BaseAxis():
         # set dim
         self.dim = len(self.val)
 
-        # check axis bounds
-        if 'tick_min' in axis_data and 'tick_max' in axis_data:
-            self.bound = 'both'
-        elif 'tick_min' in axis_data:
-            self.bound = 'lower'
-        elif 'tick_max' in axis_data:
-            self.bound = 'upper'
-        else:
-            self.bound = 'none'
-
         # set ticks
-        _ticks = axis_data.get('ticks', [])
+        _ticks = params.get('ticks', list())
         # if ticks are defined
         if type(_ticks) is list and len(_ticks) != 0:
             self.ticks = _ticks
-            # update bound
-            self.bound = 'both'
         # else initialize ticks
         else:
-            self.ticks = self.init_array(axis_data.get('tick_min', _min), axis_data.get('tick_max', _max), axis_data.get('tick_dim', _dim))
+            self.ticks = self.init_array(params.get('tick_min', _min), params.get('tick_max', _max), params.get('tick_dim', _dim))
 
         # set tick labels
-        _tick_labels = axis_data.get('tick_labels', [])
+        _tick_labels = params.get('tick_labels', [])
         # if ticks labels are defined
         if type(_tick_labels) is list and len(_tick_labels) != 0:
             self.tick_labels = _tick_labels
-            # update bound
-            self.bound = 'both'
         # else same as ticks
         else:
             self.tick_labels = self.ticks 

@@ -1,1 +1,0 @@
-from qom.numerics.RHCriterion import RHCriterion
