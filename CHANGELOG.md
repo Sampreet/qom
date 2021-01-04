@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.5.8 - 2021/01/04 - 00 - Templated Measure Solvers
+* Minor fixes to `qom/loopers/BaseLooper`.
+* Updated `qom/solvers`:
+    * Added `ODESolver` to solve ODEs.
+    * Added `HLESolver` to solve Heisenberg-Langevin equations.
+    * Added `QCMSolver` for quantum correlation measures.
+
 ## v0.5.7 - 2021/01/01 - 00 - Interfaced Gradients
 * Updated `qom/loopers`:
     * Added `XYZLooper` for 3D looping.

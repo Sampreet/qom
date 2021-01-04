@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-01-01'
+__updated__ = '2021-01-04'
 
 # dependencies
 from typing import Union
@@ -50,7 +50,7 @@ class BaseLooper():
 
     @property
     def func(self):
-        """func: Function to loop."""
+        """function: Function to loop."""
 
         return self.__func
     
