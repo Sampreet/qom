@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.9 - 2021/01/05 - 00 - Updated Measures
+* Updated `qom/solvers`:
+    * Minor fixes to `ODESolver` and `HLESolver` modules.
+    * Added discord and entanglement methods to `QCMSolver` module.
+* Added dynamics calculation methods to `qom/systems/BaseSystem` module.
+
 ## v0.5.8 - 2021/01/04 - 00 - Templated Measure Solvers
 * Minor fixes to `qom/loopers/BaseLooper`.
 * Updated `qom/solvers`:

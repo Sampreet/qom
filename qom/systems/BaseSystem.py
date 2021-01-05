@@ -6,13 +6,17 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2020-12-21'
+__updated__ = '2021-01-05'
 
 # dependencies
 from typing import Union
 import logging
 import numpy as np
 import scipy.constants as sc
+
+# qom modules
+from qom.solvers import HLESolver
+from qom.solvers import QCMSolver
 
 # module logger
 logger = logging.getLogger(__name__)
@@ -188,3 +192,111 @@ class BaseSystem():
 
         # return
         return N_o
+
+    def get_dynamics_modes_corrs(self, solver_params, ivc_func, ode_func):
+        """Method to obtain the dynamics of the classical mode amplitudes and quantum correlations from the Heisenberg-Langevin equations.
+
+        Parameters
+        ----------
+        solver_params : dict
+            Parameters for the solver.
+        ivc_func : function
+            Function returning the initial values and constants.
+        ode_func : function
+            Set of ODEs returning rate equations of the input variables.
+
+        Returns
+        -------
+        Modes : list
+            All the modes calculated at all times.
+        Corrs : list
+            All the correlations calculated at all times.
+        """
+
+        # get initial values and constants
+        _iv, _c = ivc_func()
+
+        # initialize solver
+        solver = HLESolver(ode_func, solver_params, _iv, _c)
+        
+        # get modes and correlations
+        Modes = solver.get_modes()
+        Corrs = solver.get_corrs()
+        
+        return Modes, Corrs
+    
+    def get_dynamics_measure(self, solver_params, Modes, Corrs):
+        """Method to obtain the dynamics of a particular measure.
+
+        Parameters
+        ----------
+        solver_params : dict
+            Parameters for the solver.
+        Modes : list
+            All the modes calculated at all times.
+        Corrs : list
+            All the correlations calculated at all times.
+
+        Returns
+        -------
+        M : float
+            Measures calculated at all times.
+        """
+
+        # validate parameters
+        supported_types = ['qcm']
+        assert 'measure_type' in solver_params, 'Solver parameters should contain key "measure_type" for the type of measure.'
+        assert solver_params['measure_type'] in supported_types, 'Supported types of measures are {}'.format(str(supported_types))
+
+        # extract frequently used variables
+        measure_type = solver_params.get('measure_type', 'qcm')
+
+        # initialize variables
+        M = list()
+
+        # iterate for all times
+        for i in range(len(Modes)):
+            # get quantum correlation measure
+            if measure_type == 'qcm':
+                M.append(self.__get_qcm(solver_params, Corrs[i], Modes[i]))
+            # TODO: Handle other measures
+
+        return M
+
+    def __get_qcm(self, solver_params, corrs, modes):
+        """Method to obtain a particular measure of quantum correlations.
+
+        Parameters
+        ----------
+        solver_params : dict
+            Parameters for the solver.
+        corrs : list
+            Matrix of quantum correlations.
+        modes : list
+            Values of classical mode amplitudes.
+
+        Returns
+        -------
+        measure : float
+            Calculated measure.
+        """
+
+        # validate parameters
+        supported_types = [func[4:] for func in dir(QCMSolver) if callable(getattr(QCMSolver, func)) and func[:4] == 'get_']
+        assert 'qcm_type' in solver_params, 'Solver parameters should contain key "qcm_type" for the type of correlation.'
+        assert solver_params['qcm_type'] in supported_types, 'Supported quantum correlation measures are {}'.format(str(supported_types))
+        
+        # validate parameters
+        for key in ['idx_mode_i', 'idx_mode_j']:
+            assert key in solver_params, 'Solver parameters should contain the keys "idx_mode_i" and "idx_mode_j" for synchronization'
+
+        # extract frequently used variables
+        qcm_type = solver_params['qcm_type']
+        idx_mode_i = solver_params['idx_mode_i']
+        idx_mode_j = solver_params['idx_mode_j']
+
+        # get solver
+        solver = QCMSolver(modes, corrs)
+        measure = getattr(solver, 'get_' + qcm_type)(idx_mode_i, idx_mode_j)
+        
+        return measure

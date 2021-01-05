@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.ODESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-01-04'
+__updated__ = '2021-01-05'
 
 # dependencies
 from typing import Union
@@ -28,7 +28,7 @@ class ODESolver():
     Parameters
     ----------
     func : function
-        Set of ODEs as rate equations of the variables.
+        Set of ODEs returning rate equations of the input variables.
     params : dict
         Parameters for the solver.
     iv : list or np.matrix or np.ndarray
@@ -49,7 +49,7 @@ class ODESolver():
 
     @property
     def func(self):
-        """function: Set of ODEs as rate equations of the variables."""
+        """function: Set of ODEs returning rate equations of the input variables."""
 
         return self.__func
     
