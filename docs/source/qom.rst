@@ -1,11 +1,6 @@
 qom package
 ===========
 
-.. automodule:: qom
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Subpackages
 -----------
 
@@ -13,8 +8,14 @@ Subpackages
    :maxdepth: 4
 
    qom.loopers
-   qom.measures
-   qom.numerics
+   qom.solvers
    qom.systems
    qom.ui
-   qom.utils
+
+Module contents
+---------------
+
+.. automodule:: qom
+   :members:
+   :undoc-members:
+   :show-inheritance:

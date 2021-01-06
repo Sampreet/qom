@@ -1,16 +1,29 @@
 qom.ui.plotters package
 =======================
 
-.. automodule:: qom.ui.plotters
+Submodules
+----------
+
+qom.ui.plotters.BasePlotter module
+----------------------------------
+
+.. automodule:: qom.ui.plotters.BasePlotter
    :members:
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
+qom.ui.plotters.MPLPlotter module
+---------------------------------
 
-.. toctree::
-   :maxdepth: 4
+.. automodule:: qom.ui.plotters.MPLPlotter
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-   qom.ui.plotters.BasePlotter
-   qom.ui.plotters.MPLPlotter
+Module contents
+---------------
+
+.. automodule:: qom.ui.plotters
+   :members:
+   :undoc-members:
+   :show-inheritance:

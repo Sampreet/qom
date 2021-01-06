@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.axes.DynamicAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-17'
-__updated__ = '2021-01-01'
+__updated__ = '2021-01-06'
 
 # dependencies
 import logging
@@ -48,4 +48,8 @@ class DynamicAxis(BaseAxis):
         self.bound = axis_data.get('bound', 'none')
 
         # set label
-        self.label = self.name + ' (' + self.unit + ')' if self.unit != '' else self.name
+        if axis_data.get('label', '') == '':
+            self.label = self.name + ' (' + self.unit + ')' if self.unit != '' else self.name
+        # supersede axis_data
+        else:
+            self.label = axis_data['label']

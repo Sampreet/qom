@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.ODESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-01-05'
+__updated__ = '2021-01-06'
 
 # dependencies
 from typing import Union
@@ -17,8 +17,11 @@ import scipy.integrate as si
 # module logger
 logger = logging.getLogger(__name__)
 
-# data types
+# datatypes
 t_array = Union[list, np.matrix, np.ndarray]
+            
+# TODO: Truncate times in `__set_times`.
+# TODO: Handle other integrators in `solve`.
 
 class ODESolver():
     r"""Class to handle ODE solver.
@@ -154,7 +157,6 @@ class ODESolver():
             if self.c is not None:
                 integrator.set_f_params(self.c)
         else:
-            # TODO: Handle other integrators.
             integrator = None
 
         # initialize lists

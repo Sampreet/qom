@@ -4,20 +4,20 @@
 
 ## Key Features
 
-* Calculation of several quantum properties and quantum measures.
-* Automatically managed and optimized wrappers to implement loops.
-* Configurable visualizations without the requirement for explicit plotting.
+* Automatically managed and optimized modules to implement loops.
+* Solver modules to calculate classical as well as quantum signatures.
+* Configurable visualizations without the need for explicit plotting.
 
 ## Basic Usage
 
 The library features easy-to-use functions to easily calculate as well as visualize the trend of several quantum signatures.
-For example, the `qom.looper.properties` module can be implemented as:
+For example, the `qom.looper.XLooper` module can be implemented as:
 
 ```python
-Values, Thresholds, Axes = properties.calculate(my_model, script_data)
+XLooper.calculate(func, params).loop()
 ```
 
-Here, `my_model` is a python class describing the system with the required property function inside it and `script_data` is a dictionary containing the data required for calculation of the properties and the parameters for visualization of the results.
+Here, `func` is a function containing the steps of each iteration and `params` is a dictionary containing the parameters required for the looper, solver, system and plotter.
 
 Examples on usage of various modules can be found in the [`examples`](./examples) folder.
 
@@ -41,38 +41,70 @@ ROOT_DIR/
 │   └───...
 |
 │───qom/
-│   ├───foo/
+│   ├───loopers/
 │   │   ├───__init__.py
-│   │   ├───bar.py
+│   │   ├───FooBarLooper.py
 │   │   └───...
 │   │   
-│   └───__init__.py
-|
-│───qom_experimental/
-│   ├───foo/
+│   ├───solvers/
 │   │   ├───__init__.py
-│   │   ├───bar.py
+│   │   ├───FooBarSolver.py
 │   │   └───...
+│   │   
+│   ├───systems/
+│   │   ├───__init__.py
+│   │   ├───FooBarSystem.py
+│   │   └───...
+│   │   
+│   ├───ui/
+│   │   ├───axes/
+│   │   │   ├───__init__.py
+│   │   │   ├───FooBarAxis.py
+│   │   │   └───...
+│   │   │
+│   │   ├───plotters/
+│   │   │   ├───__init__.py
+│   │   │   ├───FooBarPlotter.py
+│   │   │   └───...
+│   │   │
+│   │   ├───__init__.py
+│   │   ├───foobar.py
+│   │   └───...
+│   │   
 │   │   
 │   └───__init__.py
 |
 │───qom_legacy/
-│   ├───foo/
-│   │   ├───__init__.py
-│   │   ├───bar.py
-│   │   └───...
-│   │   
-│   └───__init__.py
+│   └───...
+|
+│───qom_tf/
+│   └───...
 |
 │───tests/
 │   └───...
 │
 ├───.gitignore
 ├───CHANGELOG.md
-├───LICENSE
 ├───README.md
 ├───requirements.txt
 └───setup.py
 ```
 
+### Running in Editable Mode
+
+To install and run the package in editable mode, execute the following from the top-level directory `ROOT_DIR` inside which `setup.py` is located:
+
+```bash
+pip install -e ROOT_DIR
+```
+
+
+### Building the Documentation
+
+To auto-generate and build the API documentation, navigate to the `ROOT_DIR/docs` folder and execute:
+
+```bash
+sphinx-apidoc -o source ../qom
+make html
+```
 

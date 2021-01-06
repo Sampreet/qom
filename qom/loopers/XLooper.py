@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.XLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-01-01'
+__updated__ = '2021-01-06'
 
 # dependencies
 import logging
@@ -55,7 +55,7 @@ class XLooper(BaseLooper):
                 'multiprocess': Multi-processor computation.
         grad : bool, optional
             Option to calculate gradients, superseded by looper parameter `grad`.
-        plot: bool, option
+        plot: bool, optional
             Option to plot the results.
         """
 

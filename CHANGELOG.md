@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.6.0 - 2021/01/06 - 00 - Clean-up and Revamp
+* Updated documentation in `docs`.
+* Updated `qom/examples/qom_loopers_XLooper` notebook.
+* Updated `qom/loopers`:
+    * Moved `dynamics`, `measures` and `properties` modules to `qom_legacy/loopers`.
+    * Minor updates and fixes to other modules.
+* Moved `qom/measures` and `qom/numerics` to `qom_legacy`.
+* Updated `qom/solvers`:
+    * Updated `HLESolver` module to handle number of modes.
+    * Minor updates and fixes to other modules.
+* Updated `qom/systems`:
+    * Added option to plot via `BaseSystem` module.
+    * Minor fixes to other modules.
+* Updated `qom/ui`:
+    * Moved `Figure` module to `qom_legacy/ui`.
+    * Minor updates and fixes to modules in `axes` and `plotters`.
+* Moved `qom/utils` to `qom_legacy`.
+* Renamed `qom_experimental/wrappers` to `qom_tf/loopers`.
+* Added dynamics calculation methods to `qom/systems/BaseSystem` module.
+* Removed `LICENSE`.
+* Updated `README`.
+
 ## v0.5.9 - 2021/01/05 - 00 - Updated Measures
 * Updated `qom/solvers`:
     * Minor fixes to `ODESolver` and `HLESolver` modules.

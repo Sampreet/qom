@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.axes.StaticAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-17'
-__updated__ = '2020-12-04'
+__updated__ = '2021-01-06'
 
 # dependencies
 import logging
@@ -47,4 +47,8 @@ class StaticAxis(BaseAxis):
         self.unit = axis_data.get('unit', '')
 
         # set label
-        self.label = self.name + ' (' + self.unit + ')' if self.unit != '' else self.name
+        if axis_data.get('label', '') == '':
+            self.label = self.name + ' (' + self.unit + ')' if self.unit != '' else self.name
+        # supersede axis_data
+        else:
+            self.label = axis_data['label']

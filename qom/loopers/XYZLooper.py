@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.XYZLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-28'
-__updated__ = '2021-01-01'
+__updated__ = '2021-01-06'
 
 # dependencies
 from typing import Union
@@ -19,7 +19,7 @@ from qom.loopers.BaseLooper import BaseLooper
 # module logger
 logger = logging.getLogger(__name__)
 
-# data types
+# datatypes
 t_position = Union[str, int, float, np.float32, np.float64]
 
 class XYZLooper(BaseLooper):
@@ -70,7 +70,7 @@ class XYZLooper(BaseLooper):
                 'mono_max': Local maxima of the monotonic patches.
         grad_mono_idx: int, optional
             Index of the monotonic patch, superseded by looper parameter `grad_mono_idx`.
-        plot: bool, option
+        plot: bool, optional
             Option to plot the results.
         """
 

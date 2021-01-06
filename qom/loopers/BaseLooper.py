@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-01-04'
+__updated__ = '2021-01-06'
 
 # dependencies
 from typing import Union
@@ -22,8 +22,13 @@ from qom.ui.plotters import MPLPlotter
 # module logger
 logger = logging.getLogger(__name__)
 
-# data types
+# datatypes
 t_position = Union[str, int, float, np.float32, np.float64]
+
+# TODO: Handle multi-valued points for gradients in `get_X_results`.
+# TODO: Handle monotonic modes in `get_index`.
+# TODO: Add `get_thresholds`.
+# TODO: Handle exceptions in `plot_results`.
 
 class BaseLooper():
     """Class to interface loopers.
@@ -298,7 +303,6 @@ class BaseLooper():
             idx = abs(np.asarray(axis_values) - np.mean(axis_values)).argmin()
         # monotonic modes
         else:
-            # TODO: handle monotonic modes
             idx = 0
 
         return idx
@@ -331,7 +335,6 @@ class BaseLooper():
         plotter = MPLPlotter(self.axes, self.params['plotter'])
 
         # get plot axes
-        # TODO: handle exceptions
         _xs = self.results['X']
         _ys = self.results.get('Y', None)
         _zs = self.results.get('Z', None)

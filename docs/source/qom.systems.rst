@@ -1,19 +1,53 @@
 qom.systems package
 ===================
 
-.. automodule:: qom.systems
+Submodules
+----------
+
+qom.systems.BaseSystem module
+-----------------------------
+
+.. automodule:: qom.systems.BaseSystem
    :members:
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
+qom.systems.DODMSystem module
+-----------------------------
 
-.. toctree::
-   :maxdepth: 4
+.. automodule:: qom.systems.DODMSystem
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-   qom.systems.BaseSystem
-   qom.systems.DODMSystem
-   qom.systems.DOSMSystem
-   qom.systems.SODMSystem
-   qom.systems.SOSMSystem
+qom.systems.DOSMSystem module
+-----------------------------
+
+.. automodule:: qom.systems.DOSMSystem
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+qom.systems.SODMSystem module
+-----------------------------
+
+.. automodule:: qom.systems.SODMSystem
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+qom.systems.SOSMSystem module
+-----------------------------
+
+.. automodule:: qom.systems.SOSMSystem
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: qom.systems
+   :members:
+   :undoc-members:
+   :show-inheritance:

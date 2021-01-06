@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-01-05'
+__updated__ = '2021-01-06'
 
 # dependencies
 from typing import Union
@@ -17,10 +17,16 @@ import scipy.constants as sc
 # qom modules
 from qom.solvers import HLESolver
 from qom.solvers import QCMSolver
+from qom.ui.plotters import MPLPlotter
 
 # module logger
 logger = logging.getLogger(__name__)
+
+# datatypes
+t_array = Union[list, np.matrix, np.ndarray]
 t_float = Union[float, np.float32, np.float64]
+            
+# TODO: Handle other measures in `get_dynamics_measure`.
 
 class BaseSystem():
     """Class to interface optomechanical systems.
@@ -37,7 +43,7 @@ class BaseSystem():
 
     @property
     def code(self):
-        """str: Short code for the model."""
+        """str: Short code for the system."""
 
         return self.__code
 
@@ -54,6 +60,16 @@ class BaseSystem():
     @name.setter
     def name(self, name):
         self.__name = name
+
+    @property
+    def num_modes(self):
+        """int: Number of classical modes."""
+
+        return self.__num_modes
+
+    @num_modes.setter
+    def num_modes(self, num_modes):
+        self.__num_modes = num_modes
 
     @property
     def params(self):
@@ -193,7 +209,7 @@ class BaseSystem():
         # return
         return N_o
 
-    def get_dynamics_modes_corrs(self, solver_params, ivc_func, ode_func):
+    def get_dynamics_modes_corrs(self, solver_params: dict, ivc_func, ode_func):
         """Method to obtain the dynamics of the classical mode amplitudes and quantum correlations from the Heisenberg-Langevin equations.
 
         Parameters
@@ -211,6 +227,8 @@ class BaseSystem():
             All the modes calculated at all times.
         Corrs : list
             All the correlations calculated at all times.
+        T : list
+            Times at which values are calculated.
         """
 
         # get initial values and constants
@@ -219,27 +237,32 @@ class BaseSystem():
         # initialize solver
         solver = HLESolver(ode_func, solver_params, _iv, _c)
         
-        # get modes and correlations
-        Modes = solver.get_modes()
-        Corrs = solver.get_corrs()
+        # get modes, correlations and times
+        Modes = solver.get_modes(self.num_modes)
+        Corrs = solver.get_corrs(self.num_modes)
+        T = solver.T
         
-        return Modes, Corrs
+        return Modes, Corrs, T
     
-    def get_dynamics_measure(self, solver_params, Modes, Corrs):
+    def get_dynamics_measure(self, solver_params: dict, ivc_func, ode_func, plot: bool=False, plotter_params: dict=None):
         """Method to obtain the dynamics of a particular measure.
 
         Parameters
         ----------
         solver_params : dict
             Parameters for the solver.
-        Modes : list
-            All the modes calculated at all times.
-        Corrs : list
-            All the correlations calculated at all times.
+        ivc_func : function
+            Function returning the initial values and constants.
+        ode_func : function
+            Set of ODEs returning rate equations of the input variables.
+        plot: bool, optional
+            Option to plot the measures. Requires `plotter_params` parameter if `True`.
+        plotter_params: dict, optional
+            Parameters for the plotter.
 
         Returns
         -------
-        M : float
+        M : list
             Measures calculated at all times.
         """
 
@@ -251,19 +274,25 @@ class BaseSystem():
         # extract frequently used variables
         measure_type = solver_params.get('measure_type', 'qcm')
 
+        # get mode and correlation dynamics
+        _Modes, _Corrs, _T = self.get_dynamics_modes_corrs(solver_params, ivc_func, ode_func)
+
         # initialize variables
         M = list()
 
         # iterate for all times
-        for i in range(len(Modes)):
+        for i in range(len(_Modes)):
             # get quantum correlation measure
             if measure_type == 'qcm':
-                M.append(self.__get_qcm(solver_params, Corrs[i], Modes[i]))
-            # TODO: Handle other measures
+                M.append(self.__get_qcm(solver_params, _Corrs[i], _Modes[i]))
+
+        # plot measures
+        if plot: 
+            self.plot_measures(plotter_params, _T, M)
 
         return M
 
-    def __get_qcm(self, solver_params, corrs, modes):
+    def __get_qcm(self, solver_params: dict, corrs: list, modes: list):
         """Method to obtain a particular measure of quantum correlations.
 
         Parameters
@@ -298,5 +327,30 @@ class BaseSystem():
         # get solver
         solver = QCMSolver(modes, corrs)
         measure = getattr(solver, 'get_' + qcm_type)(idx_mode_i, idx_mode_j)
-        
+    
         return measure
+
+    def plot_measures(self, plotter_params: dict, T: list, M: list):
+        """Method to plot the measures.
+        
+        Parameters
+        ----------
+        plotter_params : dict
+            Parameters for the plotter.
+        T : list
+            Times at which values are calculated.
+        M : list
+            Measures calculated at all times.
+        """
+
+        # validate parameters
+        supported_types = MPLPlotter.types_1D + MPLPlotter.types_2D + MPLPlotter.types_3D
+        assert plotter_params is not None, 'Parameter `plotter_params` should be a dictionary containing the key `type`.'
+        assert 'type' in plotter_params and plotter_params['type'] in supported_types, 'Parameter `plotter_params` should contain key `type` with values in {}.'.format(supported_types)
+
+        # initialize plot
+        plotter = MPLPlotter({'X': T}, plotter_params)
+        
+        # update plotter
+        plotter.update(xs=T, vs=M)
+        plotter.show(True)

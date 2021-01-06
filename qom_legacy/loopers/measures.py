@@ -3,20 +3,20 @@
  
 """Module containing looper functions for measures."""
 
-__name__    = 'qom.loopers.measures'
+__name__    = 'qom_legacy.loopers.measures'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-23'
-__updated__ = '2020-12-04'
+__updated__ = '2021-01-06'
 
 # dependencies
 import logging
 import numpy as np
 
 # dev dependencies
-from qom.loopers import dynamics
+from qom_legacy.loopers import dynamics
 from qom.ui import Figure
 from qom.ui.axes import MultiAxis, StaticAxis
-from qom.utils.misc import get_index_threshold
+from qom_legacy.utils.misc import get_index_threshold
 
 # module logger
 logger = logging.getLogger(__name__)

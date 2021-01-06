@@ -1,11 +1,6 @@
 qom.ui package
 ==============
 
-.. automodule:: qom.ui
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Subpackages
 -----------
 
@@ -18,8 +13,18 @@ Subpackages
 Submodules
 ----------
 
-.. toctree::
-   :maxdepth: 4
+qom.ui.log module
+-----------------
 
-   qom.ui.Figure
-   qom.ui.log
+.. automodule:: qom.ui.log
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: qom.ui
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.HLESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-01-05'
+__updated__ = '2021-01-06'
 
 # dependencies
 from typing import Union
@@ -19,8 +19,11 @@ from qom.solvers.ODESolver import ODESolver
 # module logger
 logger = logging.getLogger(__name__)
 
-# data types
+# datatypes
 t_array = Union[list, np.matrix, np.ndarray]
+
+# TODO: Add `solve_multi` for multi-system solving.
+# TODO: Add option to save results in `solve`.
 
 class HLESolver(ODESolver):
     r"""Class to solve Heisenberg-Langevin equations for classical mode amplitudes and quantum correlations.
@@ -49,8 +52,13 @@ class HLESolver(ODESolver):
         # update attributes
         self.results = dict()
 
-    def get_modes(self):
+    def get_modes(self, num_modes):
         """Method to obtain the classical mode amplitudes.
+
+        Parameters
+        ----------
+        num_modes : int
+            Number of classical modes.
         
         Returns
         -------
@@ -58,9 +66,6 @@ class HLESolver(ODESolver):
             All the modes calculated at all times.
         """
 
-        # validate parameters
-        assert 'num_modes' in self.params, 'Solver parameters should contain key `num_modes` for number of modes.'
-
         # ODE not solved
         if self.results.get('V', None) is None:
             # solve and update results
@@ -68,17 +73,21 @@ class HLESolver(ODESolver):
 
         # extract frequently used variables
         _V = self.results['V']
-        _num_modes = self.params['num_modes']
 
         # get modes
         Modes = list()
         for i in range(len(_V)):
-            Modes.append(_V[i][:_num_modes])
+            Modes.append(_V[i][:num_modes])
             
         return Modes
 
-    def get_corrs(self):
+    def get_corrs(self, num_modes):
         """Method to obtain the quantum correlations.
+
+        Parameters
+        ----------
+        num_modes : int
+            Number of classical modes.
         
         Returns
         -------
@@ -86,9 +95,6 @@ class HLESolver(ODESolver):
             All the correlations calculated at all times.
         """
 
-        # validate parameters
-        assert 'num_modes' in self.params, 'Solver parameters should contain key `num_modes` for number of modes.'
-
         # ODE not solved
         if self.results.get('V', None) is None:
             # solve and update results
@@ -96,11 +102,10 @@ class HLESolver(ODESolver):
 
         # extract frequently used variables
         _V = self.results['V']
-        _num_modes = self.params['num_modes']
 
         # extract correlations
         Corrs = list()
         for i in range(len(_V)):
-            Corrs.append(np.real(np.reshape(_V[i][_num_modes:], (2 * _num_modes, 2 * _num_modes))).tolist())
+            Corrs.append(np.real(np.reshape(_V[i][num_modes:], (2 * num_modes, 2 * num_modes))).tolist())
             
         return Corrs

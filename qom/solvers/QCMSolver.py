@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.QCMSolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-01-05'
+__updated__ = '2021-01-06'
 
 # dependencies
 from typing import Union
@@ -16,8 +16,11 @@ import numpy as np
 # module logger
 logger = logging.getLogger(__name__)
 
-# data types
+# datatypes
 t_array = Union[list, np.matrix, np.ndarray]
+
+# TODO: Add `get_sync_phase_rot`.
+# TODO: Add `get_phase_match_*`.
 
 class QCMSolver():
     r"""Class to handle quantum correlation measure solver.

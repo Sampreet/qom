@@ -1,1 +1,1 @@
-from qom.ui.Figure import Figure
+from qom.ui.log import init_log

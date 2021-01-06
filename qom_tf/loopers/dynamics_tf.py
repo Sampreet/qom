@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""Wrapper modules for dynamics using tensorflow."""
+"""Wrapper modules for dynamics using TensorFlow."""
 
-__name__    = 'qom_experimental.wrappers.dynamics_tf'
+__name__    = 'qom_tf.loopers.dynamics_tf'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-03'
-__updated__ = '2020-09-27'
+__updated__ = '2021-01-06'
 
 # dependencies
 import logging
@@ -21,8 +21,8 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 
 # dev dependencies 
-from qom.measures import correlations, differences
-from qom_legacy.ui import figure
+from qom_legacy.measures import correlations, differences
+from qom_legacy.ui import Figure
 
 # module logger
 logger = logging.getLogger(__name__)
@@ -176,7 +176,7 @@ def dynamics_measure(model, dyna_params, meas_params, plot=False, plot_params=No
 
     # display plot
     if plot:
-        plotter = figure.Plotter2D(plot_params, X=T)
+        plotter = Figure(plot_params, X=T)
         plotter.update(T, D, head=False, hold=True)
 
     # axes dictionary

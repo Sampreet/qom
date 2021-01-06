@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.DODMSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2020-12-21'
+__updated__ = '2021-01-06'
 
 # dependencies
 import logging
@@ -37,3 +37,4 @@ class DODMSystem(BaseSystem):
         # set attributes
         self.code = 'dodms'
         self.name = 'DODMSystem'
+        self.num_modes = 4

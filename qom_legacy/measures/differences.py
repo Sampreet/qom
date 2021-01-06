@@ -3,10 +3,10 @@
  
 """Modules to calculate difference measures."""
 
-__name__    = 'qom.measures.differences'
+__name__    = 'qom_legacy.measures.differences'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-08-24'
-__updated__ = '2020-12-04'
+__updated__ = '2021-01-06'
 
 # dependencies
 import logging

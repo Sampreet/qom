@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.BasePlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-06'
-__updated__ = '2021-01-01'
+__updated__ = '2021-01-06'
 
 # dependencies
 from typing import Union
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 # data types
 t_axis = Union[DynamicAxis, MultiAxis, StaticAxis]
 
-# TODO: Fix get_limits.
+# TODO: Fix `get_limits`.
 
 class BasePlotter():
     """Class to interface plotters.
@@ -199,7 +199,7 @@ class BasePlotter():
         # return
         return _font_dict
 
-    def get_limits(self, mini, maxi, res=2):
+    def get_limits(self, mini, maxi, res=3):
         """Function to get limits from the minimum and maximum values of an array upto a certain resolution.
 
         Parameters

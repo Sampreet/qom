@@ -3,10 +3,10 @@
  
 """Module for miscellaneous utility functions."""
 
-__name__    = 'qom.utils.misc'
+__name__    = 'qom_legacy.utils.misc'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-27'
-__updated__ = '2020-12-04'
+__updated__ = '2021-01-06'
 
 # dependencies
 import logging
@@ -15,7 +15,7 @@ import numpy as np
 # module logger
 logger = logging.getLogger(__name__)
 
-# TODO: Verify `get_limits` function.
+# TODO: Verify `get_limits`.
 
 def get_index_monotonic_mean(values):
     """Function to calculate the position of the mid points of monotonicity for given function data.

@@ -1,0 +1,1 @@
+from qom_legacy.ui.Figure import Figure

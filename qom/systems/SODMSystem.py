@@ -11,7 +11,7 @@ References:
 __name__    = 'qom.systems.SODMSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2020-12-21'
+__updated__ = '2021-01-06'
 
 # dependencies
 import logging
@@ -42,3 +42,4 @@ class SODMSystem(BaseSystem):
         # set attributes
         self.code = 'sodms'
         self.name = 'SODMSystem'
+        self.num_modes = 3

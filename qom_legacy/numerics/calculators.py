@@ -3,17 +3,17 @@
  
 """Module containing calculator functions."""
 
-__name__    = 'qom.numerics.calculators'
+__name__    = 'qom_legacy.numerics.calculators'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-27'
-__updated__ = '2020-12-04'
+__updated__ = '2021-01-06'
 
 # dependencies
 import logging
 import numpy as np
 
 # dev dependencies 
-from qom.utils import misc
+from qom_legacy.utils import misc
 
 # module logger
 logger = logging.getLogger(__name__)

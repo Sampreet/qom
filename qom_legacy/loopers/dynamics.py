@@ -3,10 +3,10 @@
 
 """Module containing looper functions for dynamics."""
 
-__name__    = 'qom.loopers.dynamics'
+__name__    = 'qom_legacy.loopers.dynamics'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-21'
-__updated__ = '2020-12-04'
+__updated__ = '2021-01-06'
 
 # dependencies
 import logging
@@ -14,8 +14,8 @@ import numpy as np
 import os
 
 # dev dependencies
-from qom.measures import correlations, differences
-from qom.numerics import solvers
+from qom_legacy.measures import correlations, differences
+from qom_legacy.numerics import solvers
 from qom.ui import Figure
 from qom.ui.axes import MultiAxis, StaticAxis
 

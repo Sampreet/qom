@@ -3,10 +3,10 @@
  
 """Modules to calculate quantum correlation measures."""
 
-__name__    = 'qom.measures.correlations'
+__name__    = 'qom_legacy.measures.correlations'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-02-26'
-__updated__ = '2020-12-04'
+__updated__ = '2021-01-06'
 
 # dependencies
 import logging
@@ -14,6 +14,8 @@ import numpy as np
 
 # module logger
 logger = logging.getLogger(__name__)
+
+# TODO: Complete `sync_phase_rot`.
 
 def calculate(V, meas_params):
     """Wrapper function to switch functions for calculation of measures.
@@ -294,8 +296,6 @@ def sync_phase_rot(mat_corr, pos_i, pos_j, mode_i, mode_j):
     # arguments
     arg_i = np.angle(mode_i)
     arg_j = np.angle(mode_j)
-
-    # TODO: complete function
 
     # rotated quadratures
     return np.cos(arg_i) * np.cos(arg_j) * mat_corr[pos_i + 1][pos_j + 1] - np.cos(arg_i) * np.sin(arg_j) * mat_corr[pos_i + 1][pos_j] - np.sin(arg_i) * np.cos(arg_j) * mat_corr[pos_i][pos_j + 1] + np.sin(arg_i) * np.sin(arg_j) * mat_corr[pos_i][pos_j]
