@@ -14,7 +14,7 @@ The library features easy-to-use functions to easily calculate as well as visual
 For example, the `qom.looper.XLooper` module can be implemented as:
 
 ```python
-XLooper.calculate(func, params).loop()
+XLooper(func, params).loop()
 ```
 
 Here, `func` is a function containing the steps of each iteration and `params` is a dictionary containing the parameters required for the looper, solver, system and plotter.
@@ -92,7 +92,7 @@ ROOT_DIR/
 
 ### Running in Editable Mode
 
-To install and run the package in editable mode, execute the following from the top-level directory `ROOT_DIR` inside which `setup.py` is located:
+To install and run the package in editable mode, execute the following from outside the top-level directory `ROOT_DIR` inside which `setup.py` is located:
 
 ```bash
 pip install -e ROOT_DIR

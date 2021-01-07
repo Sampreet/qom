@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.ODESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-01-06'
+__updated__ = '2021-01-07'
 
 # dependencies
 from typing import Union
@@ -120,9 +120,13 @@ class ODESolver():
 
         # extract frequently used variable
         _T = self.params['T']
+        _dim = _T.get('dim', 1001)
+        
+        # update dim in params
+        self.params['T']['dim'] = _dim
 
         # calculate times
-        self.T = np.linspace(_T['min'], _T['max'], _T.get('dim', 1001)).tolist()
+        self.T = np.linspace(_T['min'], _T['max'], _dim).tolist()
 
     def solve(self, solver_module='si', solver_type='complex'):
         """Method to set up the integrator for the calculation.
@@ -141,6 +145,7 @@ class ODESolver():
         # extract frequently used variables
         solver_module = self.params.get('module', solver_module)
         solver_type = self.params.get('type', solver_type)
+        show_progress = self.params.get('show_progress', False)
         _len = len(self.T)
 
         # initialize integrator
@@ -168,7 +173,7 @@ class ODESolver():
             # update progress
             progress = float(i - 1)/float(_len - 1) * 100
             # display progress
-            if int(progress * 1000) % 10 == 0:
+            if show_progress and int(progress * 1000) % 10 == 0:
                 logger.info('Calculating the values: Progress = {progress:3.2f}'.format(progress=progress))
 
             # integrate

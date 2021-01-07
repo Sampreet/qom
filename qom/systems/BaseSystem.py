@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-01-06'
+__updated__ = '2021-01-07'
 
 # dependencies
 from typing import Union
@@ -238,6 +238,7 @@ class BaseSystem():
         solver = HLESolver(ode_func, solver_params, _iv, _c)
         
         # get modes, correlations and times
+        solver.solve(system_params=self.params)
         Modes = solver.get_modes(self.num_modes)
         Corrs = solver.get_corrs(self.num_modes)
         T = solver.T
@@ -271,24 +272,29 @@ class BaseSystem():
         assert 'measure_type' in solver_params, 'Solver parameters should contain key "measure_type" for the type of measure.'
         assert solver_params['measure_type'] in supported_types, 'Supported types of measures are {}'.format(str(supported_types))
 
-        # extract frequently used variables
-        measure_type = solver_params.get('measure_type', 'qcm')
-
         # get mode and correlation dynamics
         _Modes, _Corrs, _T = self.get_dynamics_modes_corrs(solver_params, ivc_func, ode_func)
 
-        # initialize variables
+        # extract frequently used variables
+        _measure_type = solver_params.get('measure_type', 'qcm')
+        _range_min = solver_params.get('range_min', 0)
+        _range_max = solver_params.get('range_max', len(_T))
+
+        # initialize list
         M = list()
 
         # iterate for all times
-        for i in range(len(_Modes)):
+        for i in range(_range_min, _range_max):
             # get quantum correlation measure
-            if measure_type == 'qcm':
-                M.append(self.__get_qcm(solver_params, _Corrs[i], _Modes[i]))
+            if _measure_type == 'qcm':
+                measure = self.__get_qcm(solver_params, _Corrs[i], _Modes[i])
+
+            # update list
+            M.append(measure)
 
         # plot measures
         if plot: 
-            self.plot_measures(plotter_params, _T, M)
+            self.plot_measures(plotter_params, _T[_range_min:_range_max], M)
 
         return M
 

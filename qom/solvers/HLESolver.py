@@ -6,12 +6,13 @@
 __name__    = 'qom.solvers.HLESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-01-06'
+__updated__ = '2021-01-07'
 
 # dependencies
 from typing import Union
 import logging
 import numpy as np
+import os
 
 # qom modules
 from qom.solvers.ODESolver import ODESolver
@@ -23,7 +24,6 @@ logger = logging.getLogger(__name__)
 t_array = Union[list, np.matrix, np.ndarray]
 
 # TODO: Add `solve_multi` for multi-system solving.
-# TODO: Add option to save results in `solve`.
 
 class HLESolver(ODESolver):
     r"""Class to solve Heisenberg-Langevin equations for classical mode amplitudes and quantum correlations.
@@ -52,6 +52,61 @@ class HLESolver(ODESolver):
         # update attributes
         self.results = dict()
 
+    def solve(self, solver_module='si', solver_type='complex', cache=False, cache_dir='data', cache_file='V', system_params=None):
+        """Method to set up the integrator for the calculation.
+
+        Parameters
+        ----------
+        solver_module : str, optional
+            Module used to solve the ODEs:
+                'si': :class:`scipy.integrate`.
+        solver_type : str, optional
+            Type of solver:
+                'real': Real-valued variables.
+                'complex': Complex-valued variables.
+        cache : str, optional
+            Option to cache the dynamics.
+        cache_dir : str, optional
+            Directory where the results are cached.
+        cache_file : str, optional
+            File where the results are cached.
+        system_params : dict, optional
+            Parameters for the system.
+        """
+
+        # extract frequently used variables
+        cache = self.params.get('cache', cache)
+        cache_dir = self.params.get('cache_dir', cache_dir)
+        cache_file = self.params.get('cache_file', cache_file)
+        _T = self.params['T']
+
+        # update directory
+        cache_dir += '\\' + __name__ + '\\' + str(_T['min']) + '_' + str(_T['max']) + '_' + str(_T['dim']) + '\\'
+        # upate filename
+        if cache_file == 'V' and system_params is not None:
+            for key in system_params:
+                cache_file += '_' + str(system_params[key])
+
+        # load
+        if cache and os.path.isfile(cache_dir + cache_file + '.npy'):
+            self.results = {
+                'T': self.T,
+                'V': np.load(cache_dir + cache_file + '.npy').tolist()
+            }
+        else:
+            # solve
+            super().solve(solver_module, solver_type)
+            # save
+            if cache:
+                # create directories
+                try:
+                    os.makedirs(cache_dir)
+                except FileExistsError:
+                    # update log
+                    logger.debug('Directory {dir_name} already exists\n'.format(dir_name=cache_dir))
+                # save
+                np.save(cache_dir + cache_file, np.array(self.results['V']))
+
     def get_modes(self, num_modes):
         """Method to obtain the classical mode amplitudes.
 
@@ -69,7 +124,7 @@ class HLESolver(ODESolver):
         # ODE not solved
         if self.results.get('V', None) is None:
             # solve and update results
-            super().solve()
+            self.solve()
 
         # extract frequently used variables
         _V = self.results['V']
@@ -98,7 +153,7 @@ class HLESolver(ODESolver):
         # ODE not solved
         if self.results.get('V', None) is None:
             # solve and update results
-            super().solve()
+            self.solve()
 
         # extract frequently used variables
         _V = self.results['V']

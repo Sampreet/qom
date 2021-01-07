@@ -6,9 +6,10 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-01-06'
+__updated__ = '2021-01-07'
 
 # dependencies
+from decimal import Decimal
 from typing import Union
 import copy
 import logging
@@ -25,6 +26,7 @@ logger = logging.getLogger(__name__)
 # datatypes
 t_position = Union[str, int, float, np.float32, np.float64]
 
+# TODO: Fix `get_multiprocessed_results`.
 # TODO: Handle multi-valued points for gradients in `get_X_results`.
 # TODO: Handle monotonic modes in `get_index`.
 # TODO: Add `get_thresholds`.
@@ -127,7 +129,14 @@ class BaseLooper():
             assert 'min' in _axis and 'max' in _axis, 'Key `{}` should contain keys `min` and `max` to define axis range'.format(axis)
 
             # set values
-            _val = np.linspace(_axis['min'], _axis['max'], _axis.get('dim', 101)).tolist()
+            _val = np.linspace(_axis['min'], _axis['max'], _axis.get('dim', 101))
+            # truncate values
+            _step_size = (_axis['max'] - _axis['min']) / (len(_val) - 1)
+            _decimals = - Decimal(str(_step_size)).as_tuple().exponent
+            _val = np.around(_val, _decimals)
+            # convert to list
+            _val = _val.tolist()
+            # update axis
             self.axes[axis]['val'] = _val
     
     def get_X_results(self, mode: str='serial', grad: bool=False):
@@ -154,6 +163,7 @@ class BaseLooper():
         # extract frequently used variables
         system_params = self.params['system']
         looper_mode = self.params['looper'].get('mode', mode)
+        show_progress = self.params['looper'].get('show_progress', False)
         x_var = self.axes['X']['var']
         x_val = self.axes['X']['val']
         x_dim = len(x_val)
@@ -170,6 +180,11 @@ class BaseLooper():
         else:
             # iterate
             for i in range(x_dim):
+                # update progress
+                progress = float(i)/float(x_dim - 1) * 100
+                # display progress
+                if show_progress and int(progress * 1000) % 10 == 0:
+                    logger.info('Calculating the values: Progress = {progress:3.2f}'.format(progress=progress))
                 # calculate value
                 _val = x_val[i]
                 system_params[x_var] = _val
@@ -237,13 +252,11 @@ class BaseLooper():
 
         return results
 
-    def get_multiprocessed_results(self, func, var, val):
+    def get_multiprocessed_results(self, var, val):
         """Method to obtain results of multiprocessed execution of a given function. (*Under construction.*)
 
         Parameters
         ----------
-        func : function
-            Function used to calculate.
         var : str
             Name of the variable.
         val : list
@@ -264,7 +277,7 @@ class BaseLooper():
             _system_params = copy.deepcopy(system_params)
             _system_params[var] = val[i]
             # obtain results using multiprocessing pool
-            results.append(pool.apply(func, args=(_system_params, val[i], logger)))
+            results.append(pool.apply(self.func, args=(_system_params, val[i], logger, results)))
 
         # sort results by first entry
         results = sorted(results)

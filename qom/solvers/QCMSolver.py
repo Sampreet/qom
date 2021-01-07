@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.QCMSolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-01-06'
+__updated__ = '2021-01-07'
 
 # dependencies
 from typing import Union
@@ -63,7 +63,7 @@ class QCMSolver():
         self.corrs = corrs
 
     def get_discord(self, idx_mode_i, idx_mode_j):
-        """Function to calculate Gaussian quantum discord between two modes given the correlation matrix of their quadratures.
+        """Method to obtain Gaussian quantum discord between two modes given the correlation matrix of their quadratures.
 
         Parameters
         ----------
@@ -152,6 +152,44 @@ class QCMSolver():
             logger.warning('Division by zero encountered in W function\n')
             return 0
 
+    def get_elements(self, idx_mode_i, idx_mode_j):
+        """Method to obtain elements of the correlation matrix.
+
+        Parameters
+        ----------
+        idx_mode_i : int or list
+            Index or indices of ith mode.
+        idx_mode_j : int or list
+            Index or indices of jth mode.
+
+        Returns
+        -------
+        elements : list
+            Elements of the correlation matrix.
+        """
+        
+        # initialize lists
+        elements = list()
+
+        # handle single element
+        if type(idx_mode_i) is int:
+            idx_mode_i = [idx_mode_i]
+        if type(idx_mode_j) is int:
+            idx_mode_j = [idx_mode_j]
+
+        # frequently used variables
+        _dim = len(idx_mode_i)
+
+        assert _dim == len(idx_mode_j), 'Keys `idx_mode_i` and `idx_mode_j` should have same shape'
+
+        for i in range(_dim):
+            # get element
+            _ele = self.corrs[2 * idx_mode_i[i]][2 * idx_mode_j[i]]
+            # update lists
+            elements.append(_ele)
+
+        return elements
+
     def get_entan(self, idx_mode_i, idx_mode_j):
         """Function to calculate quantum entanglement via logarithmic negativity between two modes given the correlation matrix of their quadratures.
 
@@ -239,25 +277,31 @@ class QCMSolver():
             Quantum phase synchronization measure.
         """
 
+        # arguments of the modes
+        arg_i = np.angle(self.modes[idx_mode_i])
+        arg_j = np.angle(self.modes[idx_mode_j])
+
         # frequently used variables
         pos_i = 2 * idx_mode_i
         pos_j = 2 * idx_mode_j
-
-        # arguments
-        arg_i = np.angle(self.modes[idx_mode_i])
-        arg_j = np.angle(self.modes[idx_mode_j])
+        cos_i = np.cos(arg_i)
+        cos_j = np.cos(arg_j)
+        sin_i = np.sin(arg_i)
+        sin_j = np.sin(arg_j)
         
         # transformation for ith mode momentum quadrature
-        p_i_prime_2 = (np.sin(arg_i))**2 * self.corrs[pos_i][pos_i] - (np.sin(arg_i)) * (np.cos(arg_i)) * self.corrs[pos_i][pos_i + 1] - (np.cos(arg_i)) * (np.sin(arg_i)) * self.corrs[pos_i + 1][pos_i] + (np.cos(arg_i))**2 * self.corrs[pos_i + 1][pos_i + 1] 
+        p_i_prime_2 = sin_i**2 * self.corrs[pos_i][pos_i] - sin_i * cos_i * self.corrs[pos_i][pos_i + 1] - cos_i * sin_i * self.corrs[pos_i + 1][pos_i] + cos_i**2 * self.corrs[pos_i + 1][pos_i + 1] 
 
         # transformation for jth mode momentum quadrature
-        p_j_prime_2 = (np.sin(arg_j))**2 * self.corrs[pos_j][pos_j] - (np.sin(arg_j)) * (np.cos(arg_j)) * self.corrs[pos_j][pos_j + 1] - (np.cos(arg_j)) * (np.sin(arg_j)) * self.corrs[pos_j + 1][pos_j] + (np.cos(arg_j))**2 * self.corrs[pos_j + 1][pos_j + 1]
+        p_j_prime_2 = sin_j**2 * self.corrs[pos_j][pos_j] - sin_j * cos_j * self.corrs[pos_j][pos_j + 1] - cos_j * sin_j * self.corrs[pos_j + 1][pos_j] + cos_j**2 * self.corrs[pos_j + 1][pos_j + 1]
 
         # transformation for intermode momentum quadratures
-        p_i_p_j_prime = (np.sin(arg_i)) * (np.sin(arg_j)) * self.corrs[pos_i][pos_j] - (np.sin(arg_i)) * (np.cos(arg_j)) * self.corrs[pos_i][pos_j + 1] - (np.cos(arg_i)) * (np.sin(arg_j)) * self.corrs[pos_i + 1][pos_j] + (np.cos(arg_i)) * (np.cos(arg_j)) * self.corrs[pos_i + 1][pos_j + 1]
+        p_i_p_j_prime = sin_i * sin_j * self.corrs[pos_i][pos_j] - sin_i * cos_j * self.corrs[pos_i][pos_j + 1] - cos_i * sin_j * self.corrs[pos_i + 1][pos_j] + cos_i * cos_j * self.corrs[pos_i + 1][pos_j + 1]
 
         # square difference between momentum quadratures
         p_minus_prime_2 = 1 / 2 * (p_i_prime_2 + p_j_prime_2 - 2 * p_i_p_j_prime)
 
         # quantum phase synchronization value
-        return 1 / 2 / p_minus_prime_2
+        S_C = 1 / 2 / p_minus_prime_2
+
+        return S_C

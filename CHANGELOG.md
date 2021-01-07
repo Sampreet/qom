@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.6.0 - 2021/01/07 - 00 - Updated Solvers
+* Fixed axis values in `qom/loopers/BaseLooper` module and minor updates.
+* Updated `qom/solvers`:
+    * Added option to save dynamics in `HLESolver` modules.
+    * Minor updates to `ODESolver` modules.
+    * Added correlation element method to `QCMSolver` module.
+* Added dynamics range in `qom/systems/BaseSystem` module.
+* Updated `README`.
+
 ## v0.6.0 - 2021/01/06 - 00 - Clean-up and Revamp
 * Updated documentation in `docs`.
 * Updated `qom/examples/qom_loopers_XLooper` notebook.
