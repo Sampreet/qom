@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.6.0 - 2021/01/08 - 00 - Minor Fixes
+* Fixed axis value rounding in `qom/loopers/BaseLooper` module.
+* Added file compression in `qom/solvers/HLESolver` module.
+
 ## v0.6.0 - 2021/01/07 - 00 - Updated Solvers
 * Fixed axis values in `qom/loopers/BaseLooper` module and minor updates.
 * Updated `qom/solvers`:

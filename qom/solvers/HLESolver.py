@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.HLESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-01-07'
+__updated__ = '2021-01-08'
 
 # dependencies
 from typing import Union
@@ -87,11 +87,18 @@ class HLESolver(ODESolver):
             for key in system_params:
                 cache_file += '_' + str(system_params[key])
 
-        # load
+        # convert uncompressed files to compressed ones
         if cache and os.path.isfile(cache_dir + cache_file + '.npy'):
+            # load data
+            _temp = np.load(cache_dir + cache_file + '.npy')
+            # save to compressed file
+            np.savez_compressed(cache_dir + cache_file, _temp)
+        
+        # load compressed file
+        if cache and os.path.isfile(cache_dir + cache_file + '.npz'):
             self.results = {
                 'T': self.T,
-                'V': np.load(cache_dir + cache_file + '.npy').tolist()
+                'V': np.load(cache_dir + cache_file + '.npz')['arr_0'].tolist()
             }
         else:
             # solve
@@ -104,8 +111,8 @@ class HLESolver(ODESolver):
                 except FileExistsError:
                     # update log
                     logger.debug('Directory {dir_name} already exists\n'.format(dir_name=cache_dir))
-                # save
-                np.save(cache_dir + cache_file, np.array(self.results['V']))
+                # save to compressed file
+                np.savez_compressed(cache_dir + cache_file, np.array(self.results['V']))
 
     def get_modes(self, num_modes):
         """Method to obtain the classical mode amplitudes.

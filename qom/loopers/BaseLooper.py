@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-01-07'
+__updated__ = '2021-01-08'
 
 # dependencies
 from decimal import Decimal
@@ -112,6 +112,7 @@ class BaseLooper():
 
         # extract frequently used variables
         _axis = self.params['looper'][axis]
+        _dim = _axis.get('dim', 101)
 
         # validate variable
         assert 'var' in _axis, 'Key `{}` should contain key `var` for the name of the variable'.format(axis)
@@ -129,10 +130,11 @@ class BaseLooper():
             assert 'min' in _axis and 'max' in _axis, 'Key `{}` should contain keys `min` and `max` to define axis range'.format(axis)
 
             # set values
-            _val = np.linspace(_axis['min'], _axis['max'], _axis.get('dim', 101))
+            _val = np.linspace(_axis['min'], _axis['max'], _dim)
             # truncate values
-            _step_size = (_axis['max'] - _axis['min']) / (len(_val) - 1)
-            _decimals = - Decimal(str(_step_size)).as_tuple().exponent
+            _step_size = (Decimal(str(_axis['max'])) - Decimal(str(_axis['min']))) / (len(_val) - 1)
+            _decimals = - _step_size.as_tuple().exponent
+            print(_decimals)
             _val = np.around(_val, _decimals)
             # convert to list
             _val = _val.tolist()
