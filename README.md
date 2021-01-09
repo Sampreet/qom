@@ -29,7 +29,7 @@ The project requires `Python 3.7+` installed, preferably via the [Anaconda distr
 
 *Some modules also use tensor-based calculations with the CPU/GPU libraries of `TensorFlow`, an installation guide for which can be found in [Anaconda's  Documentation](https://docs.anaconda.com/anaconda/user-guide/tasks/tensorflow/).*
 
-### Structure
+### Structure of the Repository
 
 ```
 ROOT_DIR/
@@ -71,7 +71,6 @@ ROOT_DIR/
 │   │   ├───foobar.py
 │   │   └───...
 │   │   
-│   │   
 │   └───__init__.py
 |
 │───qom_legacy/
@@ -90,14 +89,13 @@ ROOT_DIR/
 └───setup.py
 ```
 
-### Running in Editable Mode
+### Installing in Editable Mode
 
-To install and run the package in editable mode, execute the following from outside the top-level directory `ROOT_DIR` inside which `setup.py` is located:
+To install the package in editable mode, execute the following from *outside* the top-level directory, `ROOT_DIR`, inside which `setup.py` is located:
 
 ```bash
 pip install -e ROOT_DIR
 ```
-
 
 ### Building the Documentation
 

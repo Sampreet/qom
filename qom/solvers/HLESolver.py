@@ -78,6 +78,7 @@ class HLESolver(ODESolver):
         cache = self.params.get('cache', cache)
         cache_dir = self.params.get('cache_dir', cache_dir)
         cache_file = self.params.get('cache_file', cache_file)
+        show_progress = self.params.get('show_progress', False)
         _T = self.params['T']
 
         # update directory
@@ -86,6 +87,10 @@ class HLESolver(ODESolver):
         if cache_file == 'V' and system_params is not None:
             for key in system_params:
                 cache_file += '_' + str(system_params[key])
+
+        # display initialization
+        if show_progress:
+            logger.info('-------------------Solver Initialized-----------------\n')
 
         # convert uncompressed files to compressed ones
         if cache and os.path.isfile(cache_dir + cache_file + '.npy'):
@@ -113,6 +118,10 @@ class HLESolver(ODESolver):
                     logger.debug('Directory {dir_name} already exists\n'.format(dir_name=cache_dir))
                 # save to compressed file
                 np.savez_compressed(cache_dir + cache_file, np.array(self.results['V']))
+            
+        # display completion
+        if show_progress:
+            logger.info('-------------------Values Obtained--------------------\n')
 
     def get_modes(self, num_modes):
         """Method to obtain the classical mode amplitudes.

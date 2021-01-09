@@ -134,7 +134,6 @@ class BaseLooper():
             # truncate values
             _step_size = (Decimal(str(_axis['max'])) - Decimal(str(_axis['min']))) / (len(_val) - 1)
             _decimals = - _step_size.as_tuple().exponent
-            print(_decimals)
             _val = np.around(_val, _decimals)
             # convert to list
             _val = _val.tolist()
