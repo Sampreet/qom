@@ -1,1 +1,1 @@
-from qom.ui.log import init_log
+from .log import init_log

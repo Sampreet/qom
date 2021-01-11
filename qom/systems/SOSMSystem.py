@@ -6,13 +6,13 @@
 __name__    = 'qom.systems.SOSMSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-01-06'
+__updated__ = '2021-01-11'
 
 # dependencies
 import logging
 
-# dev dependencies
-from qom.systems.BaseSystem import BaseSystem
+# qom modules
+from .BaseSystem import BaseSystem
 
 # module logger
 logger = logging.getLogger(__name__)

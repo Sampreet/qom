@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.XYZLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-28'
-__updated__ = '2021-01-06'
+__updated__ = '2021-01-11'
 
 # dependencies
 from typing import Union
@@ -14,7 +14,7 @@ import logging
 import numpy as np
 
 # qom modules
-from qom.loopers.BaseLooper import BaseLooper
+from .BaseLooper import BaseLooper
 
 # module logger
 logger = logging.getLogger(__name__)

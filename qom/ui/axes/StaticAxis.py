@@ -6,14 +6,14 @@
 __name__    = 'qom.ui.axes.StaticAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-17'
-__updated__ = '2021-01-06'
+__updated__ = '2021-01-11'
 
 # dependencies
 import logging
 import numpy as np
 
-# dev dependencies
-from qom.ui.axes.BaseAxis import BaseAxis
+# qom modules
+from .BaseAxis import BaseAxis
 
 # module logger
 logger = logging.getLogger(__name__)

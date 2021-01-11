@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-01-08'
+__updated__ = '2021-01-11'
 
 # dependencies
 from decimal import Decimal
@@ -132,7 +132,7 @@ class BaseLooper():
             # set values
             _val = np.linspace(_axis['min'], _axis['max'], _dim)
             # truncate values
-            _step_size = (Decimal(str(_axis['max'])) - Decimal(str(_axis['min']))) / (len(_val) - 1)
+            _step_size = (Decimal(str(_axis['max'])) - Decimal(str(_axis['min']))) / (_dim - 1)
             _decimals = - _step_size.as_tuple().exponent
             _val = np.around(_val, _decimals)
             # convert to list

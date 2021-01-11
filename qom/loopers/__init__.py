@@ -1,3 +1,3 @@
-from qom.loopers.XLooper import XLooper
-from qom.loopers.XYLooper import XYLooper
-from qom.loopers.XYZLooper import XYZLooper
+from .XLooper import XLooper
+from .XYLooper import XYLooper
+from .XYZLooper import XYZLooper

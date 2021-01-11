@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.6.1 - 2021/01/11 - 00 - SciPy Integration APIs
+* Updated `qom/solvers`:
+    * Updated displaying and solving in `HLESolver` module.
+    * Added new `scipy.integrate` API wrappers in `ODESolver` module.
+* Minor updates to `qom/systems/BaseSystem` module.
+* Dependency fixes to all modules.
+
 ## v0.6.0 - 2021/01/09 - 00 - Minor Fixes
 * Minor fixes to `qom/loopers/BaseLooper` module.
 * Added log in `qom/solvers/HLESolver` module.
@@ -12,8 +19,8 @@
 ## v0.6.0 - 2021/01/07 - 00 - Updated Solvers
 * Fixed axis values in `qom/loopers/BaseLooper` module and minor updates.
 * Updated `qom/solvers`:
-    * Added option to save dynamics in `HLESolver` modules.
-    * Minor updates to `ODESolver` modules.
+    * Added option to save dynamics in `HLESolver` module.
+    * Minor updates to `ODESolver` module.
     * Added correlation element method to `QCMSolver` module.
 * Added dynamics range in `qom/systems/BaseSystem` module.
 * Updated `README`.

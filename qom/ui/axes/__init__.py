@@ -1,3 +1,3 @@
-from qom.ui.axes.DynamicAxis import DynamicAxis
-from qom.ui.axes.MultiAxis import MultiAxis
-from qom.ui.axes.StaticAxis import StaticAxis
+from .DynamicAxis import DynamicAxis
+from .MultiAxis import MultiAxis
+from .StaticAxis import StaticAxis

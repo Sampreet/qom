@@ -6,9 +6,10 @@
 __name__    = 'qom.solvers.ODESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-01-07'
+__updated__ = '2021-01-11'
 
 # dependencies
+from decimal import Decimal
 from typing import Union
 import logging
 import numpy as np
@@ -126,43 +127,56 @@ class ODESolver():
         self.params['T']['dim'] = _dim
 
         # calculate times
-        self.T = np.linspace(_T['min'], _T['max'], _dim).tolist()
+        _ts = np.linspace(_T['min'], _T['max'], _dim)
+        # truncate values
+        _step_size = (Decimal(str(_T['max'])) - Decimal(str(_T['min']))) / (_dim - 1)
+        _decimals = - _step_size.as_tuple().exponent
+        _ts = np.around(_ts, _decimals)
+        # convert to list
+        _ts = _ts.tolist()
+        # update attribute
+        self.T = _ts
 
-    def solve(self, solver_module='si', solver_type='complex'):
-        """Method to set up the integrator for the calculation.
+    def solve(self, solver_module='si_ode', solver_type='complex'):
+        """Method to set up and perform the integration.
 
         Parameters
         ----------
         solver_module : str, optional
             Module used to solve the ODEs:
-                'si': :class:`scipy.integrate`.
+                'si_BDF': :class:`scipy.integrate.BDF`.
+                'si_DOP853': :class:`scipy.integrate.DOP853`.
+                'si_ode': :class:`scipy.integrate.ode` (default). Requires `solver_type` parameter.
+                'si_RK45': :class:`scipy.integrate.RK45`.
         solver_type : str, optional
             Type of solver:
                 'real': Real-valued variables.
-                'complex': Complex-valued variables.
+                'complex': Complex-valued variables (default).
         """
 
         # extract frequently used variables
         solver_module = self.params.get('module', solver_module)
-        solver_type = self.params.get('type', solver_type)
         show_progress = self.params.get('show_progress', False)
+        _package = solver_module[:3] if len(solver_module) >= 3 else 'si_'
+        _API = solver_module[3:] if len(solver_module) > 3 else 'ode'
+        _new_APIs = ['BDF', 'DOP853', 'RK45']
         _len = len(self.T)
+        _new = False
 
         # initialize integrator
-        if solver_module == 'si':
-            integrator = si.ode(self.func)
-            # for complex ode solver
-            if solver_type.find('complex') != -1:
-                integrator.set_integrator('zvode')
-                
-            # set initial values and constants
-            integrator.set_initial_value(self.iv, self.T[0])
-
-            # set constants
-            if self.c is not None:
-                integrator.set_f_params(self.c)
+        # new API methods of scipy.integrate
+        if _package.find('si_') != -1 and _API in _new_APIs:
+            integrator = self.__get_integrator_si_new(solver_module)
+            # flag
+            _new = True
+        # FORTRAN-based old API method of scipy.integrate
         else:
-            integrator = None
+            _API = 'ode'
+            integrator = self.__get_integrator_si_old(solver_type)
+
+        # display initialization
+        if show_progress:
+            logger.info('-------------------Integrator Initialized-------------\n')
 
         # initialize lists
         _ts = [self.T[0]]
@@ -174,11 +188,18 @@ class ODESolver():
             progress = float(i - 1)/float(_len - 1) * 100
             # display progress
             if show_progress and int(progress * 1000) % 10 == 0:
-                logger.info('Calculating the values: Progress = {progress:3.2f}'.format(progress=progress))
+                logger.info('Integrating (scipy.integrate.{API}): Progress = {progress:3.2f}'.format(API=_API, progress=progress))
 
             # integrate
-            t = self.T[i]
-            v = integrator.integrate(t)
+            # new API methods
+            if _new:
+                integrator.step()
+                t = integrator.t
+                v = integrator.y
+            # old API method
+            else:
+                t = self.T[i]
+                v = integrator.integrate(t)
 
             # update log
             logger.debug('t = {}\tv = {}'.format(t, v))
@@ -192,3 +213,78 @@ class ODESolver():
             'T': _ts,
             'V': _vs
         }
+            
+        # display completion
+        if show_progress:
+            logger.info('-------------------Integration Complete---------------\n')
+
+    def __get_integrator_si_new(self, solver_module):
+        """Method to obtain the integrator :class:`scipy.integrate.*`.
+
+        Parameters
+        ----------
+        solver_module : str, optional
+            Module used to solve the ODEs:
+                'si_BDF': :class:`scipy.integrate.BDF`.
+                'si_DOP853': :class:`scipy.integrate.DOP853`.
+                'si_RK45': :class:`scipy.integrate.RK45` (default).
+
+        Returns
+        -------
+        integrator : :class:`scipy.integrate.*`
+            Integrator for ODE.
+        """
+
+        # extract frequently used variables
+        solver_module = self.params.get('module', solver_module)
+        _APIs = {
+            'BDF': si.BDF,
+            'DOP853': si.DOP853,
+            'RK45': si.RK45,
+        }
+
+        # set constants
+        if self.c is not None:
+            _func = lambda t, x: self.func(t, x, self.c)
+        else:
+            _func = self.func
+            
+        # get integrator
+        integrator = _APIs[solver_module[3:]](_func, self.T[0], self.iv, self.T[-1], max_step=self.T[1] - self.T[0])
+
+        return integrator
+
+    def __get_integrator_si_old(self, solver_type='complex'):
+        """Method to set up the integrator :class:`scipy.integrate.ode`.
+
+        Parameters
+        ----------
+        solver_type : str, optional
+            Type of solver:
+                'real': Real-valued variables.
+                'complex': Complex-valued variables.
+
+        Returns
+        -------
+        integrator : :class:`scipy.integrate.*`
+            Integrator for ODE.
+        """
+
+        # extract frequently used variables
+        solver_type = self.params.get('type', solver_type)
+            
+        # get integrator
+        integrator = si.ode(self.func)
+
+        # for complex ode solver
+        if solver_type.find('complex') != -1:
+            integrator.set_integrator('zvode')
+            
+        # set initial values and constants
+        integrator.set_initial_value(self.iv, self.T[0])
+
+        # set constants
+        if self.c is not None:
+            integrator.set_f_params(self.c)
+
+        return integrator

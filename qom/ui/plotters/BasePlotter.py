@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.BasePlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-06'
-__updated__ = '2021-01-06'
+__updated__ = '2021-01-11'
 
 # dependencies
 from typing import Union
@@ -14,8 +14,8 @@ import logging
 import numpy as np
 import seaborn as sns
 
-# qom dependencies
-from qom.ui.axes import *
+# qom modules
+from ..axes import *
 
 # module logger
 logger = logging.getLogger(__name__)

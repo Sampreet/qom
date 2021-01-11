@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-01-07'
+__updated__ = '2021-01-11'
 
 # dependencies
 from typing import Union
@@ -279,18 +279,29 @@ class BaseSystem():
         _measure_type = solver_params.get('measure_type', 'qcm')
         _range_min = solver_params.get('range_min', 0)
         _range_max = solver_params.get('range_max', len(_T))
+        show_progress = solver_params.get('show_progress', False)
 
         # initialize list
         M = list()
 
         # iterate for all times
         for i in range(_range_min, _range_max):
+            # update progress
+            progress = float(i - _range_min)/float(_range_max - _range_min - 1) * 100
+            # display progress
+            if show_progress and int(progress * 1000) % 10 == 0:
+                logger.info('Calculating measures ({measure_type}): Progress = {progress:3.2f}'.format(measure_type=_measure_type, progress=progress))
+
             # get quantum correlation measure
             if _measure_type == 'qcm':
                 measure = self.__get_qcm(solver_params, _Corrs[i], _Modes[i])
 
             # update list
             M.append(measure)
+
+        # display initialization
+        if show_progress:
+            logger.info('------------------Measures Obtained------------------\n')
 
         # plot measures
         if plot: 

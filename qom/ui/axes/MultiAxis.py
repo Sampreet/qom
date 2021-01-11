@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.axes.MultiAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-10'
-__updated__ = '2021-01-01'
+__updated__ = '2021-01-11'
 
 # TODO: set color and style variants.
 
@@ -14,8 +14,8 @@ __updated__ = '2021-01-01'
 import logging
 import numpy as np
 
-# dev dependencies
-from qom.ui.axes.BaseAxis import BaseAxis
+# qom modules
+from .BaseAxis import BaseAxis
 
 # module logger
 logger = logging.getLogger(__name__)

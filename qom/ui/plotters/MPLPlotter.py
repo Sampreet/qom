@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2021-01-01'
+__updated__ = '2021-01-11'
 
 # dependencies
 from matplotlib.colors import Normalize
@@ -17,8 +17,8 @@ import logging
 import matplotlib.pyplot as plt
 import numpy as np
 
-# dev dependencies
-from qom.ui.plotters.BasePlotter import BasePlotter
+# qom modules
+from .BasePlotter import BasePlotter
 
 # module logger
 logger = logging.getLogger(__name__)

@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.HLESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-01-08'
+__updated__ = '2021-01-11'
 
 # dependencies
 from typing import Union
@@ -15,7 +15,7 @@ import numpy as np
 import os
 
 # qom modules
-from qom.solvers.ODESolver import ODESolver
+from .ODESolver import ODESolver
 
 # module logger
 logger = logging.getLogger(__name__)
@@ -52,7 +52,7 @@ class HLESolver(ODESolver):
         # update attributes
         self.results = dict()
 
-    def solve(self, solver_module='si', solver_type='complex', cache=False, cache_dir='data', cache_file='V', system_params=None):
+    def solve(self, solver_module='si_ode', solver_type='complex', cache=False, cache_dir='data', cache_file='V', system_params=None):
         """Method to set up the integrator for the calculation.
 
         Parameters
@@ -88,10 +88,6 @@ class HLESolver(ODESolver):
             for key in system_params:
                 cache_file += '_' + str(system_params[key])
 
-        # display initialization
-        if show_progress:
-            logger.info('-------------------Solver Initialized-----------------\n')
-
         # convert uncompressed files to compressed ones
         if cache and os.path.isfile(cache_dir + cache_file + '.npy'):
             # load data
@@ -105,9 +101,13 @@ class HLESolver(ODESolver):
                 'T': self.T,
                 'V': np.load(cache_dir + cache_file + '.npz')['arr_0'].tolist()
             }
+            
+            # display loaded
+            if show_progress:
+                logger.info('-------------------Values Loaded----------------------\n')
         else:
             # solve
-            super().solve(solver_module, solver_type)
+            super().solve()
             # save
             if cache:
                 # create directories
@@ -116,12 +116,13 @@ class HLESolver(ODESolver):
                 except FileExistsError:
                     # update log
                     logger.debug('Directory {dir_name} already exists\n'.format(dir_name=cache_dir))
+
                 # save to compressed file
                 np.savez_compressed(cache_dir + cache_file, np.array(self.results['V']))
             
-        # display completion
-        if show_progress:
-            logger.info('-------------------Values Obtained--------------------\n')
+                # display saved
+                if show_progress:
+                    logger.info('-------------------Values Saved-----------------------\n')
 
     def get_modes(self, num_modes):
         """Method to obtain the classical mode amplitudes.

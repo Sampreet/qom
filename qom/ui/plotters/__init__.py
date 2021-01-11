@@ -1,1 +1,1 @@
-from qom.ui.plotters.MPLPlotter import MPLPlotter
+from .MPLPlotter import MPLPlotter
