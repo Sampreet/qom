@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-01-11'
+__updated__ = '2021-01-12'
 
 # dependencies
 from typing import Union
@@ -25,11 +25,14 @@ logger = logging.getLogger(__name__)
 # datatypes
 t_array = Union[list, np.matrix, np.ndarray]
 t_float = Union[float, np.float32, np.float64]
-            
+
+# TODO: Add parameters for solver method and cache.
 # TODO: Handle other measures in `get_dynamics_measure`.
 
 class BaseSystem():
     """Class to interface optomechanical systems.
+
+    Initializes `params` property.
 
     References:
 
@@ -86,6 +89,155 @@ class BaseSystem():
 
         # set params
         self.params = params
+
+    def __get_qcm(self, solver_params: dict, corrs: list, modes: list):
+        """Method to obtain a particular measure of quantum correlations.
+
+        Parameters
+        ----------
+        solver_params : dict
+            Parameters for the solver.
+        corrs : list
+            Matrix of quantum correlations.
+        modes : list
+            Values of classical mode amplitudes.
+
+        Returns
+        -------
+        measure : float
+            Calculated measure.
+        """
+
+        # validate parameters
+        supported_types = [func[4:] for func in dir(QCMSolver) if callable(getattr(QCMSolver, func)) and func[:4] == 'get_']
+        assert 'qcm_type' in solver_params, 'Solver parameters should contain key "qcm_type" for the type of correlation.'
+        assert solver_params['qcm_type'] in supported_types, 'Supported quantum correlation measures are {}'.format(str(supported_types))
+        
+        # validate parameters
+        for key in ['idx_mode_i', 'idx_mode_j']:
+            assert key in solver_params, 'Solver parameters should contain the keys "idx_mode_i" and "idx_mode_j" for synchronization'
+
+        # extract frequently used variables
+        qcm_type = solver_params['qcm_type']
+        idx_mode_i = solver_params['idx_mode_i']
+        idx_mode_j = solver_params['idx_mode_j']
+
+        # get solver
+        solver = QCMSolver(modes, corrs)
+        measure = getattr(solver, 'get_' + qcm_type)(idx_mode_i, idx_mode_j)
+    
+        return measure
+    
+    def get_dynamics_measure(self, solver_params: dict, ode_func, ivc_func, ode_func_corrs=None, plot: bool=False, plotter_params: dict=None):
+        """Method to obtain the dynamics of a particular measure.
+
+        Parameters
+        ----------
+        solver_params : dict
+            Parameters for the solver.
+        ode_func : function
+            Set of ODEs returning rate equations of the classical mode amplitudes and quantum correlations. If `ode_func_corrs` parameter is given, this function is treated as the function for the modes only.
+        ivc_func : function
+            Function returning the initial values and constants.
+        ode_func_corrs : function, optional
+            Set of ODEs returning rate equations of the quantum correlations.
+        plot: bool, optional
+            Option to plot the measures. Requires `plotter_params` parameter if `True`.
+        plotter_params: dict, optional
+            Parameters for the plotter.
+
+        Returns
+        -------
+        M : list
+            Measures calculated at all times.
+        """
+
+        # validate parameters
+        supported_types = ['qcm']
+        assert 'measure_type' in solver_params, 'Solver parameters should contain key "measure_type" for the type of measure.'
+        assert solver_params['measure_type'] in supported_types, 'Supported types of measures are {}'.format(str(supported_types))
+
+        # get mode and correlation dynamics
+        _Modes, _Corrs, _T = self.get_dynamics_modes_corrs(solver_params, ode_func, ivc_func, ode_func_corrs)
+
+        # extract frequently used variables
+        show_progress = solver_params.get('show_progress', False)
+        _range_min = solver_params.get('range_min', 0)
+        _range_max = solver_params.get('range_max', len(_T))
+        _measure_type = solver_params.get('measure_type', 'qcm')
+        _module_names = {
+            'qcm': 'qom.solvers.QCMSolver'
+        }
+
+        # display initialization
+        if show_progress:
+            logger.info('------------------Obtaining Measures-----------------\n')
+
+        # initialize list
+        M = list()
+
+        # iterate for all times in given range
+        for i in range(_range_min, _range_max):
+            # update progress
+            progress = float(i - _range_min)/float(_range_max - _range_min - 1) * 100
+            # display progress
+            if show_progress and int(progress * 1000) % 10 == 0:
+                logger.info('Computing ({module_name}): Progress = {progress:3.2f}'.format(module_name=_module_names[_measure_type], progress=progress))
+
+            # get quantum correlation measure
+            if _measure_type == 'qcm':
+                measure = self.__get_qcm(solver_params, _Corrs[i], _Modes[i])
+
+            # update list
+            M.append(measure)
+
+        # display initialization
+        if show_progress:
+            logger.info('------------------Measures Obtained------------------\n')
+
+        # plot measures
+        if plot: 
+            self.plot_measures(plotter_params, _T[_range_min:_range_max], M)
+
+        return M
+
+    def get_dynamics_modes_corrs(self, solver_params: dict, ode_func, ivc_func, ode_func_corrs=None):
+        """Method to obtain the dynamics of the classical mode amplitudes and quantum correlations from the Heisenberg and Lyapunov equations.
+
+        Parameters
+        ----------
+        solver_params : dict
+            Parameters for the solver.
+        ode_func : function
+            Set of ODEs returning rate equations of the classical mode amplitudes and quantum correlations. If `ode_func_corrs` parameter is given, this function is treated as the function for the modes only.
+        ivc_func : function
+            Function returning the initial values and constants.
+        ode_func_corrs : function, optional
+            Set of ODEs returning rate equations of the quantum correlations.
+
+        Returns
+        -------
+        Modes : list
+            All the modes calculated at all times.
+        Corrs : list
+            All the correlations calculated at all times.
+        T : list
+            Times at which values are calculated.
+        """
+
+        # get initial values and constants
+        _iv, _c = ivc_func()
+
+        # initialize solver
+        solver = HLESolver(solver_params)
+        
+        # get modes, correlations and times
+        solver.solve(ode_func, _iv, _c, ode_func_corrs, self.num_modes, system_params=self.params)
+        Modes = solver.get_Modes(self.num_modes)
+        Corrs = solver.get_Corrs(self.num_modes)
+        T = solver.T
+        
+        return Modes, Corrs, T
 
     def get_mean_optical_amplitude(self, lambda_l: t_float, mu: t_float, gamma_o: t_float, P_l: t_float, Delta: t_float, C: t_float=0, mode='basic'):
         r"""Method to obtain the mean optical amplitude.
@@ -208,144 +360,6 @@ class BaseSystem():
 
         # return
         return N_o
-
-    def get_dynamics_modes_corrs(self, solver_params: dict, ivc_func, ode_func):
-        """Method to obtain the dynamics of the classical mode amplitudes and quantum correlations from the Heisenberg-Langevin equations.
-
-        Parameters
-        ----------
-        solver_params : dict
-            Parameters for the solver.
-        ivc_func : function
-            Function returning the initial values and constants.
-        ode_func : function
-            Set of ODEs returning rate equations of the input variables.
-
-        Returns
-        -------
-        Modes : list
-            All the modes calculated at all times.
-        Corrs : list
-            All the correlations calculated at all times.
-        T : list
-            Times at which values are calculated.
-        """
-
-        # get initial values and constants
-        _iv, _c = ivc_func()
-
-        # initialize solver
-        solver = HLESolver(ode_func, solver_params, _iv, _c)
-        
-        # get modes, correlations and times
-        solver.solve(system_params=self.params)
-        Modes = solver.get_modes(self.num_modes)
-        Corrs = solver.get_corrs(self.num_modes)
-        T = solver.T
-        
-        return Modes, Corrs, T
-    
-    def get_dynamics_measure(self, solver_params: dict, ivc_func, ode_func, plot: bool=False, plotter_params: dict=None):
-        """Method to obtain the dynamics of a particular measure.
-
-        Parameters
-        ----------
-        solver_params : dict
-            Parameters for the solver.
-        ivc_func : function
-            Function returning the initial values and constants.
-        ode_func : function
-            Set of ODEs returning rate equations of the input variables.
-        plot: bool, optional
-            Option to plot the measures. Requires `plotter_params` parameter if `True`.
-        plotter_params: dict, optional
-            Parameters for the plotter.
-
-        Returns
-        -------
-        M : list
-            Measures calculated at all times.
-        """
-
-        # validate parameters
-        supported_types = ['qcm']
-        assert 'measure_type' in solver_params, 'Solver parameters should contain key "measure_type" for the type of measure.'
-        assert solver_params['measure_type'] in supported_types, 'Supported types of measures are {}'.format(str(supported_types))
-
-        # get mode and correlation dynamics
-        _Modes, _Corrs, _T = self.get_dynamics_modes_corrs(solver_params, ivc_func, ode_func)
-
-        # extract frequently used variables
-        _measure_type = solver_params.get('measure_type', 'qcm')
-        _range_min = solver_params.get('range_min', 0)
-        _range_max = solver_params.get('range_max', len(_T))
-        show_progress = solver_params.get('show_progress', False)
-
-        # initialize list
-        M = list()
-
-        # iterate for all times
-        for i in range(_range_min, _range_max):
-            # update progress
-            progress = float(i - _range_min)/float(_range_max - _range_min - 1) * 100
-            # display progress
-            if show_progress and int(progress * 1000) % 10 == 0:
-                logger.info('Calculating measures ({measure_type}): Progress = {progress:3.2f}'.format(measure_type=_measure_type, progress=progress))
-
-            # get quantum correlation measure
-            if _measure_type == 'qcm':
-                measure = self.__get_qcm(solver_params, _Corrs[i], _Modes[i])
-
-            # update list
-            M.append(measure)
-
-        # display initialization
-        if show_progress:
-            logger.info('------------------Measures Obtained------------------\n')
-
-        # plot measures
-        if plot: 
-            self.plot_measures(plotter_params, _T[_range_min:_range_max], M)
-
-        return M
-
-    def __get_qcm(self, solver_params: dict, corrs: list, modes: list):
-        """Method to obtain a particular measure of quantum correlations.
-
-        Parameters
-        ----------
-        solver_params : dict
-            Parameters for the solver.
-        corrs : list
-            Matrix of quantum correlations.
-        modes : list
-            Values of classical mode amplitudes.
-
-        Returns
-        -------
-        measure : float
-            Calculated measure.
-        """
-
-        # validate parameters
-        supported_types = [func[4:] for func in dir(QCMSolver) if callable(getattr(QCMSolver, func)) and func[:4] == 'get_']
-        assert 'qcm_type' in solver_params, 'Solver parameters should contain key "qcm_type" for the type of correlation.'
-        assert solver_params['qcm_type'] in supported_types, 'Supported quantum correlation measures are {}'.format(str(supported_types))
-        
-        # validate parameters
-        for key in ['idx_mode_i', 'idx_mode_j']:
-            assert key in solver_params, 'Solver parameters should contain the keys "idx_mode_i" and "idx_mode_j" for synchronization'
-
-        # extract frequently used variables
-        qcm_type = solver_params['qcm_type']
-        idx_mode_i = solver_params['idx_mode_i']
-        idx_mode_j = solver_params['idx_mode_j']
-
-        # get solver
-        solver = QCMSolver(modes, corrs)
-        measure = getattr(solver, 'get_' + qcm_type)(idx_mode_i, idx_mode_j)
-    
-        return measure
 
     def plot_measures(self, plotter_params: dict, T: list, M: list):
         """Method to plot the measures.

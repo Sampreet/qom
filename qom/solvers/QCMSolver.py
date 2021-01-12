@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.QCMSolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-01-07'
+__updated__ = '2021-01-12'
 
 # dependencies
 from typing import Union
@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 # datatypes
 t_array = Union[list, np.matrix, np.ndarray]
 
+# TODO: Add `compute` wrapper.
 # TODO: Add `get_sync_phase_rot`.
 # TODO: Add `get_phase_match_*`.
 

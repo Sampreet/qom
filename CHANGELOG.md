@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.6.2 - 2021/01/12 - 00 - Updated ODE Solvers
+* Updated `qom/solvers`:
+    * Updated ODE solving methods in `HLESolver` module.
+    * Added methods for integration steps and parameters in `ODESolver` module.
+    * Minor updates to `QCMSolver` module.
+* Updated methods for dynamics in `qom/systems/BaseSystem` module.
+
 ## v0.6.1 - 2021/01/11 - 00 - SciPy Integration APIs
 * Updated `qom/solvers`:
     * Updated displaying and solving in `HLESolver` module.
