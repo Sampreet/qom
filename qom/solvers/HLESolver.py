@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.HLESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-01-12'
+__updated__ = '2021-01-13'
 
 # dependencies
 from decimal import Decimal
@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 # datatypes
 t_array = Union[list, np.matrix, np.ndarray]
 
+# TODO: Wrap `__solve_ODEs` in `__set_results`.
 # TODO: Add `solve_multi` for multi-system solving.
 
 class HLESolver():
@@ -122,8 +123,8 @@ class HLESolver():
         # update attribute
         self.T = _ts
 
-    def __solve_ODEs(self, ode_func, iv, c, ode_func_corrs=None, num_modes=None, solver_method='RK45'):
-        """Method to solve the ODEs.
+    def __set_results(self, ode_func, iv, c, ode_func_corrs=None, num_modes=None, solver_method='RK45'):
+        """Method to solve the ODEs and update the results.
 
         Parameters
         ----------
@@ -138,20 +139,23 @@ class HLESolver():
         num_modes : int, optional
             Number of modes of the system.
         solver_method : str, optional
-            Method used to solve the ODEs:
+            Complex integration method used to solve the ODEs:
                 'BDF': :class:`scipy.integrate.BDF`.
                 'DOP853': :class:`scipy.integrate.DOP853`.
                 'ode': :class:`scipy.integrate.ode`.
+                'RK23': :class:`scipy.integrate.RK23`.
                 'RK45': :class:`scipy.integrate.RK45` (default).
         """
 
         # validate parameters
+        _supported_methods = ['BDF', 'DOP853', 'ode', 'RK23', 'RK45']
         assert num_modes is not None if ode_func_corrs is not None else True, 'Parameter `num_modes` should be specified if `ode_func_corrs` is given'
+        assert solver_method in _supported_methods, 'Supported methods for complex integration are {}'.format(str(_supported_methods))
 
         # extract frequently used variables
-        show_progress = self.params.get('show_progress', False)
         _single_func = ode_func_corrs is None
         _len = len(self.T)
+        show_progress = self.params.get('show_progress', False)
 
         # handle single function 
         if not _single_func:
@@ -181,7 +185,7 @@ class HLESolver():
             progress = float(i - 1)/float(_len - 1) * 100
             # display progress
             if show_progress and int(progress * 1000) % 10 == 0:
-                logger.info('Integrating (scipy.integrate.{method}): Progress = {progress:3.2f}'.format(method=solver_method, progress=progress))
+                logger.info('Integrating (scipy.integrate.{method}): Progress = {progress:3.2f}'.format(method=ode_solver.method, progress=progress))
 
             # step
             _v = ode_solver.step(self.T[i], self.T[i - 1])
@@ -213,7 +217,7 @@ class HLESolver():
                 progress = float(i - 1)/float(_len - 1) * 100
                 # display progress
                 if show_progress and int(progress * 1000) % 10 == 0:
-                    logger.info('Integrating (scipy.integrate.{method}): Progress = {progress:3.2f}'.format(method=solver_method, progress=progress))
+                    logger.info('Integrating (scipy.integrate.{method}): Progress = {progress:3.2f}'.format(method=ode_solver.method, progress=progress))
 
                 # step
                 for j in range(num_modes):
@@ -310,7 +314,7 @@ class HLESolver():
             
         return self.Modes
 
-    def solve(self, ode_func, iv, c, ode_func_corrs=None, num_modes=None, solver_method='RK45', cache=True, cache_dir='data', cache_file='V', system_params=None):
+    def solve(self, ode_func, iv, c, ode_func_corrs=None, num_modes=None, solver_method='RK45', cache=True, cache_dir='data', cache_file='V'):
         """Method to obtain the solutions of the ODEs.
 
         Parameters
@@ -337,35 +341,24 @@ class HLESolver():
             Directory where the results are cached.
         cache_file : str, optional
             File where the results are cached.
-        system_params : dict, optional
-            Parameters for the system.
         """
 
         # extract frequently used variables
-        cache = self.params.get('cache', cache)
-        cache_dir = self.params.get('cache_dir', cache_dir)
-        cache_file = self.params.get('cache_file', cache_file)
         show_progress = self.params.get('show_progress', False)
-
-        # update directory
-        cache_dir += '\\' + __name__ + '\\' + str(self.T[0]) + '_' + str(self.T[-1]) + '_' + str(len(self.T)) + '\\'
-        # upate filename
-        if cache_file == 'V' and system_params is not None:
-            for key in system_params:
-                cache_file += '_' + str(system_params[key])
+        cache_path = cache_dir + '\\' + cache_file
 
         # convert uncompressed files to compressed ones
-        if cache and os.path.isfile(cache_dir + cache_file + '.npy'):
+        if cache and os.path.isfile(cache_path + '.npy'):
             # load data
-            _temp = np.load(cache_dir + cache_file + '.npy')
+            _temp = np.load(cache_path + '.npy')
             # save to compressed file
-            np.savez_compressed(cache_dir + cache_file, _temp)
+            np.savez_compressed(cache_path, _temp)
         
         # load results from compressed file
-        if cache and os.path.isfile(cache_dir + cache_file + '.npz'):
+        if cache and os.path.isfile(cache_path + '.npz'):
             self.results = {
                 'T': self.T,
-                'V': np.load(cache_dir + cache_file + '.npz')['arr_0'].tolist()
+                'V': np.load(cache_path + '.npz')['arr_0'].tolist()
             }
 
             _len = len(self.T)
@@ -377,7 +370,7 @@ class HLESolver():
                 logger.info('-------------------Results Loaded---------------------\n')
         else:
             # solve
-            self.__solve_ODEs(ode_func, iv, c, ode_func_corrs, num_modes, solver_method)
+            self.__set_results(ode_func, iv, c, ode_func_corrs, num_modes, solver_method)
             # save
             if cache:
                 # create directories
@@ -388,7 +381,7 @@ class HLESolver():
                     logger.debug('Directory {dir_name} already exists\n'.format(dir_name=cache_dir))
 
                 # save to compressed file
-                np.savez_compressed(cache_dir + cache_file, np.array(self.results['V']))
+                np.savez_compressed(cache_path, np.array(self.results['V']))
             
                 # display saved
                 if show_progress:

@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-01-12'
+__updated__ = '2021-01-13'
 
 # dependencies
 from typing import Union
@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 t_array = Union[list, np.matrix, np.ndarray]
 t_float = Union[float, np.float32, np.float64]
 
-# TODO: Add parameters for solver method and cache.
 # TODO: Handle other measures in `get_dynamics_measure`.
 
 class BaseSystem():
@@ -109,9 +108,9 @@ class BaseSystem():
         """
 
         # validate parameters
-        supported_types = [func[4:] for func in dir(QCMSolver) if callable(getattr(QCMSolver, func)) and func[:4] == 'get_']
+        _supported_types = [func[4:] for func in dir(QCMSolver) if callable(getattr(QCMSolver, func)) and func[:4] == 'get_']
         assert 'qcm_type' in solver_params, 'Solver parameters should contain key "qcm_type" for the type of correlation.'
-        assert solver_params['qcm_type'] in supported_types, 'Supported quantum correlation measures are {}'.format(str(supported_types))
+        assert solver_params['qcm_type'] in _supported_types, 'Supported quantum correlation measures are {}'.format(str(_supported_types))
         
         # validate parameters
         for key in ['idx_mode_i', 'idx_mode_j']:
@@ -153,9 +152,9 @@ class BaseSystem():
         """
 
         # validate parameters
-        supported_types = ['qcm']
+        _supported_types = ['qcm']
         assert 'measure_type' in solver_params, 'Solver parameters should contain key "measure_type" for the type of measure.'
-        assert solver_params['measure_type'] in supported_types, 'Supported types of measures are {}'.format(str(supported_types))
+        assert solver_params['measure_type'] in _supported_types, 'Supported types of measures are {}'.format(str(_supported_types))
 
         # get mode and correlation dynamics
         _Modes, _Corrs, _T = self.get_dynamics_modes_corrs(solver_params, ode_func, ivc_func, ode_func_corrs)
@@ -191,13 +190,22 @@ class BaseSystem():
             # update list
             M.append(measure)
 
-        # display initialization
+        # display completion
         if show_progress:
             logger.info('------------------Measures Obtained------------------\n')
 
         # plot measures
         if plot: 
+            # display initialization
+            if show_progress:
+                logger.info('------------------Initializing Plotter---------------\n')
+
+            # plot
             self.plot_measures(plotter_params, _T[_range_min:_range_max], M)
+
+            # display completion
+            if show_progress:
+                logger.info('------------------Results Plotted--------------------\n')
 
         return M
 
@@ -225,14 +233,31 @@ class BaseSystem():
             Times at which values are calculated.
         """
 
+        # extract frequently used variables
+        solver_method = solver_params.get('method', 'RK45')
+        cache = solver_params.get('cache', False)
+        cache_dir = solver_params.get('cache_dir', 'data')
+        cache_file = solver_params.get('cache_file', 'V')
+
         # get initial values and constants
         _iv, _c = ivc_func()
 
         # initialize solver
         solver = HLESolver(solver_params)
+
+        # cache path
+        if cache:
+            # update directory
+            cache_dir += '\\' + self.code + '\\' + str(solver.T[0]) + '_' + str(solver.T[-1]) + '_' + str(len(solver.T))
+            # upate filename
+            if cache_file == 'V' and self.params is not None:
+                for key in self.params:
+                    cache_file += '_' + str(self.params[key])
         
+        # solve and set results
+        solver.solve(ode_func, _iv, _c, ode_func_corrs, self.num_modes, solver_method, cache, cache_dir, cache_file)
+
         # get modes, correlations and times
-        solver.solve(ode_func, _iv, _c, ode_func_corrs, self.num_modes, system_params=self.params)
         Modes = solver.get_Modes(self.num_modes)
         Corrs = solver.get_Corrs(self.num_modes)
         T = solver.T
@@ -375,9 +400,9 @@ class BaseSystem():
         """
 
         # validate parameters
-        supported_types = MPLPlotter.types_1D + MPLPlotter.types_2D + MPLPlotter.types_3D
+        _supported_types = MPLPlotter.types_1D + MPLPlotter.types_2D + MPLPlotter.types_3D
         assert plotter_params is not None, 'Parameter `plotter_params` should be a dictionary containing the key `type`.'
-        assert 'type' in plotter_params and plotter_params['type'] in supported_types, 'Parameter `plotter_params` should contain key `type` with values in {}.'.format(supported_types)
+        assert 'type' in plotter_params and plotter_params['type'] in _supported_types, 'Parameter `plotter_params` should contain key `type` with values in {}.'.format(_supported_types)
 
         # initialize plot
         plotter = MPLPlotter({'X': T}, plotter_params)

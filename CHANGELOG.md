@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.6.3 - 2021/01/13 - 00 - Updated Solvers
+* Updated `qom/solvers`:
+    * Updates to `HLESolver` module properties and parameters.
+    * Added new APIs and minor fixes in `ODESolver` module.
+* Added solver method and cache options in `qom/systems/BaseSystem` module.
+
 ## v0.6.2 - 2021/01/12 - 00 - Updated ODE Solvers
 * Updated `qom/solvers`:
     * Updated ODE solving methods in `HLESolver` module.
