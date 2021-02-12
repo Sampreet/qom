@@ -39,6 +39,10 @@ class RHCSolver():
         Coefficients of the characteristic equation.
     """
 
+    # attribute
+    code = 'rhc'
+    name = 'Routh Hurwitz Criterion Solver'
+
     @property
     def coeffs(self):
         r"""list or numpy.ndarray: Coefficients of the characteristic equation given by,

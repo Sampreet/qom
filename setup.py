@@ -5,7 +5,7 @@ with open('README.md', 'r') as file_readme:
 
 setup(
     name='qom-toolbox',
-    version='0.6.3',
+    version='0.6.5',
     author='Sampreet Kalita',
     author_email='sampreet.kalita@hotmail.com',
     desctiption='Quantum Optomechanics Toolbox',
@@ -30,5 +30,6 @@ setup(
         'setuptools>=40.0'
     ],
     python_requires='>=3.7',
-    zip_safe=False
+    zip_safe=False,
+    include_package_data=True
 )

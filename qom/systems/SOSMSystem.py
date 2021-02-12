@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.SOSMSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-01-11'
+__updated__ = '2021-01-25'
 
 # dependencies
 import logging
@@ -37,4 +37,4 @@ class SOSMSystem(BaseSystem):
         # set attributes
         self.code = 'sosms'
         self.name = 'SOSMSystem'
-        self.num_modes = 4
+        self.num_modes = 2

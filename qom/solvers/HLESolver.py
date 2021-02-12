@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Class to solve Heisenberg and Lyapunov equations for classical mode amplitudes and quantum correlations."""
+"""Class to solve Heisenberg-Langevin equations for classical mode amplitudes and quantum correlations."""
 
 __name__    = 'qom.solvers.HLESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-01-13'
+__updated__ = '2021-02-08'
 
 # dependencies
 from decimal import Decimal
@@ -24,13 +24,14 @@ logger = logging.getLogger(__name__)
 # datatypes
 t_array = Union[list, np.matrix, np.ndarray]
 
+# TODO: Create attributes for supported types.
 # TODO: Wrap `__solve_ODEs` in `__set_results`.
 # TODO: Add `solve_multi` for multi-system solving.
 
 class HLESolver():
-    r"""Class to solve Heisenberg and Lyapunov equations for classical mode amplitudes and quantum correlations.
+    r"""Class to solve Heisenberg-Langevin equations for classical mode amplitudes and quantum correlations.
 
-    Initializes `params` and `T` properties.
+    Initializes `T` property.
 
     Parameters
     ----------
@@ -38,9 +39,14 @@ class HLESolver():
         Parameters for the solver.
     """
 
+    # attributes
+    code = 'hle'
+    name = 'Heisenberg-Langevin Equations Solver'
+    methods = ODESolver.new_APIs + ODESolver.old_APIs
+
     @property
     def Corrs(self):
-        """dict: Lists of times and values as keys 'T' and 'V', respectively."""
+        """dict: Lists of quantum correlations at all times."""
 
         return self.__Corrs
     
@@ -50,23 +56,13 @@ class HLESolver():
 
     @property
     def Modes(self):
-        """dict: Lists of times and values as keys 'T' and 'V', respectively."""
+        """dict: Lists of mode amplitudes at all times."""
 
         return self.__Modes
     
     @Modes.setter
     def Modes(self, Modes):
         self.__Modes = Modes
-
-    @property
-    def params(self):
-        """dict: Parameters for the solver."""
-
-        return self.__params
-    
-    @params.setter
-    def params(self, params):
-        self.__params = params
 
     @property
     def T(self):
@@ -80,7 +76,7 @@ class HLESolver():
 
     @property
     def results(self):
-        """dict: Lists of times and values as keys 'T' and 'V', respectively."""
+        """dict: Lists of times and values as keys "T" and "V", respectively."""
 
         return self.__results
     
@@ -91,31 +87,34 @@ class HLESolver():
     def __init__(self, params):
         """Class constructor for HLESolver."""
 
-        # update attributes
-        self.params = params
+        # set parameters
+        self.params = {
+            'show_progress': params.get('show_progress', False),
+            'method': params.get('method', 'RK45'),
+            'value_type': params.get('value_type', 'complex'),
+            't_min': params.get('t_min', '0.0'),
+            't_max': params.get('t_max', '1000.0'),
+            't_dim': params.get('t_dim', '10001'),
+        }
+
+        # set properties
         self.__set_times()
         self.Modes = None
         self.Corrs = None
+        self.results = None
 
     def __set_times(self):
         """Method to initialize the times at which values are calculated."""
 
-        # validate parameters
-        assert 'T' in self.params, 'Solver parameters should contain key `T`'
-        for key in ['min', 'max']:
-            assert key in self.params['T'], 'Key `T` should contain key {}'.format(key)
-
-        # extract frequently used variable
-        _T = self.params['T']
-        _dim = _T.get('dim', 1001)
-        
-        # update dim in params
-        self.params['T']['dim'] = _dim
+        # extract frequently used variables
+        t_min = np.float_(self.params['t_min'])
+        t_max = np.float_(self.params['t_max'])
+        t_dim = int(self.params['t_dim'])
 
         # calculate times
-        _ts = np.linspace(_T['min'], _T['max'], _dim)
+        _ts = np.linspace(t_min, t_max, t_dim)
         # truncate values
-        _step_size = (Decimal(str(_T['max'])) - Decimal(str(_T['min']))) / (_dim - 1)
+        _step_size = (Decimal(str(t_max)) - Decimal(str(t_min))) / (t_dim - 1)
         _decimals = - _step_size.as_tuple().exponent
         _ts = np.around(_ts, _decimals)
         # convert to list
@@ -123,7 +122,7 @@ class HLESolver():
         # update attribute
         self.T = _ts
 
-    def __set_results(self, ode_func, iv, c, ode_func_corrs=None, num_modes=None, solver_method='RK45'):
+    def __set_results(self, ode_func, iv, c, ode_func_corrs=None, num_modes=None):
         """Method to solve the ODEs and update the results.
 
         Parameters
@@ -138,107 +137,65 @@ class HLESolver():
             Set of ODEs returning rate equations of the quantum correlations. Requires `num_modes` parameter.
         num_modes : int, optional
             Number of modes of the system.
-        solver_method : str, optional
-            Complex integration method used to solve the ODEs:
-                'BDF': :class:`scipy.integrate.BDF`.
-                'DOP853': :class:`scipy.integrate.DOP853`.
-                'ode': :class:`scipy.integrate.ode`.
-                'RK23': :class:`scipy.integrate.RK23`.
-                'RK45': :class:`scipy.integrate.RK45` (default).
         """
 
-        # validate parameters
-        _supported_methods = ['BDF', 'DOP853', 'ode', 'RK23', 'RK45']
-        assert num_modes is not None if ode_func_corrs is not None else True, 'Parameter `num_modes` should be specified if `ode_func_corrs` is given'
-        assert solver_method in _supported_methods, 'Supported methods for complex integration are {}'.format(str(_supported_methods))
-
         # extract frequently used variables
-        _single_func = ode_func_corrs is None
-        _len = len(self.T)
-        show_progress = self.params.get('show_progress', False)
+        show_progress = self.params['show_progress']
+        single_func = ode_func_corrs is None
 
-        # handle single function 
-        if not _single_func:
-            # update initial values and constants
-            _iv_corrs = [np.real(ele) for ele in iv[num_modes:]]
-            iv = [ele for ele in iv[:num_modes]]
-            _c_corrs = c + iv
-            
-            # display initialization
-            if show_progress:
-                logger.info('-------------------Obtaining Modes--------------------\n')
-        else:
-            # display initialization
-            if show_progress:
-                logger.info('-------------------Obtaining Results------------------\n')
-
-        # initialize solver
-        ode_solver = ODESolver(self.params, ode_func, iv, c, solver_method)
+        # solve ODE
+        ode_solver = ODESolver(self.params, ode_func, iv, c)
         ode_solver.set_integrator_params(self.T, 'complex')
-
-        # initialize lists
-        _vs = [iv]
-
-        # for each time step, calculate the integration values
-        for i in range(1, _len):
-            # update progress
-            progress = float(i - 1)/float(_len - 1) * 100
-            # display progress
-            if show_progress and int(progress * 1000) % 10 == 0:
-                logger.info('Integrating (scipy.integrate.{method}): Progress = {progress:3.2f}'.format(method=ode_solver.method, progress=progress))
-
-            # step
-            _v = ode_solver.step(self.T[i], self.T[i - 1])
-
-            # update log
-            logger.debug('t = {}\tmodes = {}'.format(self.T[i], _v))
-
-            # update lists
-            _vs.append(_v)
+        vs = ode_solver.solve(self.T)
             
-        if not _single_func:
+        # handle single function 
+        if not single_func:
             # update modes
-            self.Modes = _vs
+            self.Modes = vs
 
-            # display completion
+            # display completion and initialization
             if show_progress:
                 logger.info('-------------------Modes Obtained---------------------\n')
-                logger.info('-------------------Obtaining Correlations-------------\n')
 
-            # initialize solver
-            ode_solver = ODESolver(self.params, ode_func_corrs, _iv_corrs, _c_corrs, solver_method)
-            ode_solver.set_integrator_params(self.T, 'real')
-
-            self.Corrs = [_iv_corrs]
-
-            # for each time step, calculate the integration values
-            for i in range(1, _len):
-                # update progress
-                progress = float(i - 1)/float(_len - 1) * 100
-                # display progress
-                if show_progress and int(progress * 1000) % 10 == 0:
-                    logger.info('Integrating (scipy.integrate.{method}): Progress = {progress:3.2f}'.format(method=ode_solver.method, progress=progress))
-
-                # step
+            # update initial values and constants
+            iv_corrs = [np.real(ele) for ele in iv[num_modes:]]
+            iv_modes = [ele for ele in iv[:num_modes]]
+            c_corrs = c + iv_modes
+            
+            # function for variable constants 
+            def c_func(i):
+                """Function to update the constants of the integration.
+                
+                Returns
+                -------
+                i : int
+                    Index of the element in `T`.
+                
+                Returns
+                -------
+                c_corrs : list
+                    Updated constants.
+                """
+                
+                # update constants
                 for j in range(num_modes):
-                    _c_corrs[len(c) + j] = self.Modes[i - 1][j]
-                ode_solver.set_func_params(_c_corrs)
-                _v = ode_solver.step(self.T[i], self.T[i - 1])
+                    c_corrs[len(c) + j] = self.Modes[i - 1][j]
 
-                # update log
-                logger.debug('t = {}\tcorrs = {}'.format(self.T[i], _v))
+                return c_corrs
 
-                # update correlations
-                self.Corrs.append(np.real(_v).tolist())
+            # solve ODE
+            ode_solver = ODESolver(self.params, ode_func_corrs, iv_corrs, c_corrs)
+            ode_solver.set_integrator_params(self.T, 'real')
+            self.Corrs = ode_solver.solve(self.T, c_func)
                 
             # update results
             self.results = {
                 'T': self.T,
-                'V': [self.Modes[i] + self.Corrs[i] for i in range(_len)]
+                'V': [self.Modes[i] + self.Corrs[i] for i in range(len(self.T))]
             }
 
             # reshape correlations
-            self.Corrs = [np.reshape(self.Corrs[i], (2 * num_modes, 2 * num_modes)).tolist() for i in range(_len)]
+            self.Corrs = [np.reshape(corrs, (2 * num_modes, 2 * num_modes)).tolist() for corrs in self.Corrs]
             
             # display completion
             if show_progress:
@@ -247,7 +204,7 @@ class HLESolver():
             # update results
             self.results = {
                 'T': self.T,
-                'V': _vs
+                'V': vs
             }
 
             # display completion
@@ -277,10 +234,10 @@ class HLESolver():
             return self.Corrs
 
         # extract frequently used variables
-        _vs = self.results['V']
+        V = self.results['V']
 
         # update correlations
-        self.Corrs = [np.real(np.reshape(_vs[i][num_modes:], (2 * num_modes, 2 * num_modes))).tolist() for i in range(len(_vs))]
+        self.Corrs = [np.real(np.reshape(vs[num_modes:], (2 * num_modes, 2 * num_modes))).tolist() for vs in V]
             
         return self.Corrs
     
@@ -307,14 +264,14 @@ class HLESolver():
             return self.Modes
 
         # extract frequently used variables
-        _vs = self.results['V']
+        V = self.results['V']
 
         # update correlations
-        self.Modes = [_vs[i][:num_modes] for i in range(len(_vs))]
+        self.Modes = [vs[:num_modes] for vs in V]
             
         return self.Modes
 
-    def solve(self, ode_func, iv, c, ode_func_corrs=None, num_modes=None, solver_method='RK45', cache=True, cache_dir='data', cache_file='V'):
+    def solve(self, ode_func, iv, c=None, ode_func_corrs=None, num_modes=None, method=None, cache=True, cache_dir='data', cache_file='V'):
         """Method to obtain the solutions of the ODEs.
 
         Parameters
@@ -329,11 +286,14 @@ class HLESolver():
             Set of ODEs returning rate equations of the quantum correlations. Requires `num_modes` parameter.
         num_modes : int, optional
             Number of modes of the system.
-        solver_method : str, optional
+        method : str, optional
             Method used to solve the ODEs:
                 'BDF': :class:`scipy.integrate.BDF`.
                 'DOP853': :class:`scipy.integrate.DOP853`.
+                'LSODA': :class:`scipy.integrate.LSODA`.
                 'ode': :class:`scipy.integrate.ode`.
+                'Radau': :class:`scipy.integrate.Radau`.
+                'RK23': :class:`scipy.integrate.RK23`.
                 'RK45': :class:`scipy.integrate.RK45` (default).
         cache : bool, optional
             Option to cache the dynamics.
@@ -343,9 +303,17 @@ class HLESolver():
             File where the results are cached.
         """
 
+        # validate parameters
+        assert num_modes is not None if ode_func_corrs is not None else True, 'Parameter `num_modes` should be specified if `ode_func_corrs` is given'
+        assert method in self.methods if method is not None else True, 'Supported methods for complex integration are {}'.format(str(self.methods))
+
+        # update parameters
+        if method is not None:
+            self.params['method'] = method
+
         # extract frequently used variables
-        show_progress = self.params.get('show_progress', False)
-        cache_path = cache_dir + '\\' + cache_file
+        show_progress = self.params['show_progress']
+        cache_path = cache_dir + '/' + cache_file
 
         # convert uncompressed files to compressed ones
         if cache and os.path.isfile(cache_path + '.npy'):
@@ -361,16 +329,19 @@ class HLESolver():
                 'V': np.load(cache_path + '.npz')['arr_0'].tolist()
             }
 
-            _len = len(self.T)
-            self.Modes = [self.results['V'][i][:num_modes] for i in range(_len)]
-            self.Corrs = [np.real(np.reshape(self.results['V'][i][num_modes:], (2 * num_modes, 2 * num_modes))).tolist() for i in range(_len)]
+            # extract frequently used variables
+            V = self.results['V']
+
+            # set modes and correlations
+            self.Modes = [vs[:num_modes] for vs in V]
+            self.Corrs = [np.real(np.reshape(vs[num_modes:], (2 * num_modes, 2 * num_modes))).tolist() for vs in V]
 
             # display loaded
             if show_progress:
                 logger.info('-------------------Results Loaded---------------------\n')
         else:
             # solve
-            self.__set_results(ode_func, iv, c, ode_func_corrs, num_modes, solver_method)
+            self.__set_results(ode_func, iv, c, ode_func_corrs, num_modes)
             # save
             if cache:
                 # create directories

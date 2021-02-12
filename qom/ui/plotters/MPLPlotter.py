@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2021-01-11'
+__updated__ = '2021-02-10'
 
 # dependencies
 from matplotlib.colors import Normalize
@@ -16,6 +16,7 @@ from typing import Union
 import logging
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 
 # qom modules
 from .BasePlotter import BasePlotter
@@ -153,6 +154,7 @@ class MPLPlotter(BasePlotter):
 
         # extract frequently used variables
         _type = self.params['type']
+        palette = self.params['palette']
         _mpl_axes = plt.gca(projection=None)
         _dim = len(self.axes['Y'].legends)
 
@@ -160,18 +162,24 @@ class MPLPlotter(BasePlotter):
         if _type == 'line' or _type == 'scatter':
             _dim = 1
 
+        # colors
+        _colors = self.axes['Y'].colors
+        if _colors is None:
+            _colors = self.color_palettes(palette, self.bins, False) if palette in self.default_palettes else self.diverging_palettes.get(palette, 'blr')(self.bins, False)
+            self.axes['Y'].colors = _colors
+
         # line plots
         if _type == 'line' or _type == 'lines':
             # collection
-            self.plot = [Line2D([], [], color=self.axes['Y'].colors[i], linestyle=self.axes['Y'].styles[i]) for i in range(_dim)]
+            self.plot = [Line2D([], [], color=_colors[i], linestyle=self.axes['Y'].styles[i]) for i in range(_dim)]
             [_mpl_axes.add_line(self.plot[i]) for i in range(_dim)]
             # heads
-            self.head = [Line2D([], [], color=self.axes['Y'].colors[i], linestyle=self.axes['Y'].styles[i], marker='o') for i in range(_dim)]
+            self.head = [Line2D([], [], color=_colors[i], linestyle=self.axes['Y'].styles[i], marker='o') for i in range(_dim)]
             [_mpl_axes.add_line(self.head[i]) for i in range(_dim)]
 
         # scatter plots
         elif _type == 'scatter' or _type == 'scatters':
-            self.plot = [_mpl_axes.scatter([], [], c=self.axes['Y'].colors[i], s=self.axes['Y'].sizes[i]) for i in range(_dim)]
+            self.plot = [_mpl_axes.scatter([], [], c=_colors[i], s=self.axes['Y'].sizes[i], marker=self.axes['Y'].styles[i]) for i in range(_dim)]
 
         # legends
         if self.params['legend']['show']:
@@ -195,12 +203,11 @@ class MPLPlotter(BasePlotter):
 
         # contour plot
         if _type == 'contour':
-            # _zeros[0] = 1
             self.plot = _mpl_axes.contour(_xs, _ys, _zeros, levels=self.bins, cmap=self.params['cmap'])
 
         # contourf plot
         if _type == 'contourf':
-            self.plot = _mpl_axes.contourf(_xs, _ys, _zeros, cmap=_cmap)
+            self.plot = _mpl_axes.contourf(_xs, _ys, _zeros, levels=self.bins, cmap=_cmap)
 
         # pcolormesh plot
         if _type == 'pcolormesh':
@@ -291,41 +298,6 @@ class MPLPlotter(BasePlotter):
             plt.setp(self.cbar.ax.get_yticklabels(), fontproperties=self.__get_font_props(_font_dicts['tick']))
         else:
             self.cbar = None
-
-    def update(self, xs: t_list=None, ys: t_list=None, zs: t_list=None, vs: t_list=None, head: bool=False):
-        """Method to update plot.
-        
-        Parameters
-        ----------
-        xs : list or numpy.ndarray, optional
-            X-axis data.
-        ys : list or numpy.ndarray, optional
-            Y-axis data.
-        zs : list or numpy.ndarray, optional
-            Z-axis data.
-        vs : list or numpy.ndarray, optional
-            V-axis data.
-        head : bool, optional
-            Option to display the head for line-type plots. Default is False.
-        """
-
-        # extract frequently used variables
-        _type = self.params['type']
-
-        # single-line plot
-        if _type == 'line' or _type == 'scatter':
-            self.__update_1D([xs], [vs], head)
-        # multi-line plot
-        if _type == 'lines' or _type == 'scatters':
-            self.__update_1D(xs, vs, head)
-        
-        # 2D plots
-        if _type in self.types_2D:
-            self.__update_2D(vs)
-
-        # 3D plot
-        if 'surface' in _type:
-            self.__update_3D(vs)
 
     def __update_1D(self, xs, ys, head):
         """Method to udpate 1D plots.
@@ -423,10 +395,10 @@ class MPLPlotter(BasePlotter):
 
             # contour plot
             if _type == 'contour':
-                self.plot = _mpl_axes.contour(_xs, _ys, vs, levels=11, cmap=_cmap)
+                self.plot = _mpl_axes.contour(_xs, _ys, vs, levels=self.bins, cmap=_cmap)
             # contourf plot
             if _type == 'contourf':
-                self.plot = _mpl_axes.contourf(_xs, _ys, vs, levels=11, cmap=_cmap)
+                self.plot = _mpl_axes.contourf(_xs, _ys, vs, levels=self.bins, cmap=_cmap)
 
             # redraw color bar
             if self.cbar is not None:
@@ -527,6 +499,55 @@ class MPLPlotter(BasePlotter):
             self.cbar.set_ticklabels(_tick_labels)
             self.cbar.ax.set_autoscale_on(True)
             self.cbar.draw_all()
+
+    def gca(self):
+        """Method to obtain the axes of the figure.
+        
+        Returns
+        ----------
+        axes : :class:`matplotlib.axes.Axes`
+            Axes of the figure.
+        """
+
+        # frequently used variables
+        _type = self.params['type']
+
+        return plt.gca(projection='3d' if _type in self.types_3D else None)
+
+    def update(self, xs: t_list=None, ys: t_list=None, zs: t_list=None, vs: t_list=None, head: bool=False):
+        """Method to update plot.
+        
+        Parameters
+        ----------
+        xs : list or numpy.ndarray, optional
+            X-axis data.
+        ys : list or numpy.ndarray, optional
+            Y-axis data.
+        zs : list or numpy.ndarray, optional
+            Z-axis data.
+        vs : list or numpy.ndarray, optional
+            V-axis data.
+        head : bool, optional
+            Option to display the head for line-type plots. Default is False.
+        """
+
+        # extract frequently used variables
+        _type = self.params['type']
+
+        # single-line plot
+        if _type == 'line' or _type == 'scatter':
+            self.__update_1D([xs], [vs], head)
+        # multi-line plot
+        if _type == 'lines' or _type == 'scatters':
+            self.__update_1D(xs, vs, head)
+        
+        # 2D plots
+        if _type in self.types_2D:
+            self.__update_2D(vs)
+
+        # 3D plot
+        if 'surface' in _type:
+            self.__update_3D(vs)
 
     def show(self, hold: bool=False):
         """Method to display plot.

@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.QCMSolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-01-12'
+__updated__ = '2021-02-10'
 
 # dependencies
 from typing import Union
@@ -30,11 +30,15 @@ class QCMSolver():
 
     Parameters
     ----------
+    modes : list
+        Classical mode amplitudes of the system.
     corrs : list
         Quantum correlations of the quadratures.
-    modes : list
-        Classical modes of the system.
     """
+
+    # attributes
+    code = 'qcm'
+    name = 'Quantum Correlations Measure Solver'
 
     @property
     def corrs(self):
@@ -62,38 +66,6 @@ class QCMSolver():
         # set attributes
         self.modes = modes
         self.corrs = corrs
-
-    def get_discord(self, idx_mode_i, idx_mode_j):
-        """Method to obtain Gaussian quantum discord between two modes given the correlation matrix of their quadratures.
-
-        Parameters
-        ----------
-        idx_mode_i : int
-            Index of ith mode.
-        idx_mode_j : int
-            Index of jth mode.
-
-        Returns
-        -------
-        D_G : float
-            Gaussian quantum discord.
-        """
-
-        # symplectic invariants
-        I_1, I_2, I_3, I_4 = self.__get_invariants(idx_mode_i, idx_mode_j)
-
-        try:
-            # sum of symplectic invariants
-            sigma = I_1 + I_2 + 2 * I_3
-            # symplectic eigenvalues
-            mu_plus = 1 / np.sqrt(2) * np.sqrt(sigma + np.sqrt(sigma**2 - 4 * I_4))
-            mu_minus = 1 / np.sqrt(2) * np.sqrt(sigma - np.sqrt(sigma**2 - 4 * I_4))
-        except ValueError:
-            logger.warning('Argument of sqrt is negative.\n')
-            return 0
-            
-        # quantum discord value
-        return self.__get_f(np.sqrt(I_2)) - self.__get_f(mu_plus) - self.__get_f(mu_minus) + self.__get_f(np.sqrt(self.__get_W(I_1, I_2, I_3, I_4)))
 
     def __get_invariants(self, idx_mode_i, idx_mode_j):
         """Helper function to calculate symplectic invariants for two modes given the correlation matrix of their quadratures.
@@ -133,15 +105,6 @@ class QCMSolver():
         # symplectic invariants
         return [np.linalg.det(A), np.linalg.det(B), np.linalg.det(C), np.linalg.det(self.corrs_modes)]
 
-    def __get_f(self, x):
-        """Helper function for quantum discord calculation."""
-
-        try:
-            return (x + 1 / 2) * np.log10(x + 1 / 2) - (x - 1 / 2) * np.log10(x - 1 / 2)
-        except ValueError:
-            logger.warning('Argument of log in f function is non-positive\n')
-            return 0
-
     def __get_W(self, I_1, I_2, I_3, I_4):
         """Helper function for quantum discord calculation."""
 
@@ -153,43 +116,49 @@ class QCMSolver():
             logger.warning('Division by zero encountered in W function\n')
             return 0
 
-    def get_elements(self, idx_mode_i, idx_mode_j):
-        """Method to obtain elements of the correlation matrix.
+    def get_discord(self, idx_mode_i, idx_mode_j):
+        """Method to obtain Gaussian quantum discord between two modes given the correlation matrix of their quadratures.
 
         Parameters
         ----------
-        idx_mode_i : int or list
-            Index or indices of ith mode.
-        idx_mode_j : int or list
-            Index or indices of jth mode.
+        idx_mode_i : int
+            Index of ith mode.
+        idx_mode_j : int
+            Index of jth mode.
 
         Returns
         -------
-        elements : list
-            Elements of the correlation matrix.
+        D_G : float
+            Gaussian quantum discord.
         """
+
+        # symplectic invariants
+        I_1, I_2, I_3, I_4 = self.__get_invariants(idx_mode_i, idx_mode_j)
+
+        try:
+            # sum of symplectic invariants
+            sigma = I_1 + I_2 + 2 * I_3
+            # symplectic eigenvalues
+            mu_plus = 1 / np.sqrt(2) * np.sqrt(sigma + np.sqrt(sigma**2 - 4 * I_4))
+            mu_minus = 1 / np.sqrt(2) * np.sqrt(sigma - np.sqrt(sigma**2 - 4 * I_4))
+        except ValueError:
+            logger.warning('Argument of sqrt is negative.\n')
+            return 0
+
+        # f function 
+        f_func = lambda x: (x + 1 / 2) * np.log10(x + 1 / 2) - (x - 1 / 2) * np.log10(x - 1 / 2)
+        # function values
+        f_vals = list()
+        for ele in [np.sqrt(I_2), mu_plus, mu_minus, np.sqrt(self.__get_W(I_1, I_2, I_3, I_4))]:
+            f_vals.append(f_func(ele))
+            
+        # quantum discord value
+        D_G = f_vals[0] - f_vals[1] - f_vals[2] + f_vals[3]
         
-        # initialize lists
-        elements = list()
+        # validate positive and not NaN
+        D_G = D_G if D_G > 0.0 and D_G == D_G else 0.0
 
-        # handle single element
-        if type(idx_mode_i) is int:
-            idx_mode_i = [idx_mode_i]
-        if type(idx_mode_j) is int:
-            idx_mode_j = [idx_mode_j]
-
-        # frequently used variables
-        _dim = len(idx_mode_i)
-
-        assert _dim == len(idx_mode_j), 'Keys `idx_mode_i` and `idx_mode_j` should have same shape'
-
-        for i in range(_dim):
-            # get element
-            _ele = self.corrs[2 * idx_mode_i[i]][2 * idx_mode_j[i]]
-            # update lists
-            elements.append(_ele)
-
-        return elements
+        return D_G
 
     def get_entan(self, idx_mode_i, idx_mode_j):
         """Function to calculate quantum entanglement via logarithmic negativity between two modes given the correlation matrix of their quadratures.
@@ -203,7 +172,7 @@ class QCMSolver():
 
         Returns
         -------
-        E_N : float
+        E_n : float
             Quantum entanglement value using logarithmic negativity.
         """
 
@@ -212,23 +181,23 @@ class QCMSolver():
         
         try:
             # sum of symplectic invariants after positive partial transpose
-            sigma = I_1 + I_2 - 2*I_3
+            sigma = I_1 + I_2 - 2 * I_3
             # smallest symplectic eigenvalue
             mu_minus = 1 / np.sqrt(2) * np.sqrt(sigma - np.sqrt(sigma**2 - 4 * I_4))
         except ValueError:
             logger.warning('Argument of sqrt is negative\n')
-            E_N = 0
+            E_n = 0
 
         try:
             # quantum entanglement value using logarithmic negativity
-            E_N =  -1 * (np.log(2 * mu_minus))
+            E_n = - 1 * (np.log(2 * mu_minus))
         except ValueError:
             logger.warning('Argument of ln is non-positive\n')
-            E_N = 0
+            E_n = 0
         else:
-            E_N = max(0, E_N)
+            E_n = max(0, E_n)
         
-        return E_N
+        return E_n
 
     def get_sync_complete(self, idx_mode_i, idx_mode_j):
         """Method to obtain the quantum complete synchronization measure between two modes.
@@ -242,7 +211,7 @@ class QCMSolver():
 
         Returns
         -------
-        S_C : float
+        S_complete : float
             Quantum complete synchronization measure.
         """
 
@@ -259,7 +228,7 @@ class QCMSolver():
             # quantum complete synchronization value
             return 1 / (q_minus_2 + p_minus_2)
         except ZeroDivisionError:
-            logger.warning('Division by zero encountered in W function\n')
+            logger.warning('Division by zero encountered\n')
             return 0
 
     def get_sync_phase(self, idx_mode_i, idx_mode_j):
@@ -274,7 +243,7 @@ class QCMSolver():
 
         Returns
         -------
-        S_C : float
+        S_phase : float
             Quantum phase synchronization measure.
         """
 
@@ -303,6 +272,6 @@ class QCMSolver():
         p_minus_prime_2 = 1 / 2 * (p_i_prime_2 + p_j_prime_2 - 2 * p_i_p_j_prime)
 
         # quantum phase synchronization value
-        S_C = 1 / 2 / p_minus_prime_2
+        S_phase = 1 / 2 / p_minus_prime_2
 
-        return S_C
+        return S_phase

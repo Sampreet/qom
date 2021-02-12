@@ -19,7 +19,7 @@ XLooper(func, params).loop()
 
 Here, `func` is a function containing the steps of each iteration and `params` is a dictionary containing the parameters required for the looper, solver, system and plotter.
 
-Examples on usage of various modules can be found in the [`examples`](./examples) folder.
+Explicit examples on usage of various modules can be found in the [`examples`](./examples) folder.
 
 ## Development
 
@@ -67,14 +67,16 @@ ROOT_DIR/
 │   │   │   ├───FooBarPlotter.py
 │   │   │   └───...
 │   │   │
+│   │   ├───widgets/
+│   │   │   ├───__init__.py
+│   │   │   ├───FooBarPlotter.py
+│   │   │   └───...
+│   │   │
 │   │   ├───__init__.py
 │   │   ├───foobar.py
 │   │   └───...
 │   │   
 │   └───__init__.py
-|
-│───qom_legacy/
-│   └───...
 |
 │───qom_tf/
 │   └───...
@@ -84,6 +86,7 @@ ROOT_DIR/
 │
 ├───.gitignore
 ├───CHANGELOG.md
+├───MANIFEST.in
 ├───README.md
 ├───requirements.txt
 └───setup.py

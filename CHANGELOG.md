@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.6.5 - 2021/02/12 - 00 - Initialized UI
+* Updated `qom/solvers`:
+    * Updated `HLESolver` module result calculations and fixed cache.
+    * Added standalone integrator in `ODESolver` module.
+    * Handled exceptions in `QCMSolver` module.
+    * Updated module display name and code names.
+* Updated `qom/systems/BaseSystem` module:
+    * Added single-time validation-check methods to speed up loops.
+    * Added methods to select mode amplitudes and correlation elements.
+    * Added measure and eigenvalue calculation methods.
+* Minor fixes to `qom/systems/SOSMSystem` and `qom/ui/axes/MultiAxis` modules.
+* Updated `qom/ui/plotters`:
+    * Added support for all seaborn palettes in `BasePlotter` module.
+    * Added option to get axes in `MPLPlotter` module.
+* Added `qom/ui/widgets`:
+    * Added icons and stylesheets for light and dark themes.
+    * Added separate widgets for constituent modules.
+* Added `gui` module to read folder data and compile widgets.
+* Removed `qom_legacy`.
+* Added `MANIFEST` to pack resources.
+* Updated `README`, `requirements` and `setup`.
+
 ## v0.6.3 - 2021/01/13 - 00 - Updated Solvers
 * Updated `qom/solvers`:
     * Updates to `HLESolver` module properties and parameters.
