@@ -35,9 +35,16 @@ The project requires `Python 3.7+` installed, preferably via the [Anaconda distr
 ROOT_DIR/
 |
 │───docs/
-│   └───...
+│   ├───source/
+│   │   ├───conf.py
+│   │   ├───foobar.rst
+│   │   └───...
+│   │   
+│   ├───make.bat
+│   └───Makefile
 |
 │───examples/
+│   ├───foo_bar.ipynb
 │   └───...
 |
 │───qom/
@@ -68,20 +75,25 @@ ROOT_DIR/
 │   │   │   └───...
 │   │   │
 │   │   ├───widgets/
+│   │   │   ├───icons/
+│   │   │   │   ├───foo_bar.png
+│   │   │   │   └───...
+│   │   │   │
+│   │   │   ├───stylesheets/
+│   │   │   │   ├───foo_bar.ss
+│   │   │   │   └───...
+│   │   │   │
 │   │   │   ├───__init__.py
-│   │   │   ├───FooBarPlotter.py
+│   │   │   ├───FooBarWidget.py
 │   │   │   └───...
 │   │   │
 │   │   ├───__init__.py
-│   │   ├───foobar.py
-│   │   └───...
+│   │   ├───gui.py
+│   │   └───log.py
 │   │   
 │   └───__init__.py
 |
 │───qom_tf/
-│   └───...
-|
-│───tests/
 │   └───...
 │
 ├───.gitignore

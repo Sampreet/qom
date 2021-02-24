@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.6.6 - 2021/02/24 - 00 - Refined Plotters
+* Minor fixes to `qom/systems/BaseSystem` module.
+* Updated `qom/ui/plotters` module:
+    * Restructured and added palettes in `BasePlotter` module.
+    * Modified colorbar in `MPLPlotter` module supporting horizontal orientation.
+* Updated `README`.
+
 ## v0.6.5 - 2021/02/12 - 00 - Initialized UI
 * Updated `qom/solvers`:
     * Updated `HLESolver` module result calculations and fixed cache.

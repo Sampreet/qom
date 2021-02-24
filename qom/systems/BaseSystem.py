@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-01-31'
+__updated__ = '2021-02-24'
 
 # dependencies
 from typing import Union
@@ -28,10 +28,9 @@ logger = logging.getLogger(__name__)
 t_array = Union[list, np.matrix, np.ndarray]
 t_float = Union[float, np.float, np.float_]
 
-# TODO: Create attributes for supported types.
 # TODO: Handle other measures in `get_measure_dynamics`.
 # TODO: Amplitude-based parameters in `get_mean_*`.
-# TODO: Calculate mean along axis in `get_measure_pearson`.
+# TODO: Add `check_limit_cycle`.
 
 class BaseSystem():
     """Class to interface QOM systems.
@@ -49,6 +48,11 @@ class BaseSystem():
     params : dict
         Parameters for the system.
     """
+
+    # attributes
+    types_measures = ['corr_ele', 'mode_amp', 'qcm']
+    types_qcm = [func[4:] for func in dir(QCMSolver) if callable(getattr(QCMSolver, func)) and func[:4] == 'get_']
+    types_plots = MPLPlotter.types_1D + MPLPlotter.types_2D + MPLPlotter.types_3D
 
     @property
     def code(self):
@@ -113,18 +117,18 @@ class BaseSystem():
             assert type(solver_params[key]) is list or type(solver_params[key]) is int, 'Keys "idx_row" and "idx_col" should be integers or lists of integers'
         
         # extract frequently used variables
-        idx_row = solver_params['idx_row']
-        idx_col = solver_params['idx_col']
+        _idx_row = solver_params['idx_row']
+        _idx_col = solver_params['idx_col']
 
         # same type
-        assert type(idx_row) is type(idx_col), 'Keys "idx_row" and "idx_col" should be of same type'
+        assert type(_idx_row) is type(_idx_col), 'Keys "idx_row" and "idx_col" should be of same type'
         
         # same shape
-        assert len(idx_row) == len(idx_col) if type(idx_row) is list else True, 'Keys "idx_row" and "idx_col" should be of same shape'
+        assert len(_idx_row) == len(_idx_col) if type(_idx_row) is list else True, 'Keys "idx_row" and "idx_col" should be of same shape'
 
         # for fixed number of elements
         if count is not None:
-            assert len(idx_row) == count, 'Keys "idx_row" and "idx_col" should contain exactly {} entries'.format(count)
+            assert len(_idx_row) == count, 'Keys "idx_row" and "idx_col" should contain exactly {} entries'.format(count)
     
     def __validate_params_measure(self, solver_params: dict):
         """Method to validate parameters for measures.
@@ -139,20 +143,19 @@ class BaseSystem():
         assert 'measure_type' in solver_params, 'Solver parameters should contain key "measure_type" for the type of measure'
 
         # extract frequently used variables
-        measure_type = solver_params['measure_type']
+        _measure_type = solver_params['measure_type']
 
         # supported types
-        _supported_types = ['corr_ele', 'mode_amp', 'qcm']
-        assert measure_type in _supported_types, 'Supported types of measures are {}'.format(str(_supported_types))
+        assert _measure_type in self.types_measures, 'Supported types of measures are {}'.format(str(self.types_measures))
 
         # correlation matrix elements
-        if measure_type == 'corr_ele':
+        if _measure_type == 'corr_ele':
             self.__validate_params_corr_ele(solver_params)
         # mode amplitudes
-        if measure_type == 'mode_amp':
+        if _measure_type == 'mode_amp':
             self.__validate_params_mode_amp(solver_params)
         # quantum correlation measure
-        if measure_type == 'qcm':
+        if _measure_type == 'qcm':
             self.__validate_params_qcm(solver_params)
 
     def __validate_params_mode_amp(self, solver_params: dict):
@@ -168,15 +171,15 @@ class BaseSystem():
         assert 'idx_mode' in solver_params, 'Solver parameters should contain the key "idx_mode" for indices of the modes'
 
         # extract frequently used variables
-        idx_mode = solver_params['idx_mode']
+        _idx_mode = solver_params['idx_mode']
 
         # index type
-        assert type(idx_mode) is list or type(idx_mode) is int, 'Key "idx_mode" should be integer or list of integers'
+        assert type(_idx_mode) is list or type(_idx_mode) is int, 'Key "idx_mode" should be integer or list of integers'
         
         # index limits
-        if type(idx_mode) is int:
-            idx_mode = [idx_mode]
-        for idx in idx_mode:
+        if type(_idx_mode) is int:
+            _idx_mode = [_idx_mode]
+        for idx in _idx_mode:
             assert idx < self.num_modes, 'Mode indices should not exceed total number of modes'
 
     def __validate_params_qcm(self, solver_params: dict):
@@ -192,8 +195,7 @@ class BaseSystem():
         assert 'qcm_type' in solver_params, 'Solver parameters should contain key "qcm_type" for the type of correlation measure'
 
         # supported types
-        _supported_types = [func[4:] for func in dir(QCMSolver) if callable(getattr(QCMSolver, func)) and func[:4] == 'get_']
-        assert solver_params['qcm_type'] in _supported_types, 'Supported quantum correlation measures are {}'.format(str(_supported_types))
+        assert solver_params['qcm_type'] in self.types_qcm, 'Supported quantum correlation measures are {}'.format(str(self.types_qcm))
         
         # mode indices
         for key in ['idx_mode_i', 'idx_mode_j']:
@@ -201,23 +203,23 @@ class BaseSystem():
             assert type(solver_params[key]) is list or type(solver_params[key]) is int, 'Keys "idx_mode_i" and "idx_mode_j" should be integers or lists of integers'
 
         # extract frequently used variables
-        idx_mode_i = solver_params['idx_mode_i']
-        idx_mode_j = solver_params['idx_mode_j']
+        _idx_mode_i = solver_params['idx_mode_i']
+        _idx_mode_j = solver_params['idx_mode_j']
 
         # same type
-        assert type(idx_mode_i) is type(idx_mode_j), 'Keys "idx_mode_i" and "idx_mode_j" should be of same type'
+        assert type(_idx_mode_i) is type(_idx_mode_j), 'Keys "idx_mode_i" and "idx_mode_j" should be of same type'
         
         # same shape
-        assert len(idx_mode_i) == len(idx_mode_j) if type(idx_mode_i) is list else True, 'Keys "idx_mode_i" and "idx_mode_j" should be of same shape'
+        assert len(_idx_mode_i) == len(_idx_mode_j) if type(_idx_mode_i) is list else True, 'Keys "idx_mode_i" and "idx_mode_j" should be of same shape'
         
         # index limits
-        if type(idx_mode_i) is int:
-            idx_mode_i = [idx_mode_i]
-        for idx in idx_mode_i:
+        if type(_idx_mode_i) is int:
+            _idx_mode_i = [_idx_mode_i]
+        for idx in _idx_mode_i:
             assert idx < self.num_modes, 'Mode indices should not exceed total number of modes'
-        if type(idx_mode_j) is int:
-            idx_mode_j = [idx_mode_j]
-        for idx in idx_mode_j:
+        if type(_idx_mode_j) is int:
+            _idx_mode_j = [_idx_mode_j]
+        for idx in _idx_mode_j:
             assert idx < self.num_modes, 'Mode indices should not exceed total number of modes'
 
     def get_corr_ele(self, solver_params: dict, corrs: list):
@@ -237,17 +239,17 @@ class BaseSystem():
         """
 
         # extract frequently used variables
-        idx_row = solver_params['idx_row']
-        idx_col = solver_params['idx_col']
+        _idx_row = solver_params['idx_row']
+        _idx_col = solver_params['idx_col']
         
         # single element
-        if type(idx_row) is int:
-            idx_row = [idx_row]
-        if type(idx_col) is int:
-            idx_col = [idx_col]
+        if type(_idx_row) is int:
+            _idx_row = [_idx_row]
+        if type(_idx_col) is int:
+            _idx_col = [_idx_col]
         
         # extract elements
-        ele = [corrs[idx_row[j]][idx_col[j]] for j in range(len(idx_row))]
+        ele = [corrs[_idx_row[j]][_idx_col[j]] for j in range(len(_idx_row))]
 
         return ele
 
@@ -276,10 +278,10 @@ class BaseSystem():
         """
 
         # extract frequently used variables
-        method = solver_params.get('method', 'RK45')
-        cache = solver_params.get('cache', False)
-        cache_dir = solver_params.get('cache_dir', 'data')
-        cache_file = solver_params.get('cache_file', 'V')
+        _method = solver_params.get('method', 'RK45')
+        _cache = solver_params.get('cache', False)
+        _cache_dir = solver_params.get('cache_dir', 'data')
+        _cache_file = solver_params.get('cache_file', 'V')
 
         # get initial values and constants
         iv, c = ivc_func()
@@ -288,17 +290,17 @@ class BaseSystem():
         solver = HLESolver(solver_params)
 
         # cache path
-        if cache:
+        if _cache:
             # update directory
-            if cache_dir == 'data':
-                cache_dir += '\\' + self.code + '\\' + str(solver.T[0]) + '_' + str(solver.T[-1]) + '_' + str(len(solver.T))
+            if _cache_dir == 'data':
+                _cache_dir += '\\' + self.code + '\\' + str(solver.T[0]) + '_' + str(solver.T[-1]) + '_' + str(len(solver.T))
             # update filename
-            if cache_file == 'V' and self.params is not None:
+            if _cache_file == 'V' and self.params is not None:
                 for key in self.params:
-                    cache_file += '_' + str(self.params[key])
+                    _cache_file += '_' + str(self.params[key])
         
         # solve and set results
-        solver.solve(ode_func, iv, c, ode_func_corrs, self.num_modes, method, cache, cache_dir, cache_file)
+        solver.solve(ode_func, iv, c, ode_func_corrs, self.num_modes, _method, _cache, _cache_dir, _cache_file)
 
         # get modes, correlations and times
         Modes = solver.get_Modes(self.num_modes)
@@ -516,59 +518,59 @@ class BaseSystem():
         Modes, Corrs, T = self.get_dynamics_modes_corrs(solver_params, ode_func, ivc_func, ode_func_corrs)
 
         # extract frequently used variables
-        show_progress = solver_params.get('show_progress', False)
-        range_min = solver_params.get('range_min', 0)
-        range_max = solver_params.get('range_max', len(T))
-        measure_type = solver_params['measure_type']
-        module_names = {
+        _show_progress = solver_params.get('show_progress', False)
+        _range_min = solver_params.get('range_min', 0)
+        _range_max = solver_params.get('range_max', len(T))
+        _measure_type = solver_params['measure_type']
+        _module_names = {
             'corr_ele': __name__,
             'mode_amp': __name__,
             'qcm': 'qom.solvers.QCMSolver'
         }
 
         # display initialization
-        if show_progress:
+        if _show_progress:
             logger.info('------------------Obtaining Measures-----------------\n')
 
         # initialize list
         M = list()
 
         # iterate for all times in given range
-        for i in range(range_min, range_max):
+        for i in range(_range_min, _range_max):
             # update progress
-            progress = float(i - range_min)/float(range_max - range_min - 1) * 100
+            progress = float(i - _range_min)/float(_range_max - _range_min - 1) * 100
             # display progress
-            if show_progress and int(progress * 1000) % 10 == 0:
-                logger.info('Computing ({module_name}): Progress = {progress:3.2f}'.format(module_name=module_names[measure_type], progress=progress))
+            if _show_progress and int(progress * 1000) % 10 == 0:
+                logger.info('Computing ({module_name}): Progress = {progress:3.2f}'.format(module_name=_module_names[_measure_type], progress=progress))
 
             # correlation matrix elements
-            if measure_type == 'corr_ele':
+            if _measure_type == 'corr_ele':
                 measure = self.get_corr_ele(solver_params, Corrs[i])
             # mode amplidutes
-            elif measure_type == 'mode_amp':
+            elif _measure_type == 'mode_amp':
                 measure = self.get_mode_amp(solver_params, Modes[i])
             # quantum correlation measure
-            elif measure_type == 'qcm':
+            elif _measure_type == 'qcm':
                 measure = self.get_qcm(solver_params, Modes[i], Corrs[i])
 
             # update list
             M.append(measure)
 
         # display completion
-        if show_progress:
+        if _show_progress:
             logger.info('------------------Measures Obtained------------------\n')
 
         # plot measures
         if plot: 
             # display initialization
-            if show_progress:
+            if _show_progress:
                 logger.info('------------------Initializing Plotter---------------\n')
 
             # plot
-            self.plot_measures(plotter_params, T[range_min:range_max], M)
+            self.plot_measures(plotter_params, T[_range_min:_range_max], M)
 
             # display completion
-            if show_progress:
+            if _show_progress:
                 logger.info('------------------Results Plotted--------------------\n')
 
         return M
@@ -637,14 +639,14 @@ class BaseSystem():
         """
 
         # extract frequently used variables
-        idx_mode = solver_params['idx_mode']
+        _idx_mode = solver_params['idx_mode']
         
         # single mode
-        if type(idx_mode) is int:
-            idx_mode = [idx_mode]
+        if type(_idx_mode) is int:
+            _idx_mode = [_idx_mode]
         
         # extract amplitude
-        amp = [modes[idx] for idx in idx_mode]
+        amp = [modes[idx] for idx in _idx_mode]
 
         return amp
 
@@ -667,18 +669,18 @@ class BaseSystem():
         """
 
         # extract frequently used variables
-        qcm_type = solver_params['qcm_type']
-        idx_mode_i = solver_params['idx_mode_i']
-        idx_mode_j = solver_params['idx_mode_j']
+        _qcm_type = solver_params['qcm_type']
+        _idx_mode_i = solver_params['idx_mode_i']
+        _idx_mode_j = solver_params['idx_mode_j']
 
         # get solver
         solver = QCMSolver(modes, corrs)
         # calculate measure
-        measure = getattr(solver, 'get_' + qcm_type)(idx_mode_i, idx_mode_j)
+        measure = getattr(solver, 'get_' + _qcm_type)(_idx_mode_i, _idx_mode_j)
     
         return measure
 
-    def get_steady_state_modes_corrs(self, solver_params: dict, get_rates_modes, iv: t_array, get_A, get_D, func_type='complex'):
+    def get_steady_state_modes_corrs(self, solver_params: dict, get_rates_modes, iv: t_array, get_A, get_D, func_type: str='complex'):
         """Method to obtain the steady states of the classical mode amplitudes and quantum correlations from the Heisenberg and Lyapunov equations.
 
         Parameters
@@ -779,9 +781,8 @@ class BaseSystem():
         """
 
         # validate parameters
-        _supported_types = MPLPlotter.types_1D + MPLPlotter.types_2D + MPLPlotter.types_3D
         assert plotter_params is not None, 'Parameter `plotter_params` should be a dictionary containing the key `type`'
-        assert 'type' in plotter_params and plotter_params['type'] in _supported_types, 'Parameter `plotter_params` should contain key `type` with values in {}'.format(_supported_types)
+        assert 'type' in plotter_params and plotter_params['type'] in self.types_plots, 'Parameter `plotter_params` should contain key `type` with values in {}'.format(self.types_plots)
 
         # initialize plot
         plotter = MPLPlotter({'X': T}, plotter_params)

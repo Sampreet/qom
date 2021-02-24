@@ -6,9 +6,10 @@
 __name__    = 'qom.ui.plotters.BasePlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-06'
-__updated__ = '2021-02-10'
+__updated__ = '2021-02-24'
 
 # dependencies
+from matplotlib.colors import LinearSegmentedColormap
 from typing import Union
 import logging
 import numpy as np
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 # data types
 t_axis = Union[DynamicAxis, MultiAxis, StaticAxis]
 
-# TODO: Fix `get_limits`.
+# TODO: Verify `get_limits`.
 
 class BasePlotter():
     """Class to interface plotters.
@@ -43,15 +44,12 @@ class BasePlotter():
     types_2D = ['contour', 'contourf', 'pcolormesh']
     types_3D = ['surface', 'surface_cx', 'surface_cy', 'surface_cz']
     default_palettes = ['Accent', 'Accent_r', 'Blues', 'Blues_r', 'BrBG', 'BrBG_r', 'BuGn', 'BuGn_r', 'BuPu', 'BuPu_r', 'CMRmap', 'CMRmap_r', 'Dark2', 'Dark2_r', 'GnBu', 'GnBu_r', 'Greens', 'Greens_r', 'Greys', 'Greys_r', 'OrRd', 'OrRd_r', 'Oranges', 'Oranges_r', 'PRGn', 'PRGn_r', 'Paired', 'Paired_r', 'Pastel1', 'Pastel1_r', 'Pastel2', 'Pastel2_r', 'PiYG', 'PiYG_r', 'PuBu', 'PuBuGn', 'PuBuGn_r', 'PuBu_r', 'PuOr', 'PuOr_r', 'PuRd', 'PuRd_r', 'Purples', 'Purples_r', 'RdBu', 'RdBu_r', 'RdGy', 'RdGy_r', 'RdPu', 'RdPu_r', 'RdYlBu', 'RdYlBu_r', 'RdYlGn', 'RdYlGn_r', 'Reds', 'Reds_r', 'Set1', 'Set1_r', 'Set2', 'Set2_r', 'Set3', 'Set3_r', 'Spectral', 'Spectral_r', 'Wistia', 'Wistia_r', 'YlGn', 'YlGnBu', 'YlGnBu_r', 'YlGn_r', 'YlOrBr', 'YlOrBr_r', 'YlOrRd', 'YlOrRd_r', 'afmhot', 'afmhot_r', 'autumn', 'autumn_r', 'binary', 'binary_r', 'bone', 'bone_r', 'brg', 'brg_r', 'bwr', 'bwr_r', 'cividis', 'cividis_r', 'cool', 'cool_r', 'coolwarm', 'coolwarm_r', 'copper', 'copper_r', 'cubehelix', 'cubehelix_r', 'flag', 'flag_r', 'gist_earth', 'gist_earth_r', 'gist_gray', 'gist_gray_r', 'gist_heat', 'gist_heat_r', 'gist_ncar', 'gist_ncar_r', 'gist_rainbow', 'gist_rainbow_r', 'gist_stern', 'gist_stern_r', 'gist_yarg', 'gist_yarg_r', 'gnuplot', 'gnuplot2', 'gnuplot2_r', 'gnuplot_r', 'gray', 'gray_r', 'hot', 'hot_r', 'hsv', 'hsv_r', 'icefire', 'icefire_r', 'inferno', 'inferno_r', 'magma', 'magma_r', 'mako', 'mako_r', 'nipy_spectral', 'nipy_spectral_r', 'ocean', 'ocean_r', 'pink', 'pink_r', 'plasma', 'plasma_r', 'prism', 'prism_r', 'rainbow', 'rainbow_r', 'rocket', 'rocket_r', 'seismic', 'seismic_r', 'spring', 'spring_r', 'summer', 'summer_r', 'tab10', 'tab10_r', 'tab20', 'tab20_r', 'tab20b', 'tab20b_r', 'tab20c', 'tab20c_r', 'terrain', 'terrain_r', 'twilight', 'twilight_r', 'twilight_shifted', 'twilight_shifted_r', 'viridis', 'viridis_r', 'vlag', 'vlag_r', 'winter', 'winter_r']
-    bins = 11
     diverging_palettes = {
-        'blr': lambda bins, as_cmap: sns.diverging_palette(225, 15, s=75, l=40, n=bins, center='light', as_cmap=as_cmap),
-        'glr': lambda bins, as_cmap: sns.diverging_palette(150, 15, s=75, l=40, n=bins, center='light', as_cmap=as_cmap),
-        'rlb': lambda bins, as_cmap: sns.diverging_palette(20, 240, s=75, l=40, n=bins, center='light', as_cmap=as_cmap),
-        'ylg': lambda bins, as_cmap: sns.diverging_palette(60, 150, s=75, l=40, n=bins, center='light', as_cmap=as_cmap)
+        'blr': ['Blues_r', 'Reds'],
+        'glr': ['Greens_r', 'Reds'],
+        'rlb': ['Reds_r', 'Blues']
     }
-    color_palettes = lambda self, palette, bins, as_cmap: sns.color_palette(palette, n_colors=bins, as_cmap=as_cmap)
-
+    bins = 11
 
     @property
     def axes(self):
@@ -60,7 +58,7 @@ class BasePlotter():
         return self.__axes
     
     @axes.setter
-    def axes(self, axes):
+    def axes(self, axes: dict):
         self.__axes = axes
 
     @property
@@ -70,19 +68,77 @@ class BasePlotter():
         return self.__params
     
     @params.setter
-    def params(self, params):
+    def params(self, params: dict):
         self.__params = params
 
-    def __init__(self, axes, params):
+    def __init__(self, axes: dict, params: dict):
         """Class constructor for MPLPlotter."""
 
         # frequently used variables
         _type = params.get('type', 'line')
+        _axes_params = self.__get_axes_params(axes, params)
+        _palette = params.get('palette', 'Blues')
+        _bins = params.get('bins', self.bins)
+
+        # se;ect axes
+        self.axes = {
+            'X': StaticAxis(_axes_params['X']),
+            'Y': MultiAxis(_axes_params['Y']) if _type in self.types_1D else StaticAxis(_axes_params['Y']),
+            'Z': StaticAxis(_axes_params['Z']),
+            'V': DynamicAxis(_axes_params['V'])
+        }
+
+        # update bins
+        self.bins = _bins
+
+        # set params
+        self.params = {
+            'type': _type,
+            'title': params.get('title', ''),
+            'cmap': self.get_palette(_palette, _bins, True),
+            'palette': _palette,
+            'font_dicts': {
+                'label': self.__get_font_dict(params, 'label'), 
+                'tick': self.__get_font_dict(params, 'tick'),
+                'math': params.get('font_math', 'cm')
+            },
+            'legend': {
+                'show': params.get('show_legend', False),
+                'location': params.get('legend_location', 'best')
+            },
+            'cbar': {
+                'show': params.get('show_cbar', True),
+                'title': params.get('cbar_title', ''),
+                'orientation': params.get('cbar_orientation', 'vertical'),
+                'x_label': params.get('cbar_x_label', ''),
+                'y_label': params.get('cbar_y_label', ''),
+                'ticks': params.get('cbar_ticks', None),
+                'tick_labels': params.get('cbar_tick_labels', None),
+            }
+        }
+
+    def __get_axes_params(self, axes: dict, params: dict):
+        """Method to set parameters for the axes.
+
+        Parameters
+        ----------
+        axes : dict
+            Data for the axes.
+
+        Returns
+        -------
+        axes_params : dict
+            Parameters for the axes.
+        """
+
+        # frequently used variables
         _min = -1
         _max = 1
 
-        # get parameters for axes
-        _axes_params = dict()
+        # initialize
+        axes_params = dict()
+
+        # for each axis
         for axis in ['X', 'Y', 'Z', 'V']:
             _dim = 5
             # extract axis
@@ -130,49 +186,11 @@ class BasePlotter():
             _axis['unit'] = params.get(axis.lower() + '_unit', '')
                 
             # update axis
-            _axes_params[axis] = _axis
+            axes_params[axis] = _axis
+        
+        return axes_params
 
-        # set axes
-        self.axes = {
-            'X': StaticAxis(_axes_params['X']),
-            'Y': MultiAxis(_axes_params['Y']) if _type in self.types_1D else StaticAxis(_axes_params['Y']),
-            'Z': StaticAxis(_axes_params['Z']),
-            'V': DynamicAxis(_axes_params['V'])
-        }
-
-        # extarct frequently used variables
-        bins = params.get('bins', self.bins)
-        palette = params.get('palette', 'Blues')
-
-        # update bins
-        self.bins = bins
-
-        # set params
-        self.params = {
-            'type': _type,
-            'title': params.get('title', ''),
-            'cmap': self.color_palettes(palette, bins, True) if palette in self.default_palettes else self.diverging_palettes.get(palette, self.diverging_palettes['blr'])(bins, True),
-            'palette': palette,
-            'font_dicts': {
-                'label': self.__get_font_dict(params, 'label'), 
-                'tick': self.__get_font_dict(params, 'tick'),
-                'math': params.get('font_math', 'cm')
-            },
-            'legend': {
-                'show': params.get('show_legend', False),
-                'location': params.get('legend_location', 'best')
-            },
-            'cbar': {
-                'show': params.get('show_cbar', True),
-                'title': params.get('cbar_title', ''),
-                'x_label': params.get('cbar_x_label', ''),
-                'y_label': params.get('cbar_y_label', ''),
-                'ticks': params.get('cbar_ticks', None),
-                'tick_labels': params.get('cbar_tick_labels', None),
-            }
-        }
-
-    def __get_font_dict(self, params, text_type): 
+    def __get_font_dict(self, params: dict, text_type: str): 
         """Method to generate a dictionary of font properties for a given type of text.
 
         Parameters
@@ -212,17 +230,17 @@ class BasePlotter():
         # return
         return _font_dict
 
-    def get_limits(self, mini, maxi, res=3):
+    def get_limits(self, mini: float, maxi: float, res: int=2):
         """Function to get limits from the minimum and maximum values of an array upto a certain resolution.
 
         Parameters
         ----------
-        mini : list  
+        mini : float  
             Minimum value of the array.
-        maxi : list  
+        maxi : float  
             Maximum value of the array.
         res : int
-            Resolution after the first significant digit in the decimal number system.
+            Resolution after the first significant digit in the decimal number system. Default is 2.
 
         Returns
         -------
@@ -260,3 +278,42 @@ class BasePlotter():
 
         # return
         return _mini, _maxi, _prec
+
+    def get_palette(self, palette: str='Blues', bins: int=11, as_cmap: bool=True):
+        """Method to obtain a color palette.
+
+        Parameters
+        ----------
+        palette : str
+            Default or diverging color palette.
+        bins : int
+            Number of bins.
+        as_cmap : boolean
+            Option to export as colormap.
+        
+        Returns
+        -------
+        palette : :class:`matplotlib.colors.ColorMap`
+            ColorMap of colors
+        """
+
+        # default color palettes
+        if not palette in self.diverging_palettes:
+            palette = sns.color_palette(palette, n_colors=bins, as_cmap=as_cmap)
+
+        # diverging color palettes
+        else:
+            _bins = int(bins / 2) + bins % 2
+
+            # constituent names
+            names = self.diverging_palettes[palette]
+
+            # list of colors
+            colors = sns.color_palette(names[0], n_colors=_bins, as_cmap=False) + sns.color_palette(names[1], n_colors=_bins, as_cmap=False)
+
+            # palette
+            palette = LinearSegmentedColormap.from_list(palette, colors)
+
+        return palette
+
+
