@@ -24,8 +24,6 @@ logger = logging.getLogger(__name__)
 # datatypes
 t_array = Union[list, np.matrix, np.ndarray]
 
-# TODO: Create attributes for supported types.
-# TODO: Wrap `__solve_ODEs` in `__set_results`.
 # TODO: Add `solve_multi` for multi-system solving.
 
 class HLESolver():

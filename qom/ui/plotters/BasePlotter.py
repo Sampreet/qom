@@ -6,10 +6,9 @@
 __name__    = 'qom.ui.plotters.BasePlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-06'
-__updated__ = '2021-02-24'
+__updated__ = '2021-03-03'
 
 # dependencies
-from matplotlib.colors import LinearSegmentedColormap
 from typing import Union
 import logging
 import numpy as np
@@ -44,7 +43,7 @@ class BasePlotter():
     types_2D = ['contour', 'contourf', 'pcolormesh']
     types_3D = ['surface', 'surface_cx', 'surface_cy', 'surface_cz']
     default_palettes = ['Accent', 'Accent_r', 'Blues', 'Blues_r', 'BrBG', 'BrBG_r', 'BuGn', 'BuGn_r', 'BuPu', 'BuPu_r', 'CMRmap', 'CMRmap_r', 'Dark2', 'Dark2_r', 'GnBu', 'GnBu_r', 'Greens', 'Greens_r', 'Greys', 'Greys_r', 'OrRd', 'OrRd_r', 'Oranges', 'Oranges_r', 'PRGn', 'PRGn_r', 'Paired', 'Paired_r', 'Pastel1', 'Pastel1_r', 'Pastel2', 'Pastel2_r', 'PiYG', 'PiYG_r', 'PuBu', 'PuBuGn', 'PuBuGn_r', 'PuBu_r', 'PuOr', 'PuOr_r', 'PuRd', 'PuRd_r', 'Purples', 'Purples_r', 'RdBu', 'RdBu_r', 'RdGy', 'RdGy_r', 'RdPu', 'RdPu_r', 'RdYlBu', 'RdYlBu_r', 'RdYlGn', 'RdYlGn_r', 'Reds', 'Reds_r', 'Set1', 'Set1_r', 'Set2', 'Set2_r', 'Set3', 'Set3_r', 'Spectral', 'Spectral_r', 'Wistia', 'Wistia_r', 'YlGn', 'YlGnBu', 'YlGnBu_r', 'YlGn_r', 'YlOrBr', 'YlOrBr_r', 'YlOrRd', 'YlOrRd_r', 'afmhot', 'afmhot_r', 'autumn', 'autumn_r', 'binary', 'binary_r', 'bone', 'bone_r', 'brg', 'brg_r', 'bwr', 'bwr_r', 'cividis', 'cividis_r', 'cool', 'cool_r', 'coolwarm', 'coolwarm_r', 'copper', 'copper_r', 'cubehelix', 'cubehelix_r', 'flag', 'flag_r', 'gist_earth', 'gist_earth_r', 'gist_gray', 'gist_gray_r', 'gist_heat', 'gist_heat_r', 'gist_ncar', 'gist_ncar_r', 'gist_rainbow', 'gist_rainbow_r', 'gist_stern', 'gist_stern_r', 'gist_yarg', 'gist_yarg_r', 'gnuplot', 'gnuplot2', 'gnuplot2_r', 'gnuplot_r', 'gray', 'gray_r', 'hot', 'hot_r', 'hsv', 'hsv_r', 'icefire', 'icefire_r', 'inferno', 'inferno_r', 'magma', 'magma_r', 'mako', 'mako_r', 'nipy_spectral', 'nipy_spectral_r', 'ocean', 'ocean_r', 'pink', 'pink_r', 'plasma', 'plasma_r', 'prism', 'prism_r', 'rainbow', 'rainbow_r', 'rocket', 'rocket_r', 'seismic', 'seismic_r', 'spring', 'spring_r', 'summer', 'summer_r', 'tab10', 'tab10_r', 'tab20', 'tab20_r', 'tab20b', 'tab20b_r', 'tab20c', 'tab20c_r', 'terrain', 'terrain_r', 'twilight', 'twilight_r', 'twilight_shifted', 'twilight_shifted_r', 'viridis', 'viridis_r', 'vlag', 'vlag_r', 'winter', 'winter_r']
-    diverging_palettes = {
+    custom_palettes = {
         'blr': ['Blues_r', 'Reds'],
         'glr': ['Greens_r', 'Reds'],
         'rlb': ['Reds_r', 'Blues']
@@ -95,7 +94,7 @@ class BasePlotter():
         self.params = {
             'type': _type,
             'title': params.get('title', ''),
-            'cmap': self.get_palette(_palette, _bins, True),
+            'colors': self.get_colors(_palette, _bins),
             'palette': _palette,
             'font_dicts': {
                 'label': self.__get_font_dict(params, 'label'), 
@@ -109,7 +108,7 @@ class BasePlotter():
             'cbar': {
                 'show': params.get('show_cbar', True),
                 'title': params.get('cbar_title', ''),
-                'orientation': params.get('cbar_orientation', 'vertical'),
+                'position': params.get('cbar_position', 'right'),
                 'x_label': params.get('cbar_x_label', ''),
                 'y_label': params.get('cbar_y_label', ''),
                 'ticks': params.get('cbar_ticks', None),
@@ -279,8 +278,8 @@ class BasePlotter():
         # return
         return _mini, _maxi, _prec
 
-    def get_palette(self, palette: str='Blues', bins: int=11, as_cmap: bool=True):
-        """Method to obtain a color palette.
+    def get_colors(self, palette: str='Blues', bins: int=11):
+        """Method to obtain the colors in a color palette.
 
         Parameters
         ----------
@@ -288,32 +287,29 @@ class BasePlotter():
             Default or diverging color palette.
         bins : int
             Number of bins.
-        as_cmap : boolean
-            Option to export as colormap.
         
         Returns
         -------
-        palette : :class:`matplotlib.colors.ColorMap`
-            ColorMap of colors
+        colors : list
+            Colors in the palette.
         """
 
         # default color palettes
-        if not palette in self.diverging_palettes:
-            palette = sns.color_palette(palette, n_colors=bins, as_cmap=as_cmap)
+        if not palette in self.custom_palettes:
+            colors = sns.color_palette(palette, n_colors=bins, as_cmap=False)
 
-        # diverging color palettes
+        # custom color palettes
         else:
-            _bins = int(bins / 2) + bins % 2
-
-            # constituent names
-            names = self.diverging_palettes[palette]
-
+            # frequently used variables
+            _palettes = self.custom_palettes[palette]
+            _dim = len(_palettes)
+            _bins = int(bins / _dim) + bins % _dim
+            
             # list of colors
-            colors = sns.color_palette(names[0], n_colors=_bins, as_cmap=False) + sns.color_palette(names[1], n_colors=_bins, as_cmap=False)
+            colors = sns.color_palette(_palettes[0], n_colors=_bins, as_cmap=False)
+            for i in range(1, _dim):
+                colors += sns.color_palette(_palettes[i], n_colors=_bins, as_cmap=False)
 
-            # palette
-            palette = LinearSegmentedColormap.from_list(palette, colors)
-
-        return palette
+        return colors
 
 

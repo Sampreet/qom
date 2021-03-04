@@ -6,13 +6,14 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2021-02-24'
+__updated__ = '2021-03-04'
 
 # dependencies
-from matplotlib.colors import Normalize
+from matplotlib.colors import LinearSegmentedColormap, Normalize
 from matplotlib.font_manager import FontProperties 
 from matplotlib.lines import Line2D
 from typing import Union
+import copy
 import logging
 import matplotlib.pyplot as plt
 import numpy as np
@@ -42,7 +43,35 @@ class MPLPlotter(BasePlotter):
         Axes for the plot.
     params : dict
         Parameters of the plot.
+    mpl_spec : :class:`matplotlib.gridspec.GridSpec`
+        Grid for the plot.
+    mpl_spec : :class:`matplotlib.gridspec.GridSpec`
+        Grid for the plot.
     """
+
+    # attributes
+    cbar_positions = {
+        'left': lambda gs: gs[:, 0], 
+        'top': lambda gs: gs[0, :], 
+        'right': lambda gs: gs[:, -1], 
+        'bottom': lambda gs: gs[-1, :]
+    }
+    cbar_positions_toggled = {
+        'left': lambda gs: gs[:, 1:], 
+        'top': lambda gs: gs[1:, :], 
+        'right': lambda gs: gs[:, :-1], 
+        'bottom': lambda gs: gs[:-1, :]
+    }
+
+    @property
+    def mpl_spec(self):
+        """:class:`matplotlib.gridspec.GridSpec`: Grid for the plot."""
+
+        return self.__mpl_spec
+    
+    @mpl_spec.setter
+    def mpl_spec(self, mpl_spec):
+        self.__mpl_spec = mpl_spec
 
     def __init__(self, axes: dict, params: dict):
         """Class constructor for MPLPlotter."""
@@ -52,8 +81,24 @@ class MPLPlotter(BasePlotter):
 
         # extract frequently used variables
         _type = self.params['type']
-        _mpl_axes = plt.gca(projection='3d' if _type in self.types_3D else None)
         _font_dicts = self.params['font_dicts']
+        _cbar_position = self.params['cbar']['position']
+
+        # initialize figure
+        _fig = self.gcf()
+        self.mpl_spec = _fig.add_gridspec(ncols=3, nrows=3, width_ratios=[1, 8, 1], height_ratios=[1, 8, 1])
+        # initialize and validate colorbar
+        self.cbar = None
+        if self.params['cbar']['show']:
+            if _cbar_position not in self.cbar_positions:
+                _cbar_position = 'right'
+            gs = self.cbar_positions_toggled[_cbar_position](self.mpl_spec)
+        else:
+            gs = self.mpl_spec[:, :]
+
+        _mpl_axes = _fig.add_subplot(gs, projection='3d' if _type in self.types_3D else None)
+        # set current axes
+        plt.sca(_mpl_axes)
 
         # update fonts
         plt.rcParams['mathtext.fontset'] = _font_dicts['math']
@@ -125,7 +170,7 @@ class MPLPlotter(BasePlotter):
 
         # extract frequently used variables
         _type = self.params['type']
-        _mpl_axes = plt.gca(projection=None)
+        _mpl_axes = self.gca()
         _palette = self.params['palette']
         _colors = self.axes['Y'].colors
         _styles = self.axes['Y'].styles
@@ -137,7 +182,7 @@ class MPLPlotter(BasePlotter):
 
         # udpate colors
         if _colors is None:
-            _colors = self.get_palette(_palette, self.bins, False)
+            _colors = self.get_colors(_palette, self.bins)
             self.axes['Y'].colors = _colors
 
         # line plots
@@ -163,9 +208,9 @@ class MPLPlotter(BasePlotter):
 
         # extract frequently used variables
         _type = self.params['type']
-        _mpl_axes = plt.gca(projection=None)
+        _mpl_axes = self.gca()
         _font_dicts = self.params['font_dicts']
-        _cmap = self.params['cmap']
+        _cmap = LinearSegmentedColormap.from_list(self.params['palette'], self.params['colors'])
 
         # initailize values
         _xs, _ys = np.meshgrid(self.axes['X'].val, self.axes['Y'].val)
@@ -185,16 +230,13 @@ class MPLPlotter(BasePlotter):
         if _type == 'pcolormesh':
             self.plots = _mpl_axes.pcolormesh(_xs, _ys, _nan, shading='gouraud', cmap=_cmap)
 
-        # color bar
-        self.cbar = None
-
     def __init_3D(self):
         """Method to initialize 3D plots."""
 
         # extract frequently used variables
         _type = self.params['type']
-        _mpl_axes = plt.gca(projection='3d')
-        _cmap = self.params['cmap']
+        _mpl_axes = self.gca()
+        _cmap = LinearSegmentedColormap.from_list(self.params['palette'], self.params['colors'])
 
         # update view
         _mpl_axes.view_init(32, 216)
@@ -220,9 +262,6 @@ class MPLPlotter(BasePlotter):
         if 'surface' in _type:
             self.plots =_mpl_axes.plot_surface(_xs, _ys, _zeros, rstride=1, cstride=1, cmap=_cmap)
 
-        # color bar
-        self.cbar = None
-
     def __update_1D(self, xs: t_list, vs: t_list, head: bool):
         """Method to udpate 1D plots.
         
@@ -238,7 +277,7 @@ class MPLPlotter(BasePlotter):
 
         # frequently used variables
         _type = self.params['type']
-        _mpl_axes = plt.gca(projection=None)
+        _mpl_axes = self.gca()
         _dim = len(xs[0])
         
         # line plots
@@ -303,9 +342,9 @@ class MPLPlotter(BasePlotter):
 
         # frequently used variables
         _type = self.params['type']
-        _mpl_axes = plt.gca(projection=None)
+        _mpl_axes = self.gca()
         _font_dicts = self.params['font_dicts']
-        _cmap = self.params['cmap']
+        _cmap = LinearSegmentedColormap.from_list(self.params['palette'], self.params['colors'])
         _rave = np.ravel(vs)
 
         # initialize values
@@ -356,9 +395,9 @@ class MPLPlotter(BasePlotter):
 
         # frequently used variables
         _type = self.params['type']
-        _mpl_axes = plt.gca(projection='3d')
+        _mpl_axes = self.gca()
         _font_dicts = self.params['font_dicts']
-        _cmap = self.params['cmap']
+        _cmap = LinearSegmentedColormap.from_list(self.params['palette'], self.params['colors'])
 
         # initialize values
         _X, _Y = np.meshgrid(self.axes['X'].val, self.axes['Y'].val)
@@ -494,25 +533,30 @@ class MPLPlotter(BasePlotter):
             Precision upto which the values are displayed. Default is 2.
         """
 
-        # frequently used variables
-        _orientation = self.params['cbar']['orientation']
+        # extract frequently used variables
+        _cbar_position = self.params['cbar']['position']
+        _orientation = 'vertical' if _cbar_position == 'right' or _cbar_position == 'left' else 'horizontal'
         _font_dicts = self.params['font_dicts']
-        _cax = None
+        _cmap = LinearSegmentedColormap.from_list(self.params['palette'], self.params['colors'])
 
         # clear if existed
         if self.cbar is not None:
             self.cbar.ax.clear()
             _cax = self.cbar.ax
+        # add axis
+        else:
+            _cax = self.gcf().add_subplot(self.cbar_positions[_cbar_position](self.mpl_spec))
+
 
         # set scalar mappable 
         if 'contour' in self.params['type']:
-            _sm = plt.cm.ScalarMappable(cmap=self.params['cmap'], norm=Normalize(vmin=mini, vmax=maxi))
+            _sm = plt.cm.ScalarMappable(cmap=_cmap, norm=Normalize(vmin=mini, vmax=maxi))
             _sm.set_array([])
         else:
             _sm = self.plots
 
-        # initialize
-        self.cbar = plt.colorbar(_sm, cax=_cax, orientation=_orientation)
+        # initialize colorbar
+        self.cbar = plt.colorbar(_sm, cax=_cax, ax=self.gca(), orientation=_orientation)
 
         # title
         self.cbar.ax.set_title(self.params['cbar']['title'], fontproperties=self.__get_font_props(_font_dicts['label']), pad=12)
@@ -583,6 +627,16 @@ class MPLPlotter(BasePlotter):
         hold : bool, optional
             Option to hold the plot. Default is False.
         """
+
+        # extractfrequently used variables
+        _cbar_position = self.params['cbar']['position']
+
+        # resize figure
+        if self.cbar is not None:
+            if _cbar_position == 'top' or _cbar_position == 'bottom':
+                plt.gcf().set_size_inches(5, 5.5)
+            else:
+                plt.gcf().set_size_inches(5.5, 5)
 
         # draw data
         plt.draw()

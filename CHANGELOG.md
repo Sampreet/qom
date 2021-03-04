@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.6.7 - 2021/03/04 - 00 - Updated Plotters
+* Updated `qom/ui/plotters` module:
+    * Updated palettes in `BasePlotter` module.
+    * Added colorbar position support in `MPLPlotter`.
+* Updated `README`.
+
 ## v0.6.6 - 2021/02/24 - 00 - Refined Plotters
 * Minor fixes to `qom/systems/BaseSystem` module.
 * Updated `qom/ui/plotters` module:
