@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.XLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-01-11'
+__updated__ = '2021-03-22'
 
 # dependencies
 import logging
@@ -30,12 +30,12 @@ class XLooper(BaseLooper):
     params : dict
         Parameters for the system, looper and figure.
     """
-
+    
     def __init__(self, func, params: dict):
         """Class constructor for XLooper."""
 
         # initialize super class
-        super().__init__(func, params)
+        super().__init__(func, params, 'XLooper', '1D Looper')
 
         # set axes
         self._set_axis('X')
@@ -57,6 +57,11 @@ class XLooper(BaseLooper):
             Option to calculate gradients, superseded by looper parameter `grad`.
         plot: bool, optional
             Option to plot the results.
+
+        Returns
+        -------
+        results : dict
+            Axes and calculated values.
         """
 
         # supersede looper parameters
@@ -80,3 +85,5 @@ class XLooper(BaseLooper):
     
             # update log
             logger.info('---------------------Results Plotted--------------------\t\n')
+
+        return self.results

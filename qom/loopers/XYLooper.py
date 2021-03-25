@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.XYLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-01-11'
+__updated__ = '2021-03-22'
 
 # dependencies
 from typing import Union
@@ -39,7 +39,7 @@ class XYLooper(BaseLooper):
         """Class constructor for XYLooper."""
 
         # initialize super class
-        super().__init__(func, params)
+        super().__init__(func, params, 'XYLooper', '2D Looper')
 
         # set axes
         self._set_axis('X')
@@ -71,6 +71,11 @@ class XYLooper(BaseLooper):
             Index of the monotonic patch, superseded by looper parameter `grad_mono_idx`.
         plot: bool, optional
             Option to plot the results.
+
+        Returns
+        -------
+        results : dict
+            Axes and calculated values.
         """
 
         # extract frequently used variables
@@ -129,6 +134,8 @@ class XYLooper(BaseLooper):
     
             # update log
             logger.info('--------------------Results Plotted--------------------\t\n')
+
+        return self.results
 
 
 

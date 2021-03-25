@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.6.8 - 2021/03/25 - 00 - Added Examples
+* Added notebooks to demonstrate `loopers`, `solvers` and `systems`.
+* Added threshold method in `qom/loopers/BaseLooper` module.
+* Added detection of number of modes in `qom/solvers/HLESolver` module.
+* Minor fixes to `qom/systems/BaseSystem` module.
+* Updated `qom/ui/plotters/MPLPlotter` module methods.
+* Updated usage in `README`.
+
 ## v0.6.7 - 2021/03/04 - 00 - Updated Plotters
 * Updated `qom/ui/plotters` module:
     * Updated palettes in `BasePlotter` module.

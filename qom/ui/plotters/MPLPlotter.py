@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2021-03-04'
+__updated__ = '2021-03-25'
 
 # dependencies
 from matplotlib.colors import LinearSegmentedColormap, Normalize
@@ -85,7 +85,7 @@ class MPLPlotter(BasePlotter):
         _cbar_position = self.params['cbar']['position']
 
         # initialize figure
-        _fig = self.gcf()
+        _fig = plt.gcf()
         self.mpl_spec = _fig.add_gridspec(ncols=3, nrows=3, width_ratios=[1, 8, 1], height_ratios=[1, 8, 1])
         # initialize and validate colorbar
         self.cbar = None
@@ -120,6 +120,10 @@ class MPLPlotter(BasePlotter):
             # initialize 1D plot
             self.__init_1D()
 
+            # values are given
+            if 'V' in axes:
+                self.update(xs=self.axes['X'].val, vs=self.axes['V'].val)
+
         # 2D plot
         elif _type in self.types_2D:
             # update y-axis
@@ -127,6 +131,10 @@ class MPLPlotter(BasePlotter):
 
             # initializze 2D plot
             self.__init_2D()
+
+            # values are given
+            if 'V' in axes:
+                self.update(vs=self.axes['V'].val)
 
         # 3D plot
         else:
@@ -137,6 +145,10 @@ class MPLPlotter(BasePlotter):
 
             # initializze 3D plot
             self.__init_3D()
+
+            # values are given
+            if 'V' in axes:
+                self.update(vs=self.axes['V'].val)
 
     def __get_font_props(self, font_dict: dict):
         """Method to convert font dictionary to FontProperties.
@@ -170,7 +182,7 @@ class MPLPlotter(BasePlotter):
 
         # extract frequently used variables
         _type = self.params['type']
-        _mpl_axes = self.gca()
+        _mpl_axes = plt.gca()
         _palette = self.params['palette']
         _colors = self.axes['Y'].colors
         _styles = self.axes['Y'].styles
@@ -208,7 +220,7 @@ class MPLPlotter(BasePlotter):
 
         # extract frequently used variables
         _type = self.params['type']
-        _mpl_axes = self.gca()
+        _mpl_axes = plt.gca()
         _font_dicts = self.params['font_dicts']
         _cmap = LinearSegmentedColormap.from_list(self.params['palette'], self.params['colors'])
 
@@ -235,7 +247,7 @@ class MPLPlotter(BasePlotter):
 
         # extract frequently used variables
         _type = self.params['type']
-        _mpl_axes = self.gca()
+        _mpl_axes = plt.gca()
         _cmap = LinearSegmentedColormap.from_list(self.params['palette'], self.params['colors'])
 
         # update view
@@ -262,6 +274,21 @@ class MPLPlotter(BasePlotter):
         if 'surface' in _type:
             self.plots =_mpl_axes.plot_surface(_xs, _ys, _zeros, rstride=1, cstride=1, cmap=_cmap)
 
+    def __resize_plot(self):
+        """Method to resize the plot."""
+
+        # extractfrequently used variables
+        _cbar_position = self.params['cbar']['position']
+
+        # resize figure
+        if self.cbar is not None:
+            if _cbar_position == 'top' or _cbar_position == 'bottom':
+                plt.gcf().set_size_inches(5, 5.5)
+            else:
+                plt.gcf().set_size_inches(5.5, 5)
+        else:
+            plt.gcf().set_size_inches(5, 5)
+
     def __update_1D(self, xs: t_list, vs: t_list, head: bool):
         """Method to udpate 1D plots.
         
@@ -277,7 +304,7 @@ class MPLPlotter(BasePlotter):
 
         # frequently used variables
         _type = self.params['type']
-        _mpl_axes = self.gca()
+        _mpl_axes = plt.gca()
         _dim = len(xs[0])
         
         # line plots
@@ -342,7 +369,7 @@ class MPLPlotter(BasePlotter):
 
         # frequently used variables
         _type = self.params['type']
-        _mpl_axes = self.gca()
+        _mpl_axes = plt.gca()
         _font_dicts = self.params['font_dicts']
         _cmap = LinearSegmentedColormap.from_list(self.params['palette'], self.params['colors'])
         _rave = np.ravel(vs)
@@ -395,7 +422,7 @@ class MPLPlotter(BasePlotter):
 
         # frequently used variables
         _type = self.params['type']
-        _mpl_axes = self.gca()
+        _mpl_axes = plt.gca()
         _font_dicts = self.params['font_dicts']
         _cmap = LinearSegmentedColormap.from_list(self.params['palette'], self.params['colors'])
 
@@ -469,7 +496,7 @@ class MPLPlotter(BasePlotter):
         getattr(ax, 'set_' + ax_name + 'ticklabels')(ax_data.tick_labels)
         plt.setp(getattr(ax, 'get_' + ax_name + 'ticklabels')(), fontproperties=_font_props)
 
-    def gca(self):
+    def get_current_axis(self):
         """Method to obtain the axes of the figure.
         
         Returns
@@ -478,12 +505,9 @@ class MPLPlotter(BasePlotter):
             Axes of the figure.
         """
 
-        # frequently used variables
-        _type = self.params['type']
+        return plt.gca()
 
-        return plt.gca(projection='3d' if _type in self.types_3D else None)
-
-    def gcf(self):
+    def get_current_figure(self):
         """Method to obtain the current figure.
         
         Returns
@@ -494,13 +518,13 @@ class MPLPlotter(BasePlotter):
         
         return plt.gcf()
 
-    def gta(self):
+    def get_twin_axis(self):
         """Method to obtain a twin axes of the figure.
         
         Returns
         ----------
-        axes : :class:`matplotlib.axes.Axes`
-            Axes of the figure.
+        ax_twin : :class:`matplotlib.axes.Axes`
+            The twin axis.
         """
 
         # frequently used variables
@@ -509,7 +533,7 @@ class MPLPlotter(BasePlotter):
         _font_props = self.__get_font_props(_font_dicts['tick'])
 
         # initialize twin axis
-        ax_twin = plt.twinx()
+        ax_twin = plt.gca().twinx()
 
         # labels
         ax_twin.set_ylabel('a', labelpad=12, fontdict=_font_dicts['label'])
@@ -519,6 +543,21 @@ class MPLPlotter(BasePlotter):
         ax_twin.tick_params(axis='y', which='major', pad=12)
 
         return ax_twin
+
+    def save(self, filename: str):
+        """Method to save the figure.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the saved file.
+        """
+
+        # resize plot
+        self.__resize_plot()
+        
+        # save to file
+        plt.savefig(filename, dpi=300)
 
     def set_cbar(self, mini: float=0, maxi: float=0, prec: int=2):
         """Method to set the colorbar for the figure.
@@ -545,7 +584,7 @@ class MPLPlotter(BasePlotter):
             _cax = self.cbar.ax
         # add axis
         else:
-            _cax = self.gcf().add_subplot(self.cbar_positions[_cbar_position](self.mpl_spec))
+            _cax = plt.gcf().add_subplot(self.cbar_positions[_cbar_position](self.mpl_spec))
 
 
         # set scalar mappable 
@@ -556,7 +595,7 @@ class MPLPlotter(BasePlotter):
             _sm = self.plots
 
         # initialize colorbar
-        self.cbar = plt.colorbar(_sm, cax=_cax, ax=self.gca(), orientation=_orientation)
+        self.cbar = plt.colorbar(_sm, cax=_cax, ax=plt.gca(), orientation=_orientation)
 
         # title
         self.cbar.ax.set_title(self.params['cbar']['title'], fontproperties=self.__get_font_props(_font_dicts['label']), pad=12)
@@ -583,6 +622,29 @@ class MPLPlotter(BasePlotter):
 
         # draw colorbar
         self.cbar.draw_all()
+
+    def show(self, hold: bool=False):
+        """Method to display the figure.
+
+        Parameters
+        ----------
+        hold : bool, optional
+            Option to hold the plot. Default is False.
+        """
+        
+        # resize plot
+        self.__resize_plot()
+
+        # draw data
+        plt.draw()
+        plt.tight_layout()
+        # plt.subplots_adjust(top=0.99, bottom=0.06, left=0.06, right=0.99)
+
+        # display plot
+        if hold:
+            plt.show()
+        else:
+            plt.pause(1e-9)
 
     def update(self, xs: t_list=None, ys: t_list=None, zs: t_list=None, vs: t_list=None, head: bool=False):
         """Method to update the figure.
@@ -618,33 +680,3 @@ class MPLPlotter(BasePlotter):
         # 3D plot
         if 'surface' in _type:
             self.__update_3D(vs)
-
-    def show(self, hold: bool=False):
-        """Method to display the figure.
-
-        Parameters
-        ----------
-        hold : bool, optional
-            Option to hold the plot. Default is False.
-        """
-
-        # extractfrequently used variables
-        _cbar_position = self.params['cbar']['position']
-
-        # resize figure
-        if self.cbar is not None:
-            if _cbar_position == 'top' or _cbar_position == 'bottom':
-                plt.gcf().set_size_inches(5, 5.5)
-            else:
-                plt.gcf().set_size_inches(5.5, 5)
-
-        # draw data
-        plt.draw()
-        plt.tight_layout()
-        # plt.subplots_adjust(top=0.99, bottom=0.06, left=0.06, right=0.99)
-
-        # display plot
-        if hold:
-            plt.show()
-        else:
-            plt.pause(1e-9)

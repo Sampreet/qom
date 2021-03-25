@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-02-24'
+__updated__ = '2021-03-25'
 
 # dependencies
 from typing import Union
@@ -428,7 +428,7 @@ class BaseSystem():
             # get mean optical amplitude
             alpha_s = self.get_mean_optical_amplitude(lambda_l, mu, gamma_o, P_l, Delta)
             # mean optical occupancy
-            N_o = np.conjugate(alpha_s) * alpha_s
+            N_o = np.real(np.conjugate(alpha_s) * alpha_s)
 
         # cubic mode
         elif mode == 'cubic':

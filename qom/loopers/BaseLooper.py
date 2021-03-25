@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-01-11'
+__updated__ = '2021-03-22'
 
 # dependencies
 from decimal import Decimal
@@ -44,6 +44,13 @@ class BaseLooper():
     params : dict
         Parameters for the system, looper and figure.
     """
+
+    # attributes
+    default_plotters = {
+        'XLooper': 'line',
+        'XYLooper': 'pcolormesh',
+        'XYZLooper': 'surface'
+    }
 
     @property
     def axes(self):
@@ -85,14 +92,19 @@ class BaseLooper():
     def results(self, results):
         self.__results = results
 
-    def __init__(self, func, params: dict):
+    def __init__(self, func, params: dict, code, name):
         """Class constructor for BaseLooper."""
 
         # validate parameters
-        assert 'system' in params, 'Parameter `params` should contain key `system` for system parameters'
         assert 'looper' in params, 'Parameter `params` should contain key `looper` for looper parameters'
+        if 'system' not in params:
+            params['system'] = {}
 
         # set attributes
+        self.code = code
+        self.name = name
+
+        # set properties
         self.func = func
         self.params = params
         self.axes = dict()
@@ -108,11 +120,19 @@ class BaseLooper():
 
         # validate parameters
         assert axis in self.params['looper'], 'Key `looper` should contain key `{}` for axis parameters'.format(axis)
-        self.axes[axis] = dict()
 
         # extract frequently used variables
         _axis = self.params['looper'][axis]
-        _dim = _axis.get('dim', 101)
+
+        # if axis is a list of values
+        if type(_axis) is list:
+            _axis = {
+                'var': 'x',
+                'val': _axis
+            }
+
+        # initialize dict
+        self.axes[axis] = dict()
 
         # validate variable
         assert 'var' in _axis, 'Key `{}` should contain key `var` for the name of the variable'.format(axis)
@@ -123,11 +143,13 @@ class BaseLooper():
         if _val is not None and type(_val) is list:
             # set values
             self.axes[axis]['val'] = _val
-
         # generate values
         else:
             # validate range
             assert 'min' in _axis and 'max' in _axis, 'Key `{}` should contain keys `min` and `max` to define axis range'.format(axis)
+
+            # extract dimension
+            _dim = _axis.get('dim', 101)
 
             # set values
             _val = np.linspace(_axis['min'], _axis['max'], _dim)
@@ -321,6 +343,45 @@ class BaseLooper():
 
         return idx
 
+    def get_thresholds(self, thres_mode='minmax'):
+        """Method to calculate the threshold values for the results.
+
+        Parameters
+        ----------
+        thres_mode : str
+            Mode of calculation of threshold values. Options are:
+                'minmax' : Minimum value at which maximum is reached.
+        
+        Returns
+        -------
+        thres : dict
+            Threshold values.
+        """
+
+        # mode selector
+        _selector = {
+            'minmax': np.argmax,
+            'minmin': np.argmin
+        }
+
+        # initialize
+        thres = {}
+
+        # XLooper
+        if self.code == 'XLooper':
+            _index = _selector[thres_mode](self.results['V'])
+            thres['X'] = self.axes['X']['val'][_index]
+            thres['V'] = self.results['V'][_index]
+        # XYLooper
+        if self.code == 'XYLooper':
+            _x_dim = len(self.axes['X']['val'])
+            _index = _selector[thres_mode](self.results['V'])
+            thres['X'] = self.axes['X']['val'][_index % _x_dim]
+            thres['Y'] = self.axes['Y']['val'][int(_index / _x_dim)]
+            thres['V'] = self.results['V'][int(_index / _x_dim)][_index % _x_dim]
+
+        return thres
+
     def update_progress(self, pos, dim):
         """Method to update the progress of the calculation.
         
@@ -342,8 +403,11 @@ class BaseLooper():
         """Method to plot the results."""
 
         # validate parameters
-        assert 'plotter' in self.params, 'Parameter `params` should contain key `plotter` for plotter parameters'
-        assert 'type' in self.params['plotter'], 'Parameter `plotter` should contain key `type`.'
+        if 'plotter' not in self.params:
+            self.params['plotter'] = {}
+        # default plotter type
+        if 'type' not in self.params['plotter']:
+            self.params['plotter']['type'] = self.default_plotters[self.code]
 
         # initialize plot
         plotter = MPLPlotter(self.axes, self.params['plotter'])

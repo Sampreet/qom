@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.HLESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-02-08'
+__updated__ = '2021-03-22'
 
 # dependencies
 from decimal import Decimal
@@ -100,6 +100,23 @@ class HLESolver():
         self.Modes = None
         self.Corrs = None
         self.results = None
+
+    def __detect_num_modes(self):
+        """Method to detect number of modes of the system.
+        
+        Returns
+        -------
+        num_modes : int
+            Number of modes of the system.
+        """
+
+        # extract frequently used variables
+        dim = len(self.results['V'][0])
+
+        # natural root of the quadratic equation (4 * n**2 + n - dim = 0)
+        num_modes = int((- 1 + np.sqrt(1 + 16 * dim)) / 8)
+
+        return num_modes
 
     def __set_times(self):
         """Method to initialize the times at which values are calculated."""
@@ -209,12 +226,12 @@ class HLESolver():
             if show_progress:
                 logger.info('-------------------Results Obtained-------------------\n')
 
-    def get_Corrs(self, num_modes):
+    def get_Corrs(self, num_modes=None):
         """Method to obtain the quantum correlations.
 
         Parameters
         ----------
-        num_modes : int
+        num_modes : int, optional
             Number of classical modes.
         
         Returns
@@ -231,20 +248,21 @@ class HLESolver():
             # get correlations
             return self.Corrs
 
-        # extract frequently used variables
-        V = self.results['V']
+        # detect number of modes if not given
+        if num_modes is None:
+            num_modes = self.__detect_num_modes()
 
         # update correlations
-        self.Corrs = [np.real(np.reshape(vs[num_modes:], (2 * num_modes, 2 * num_modes))).tolist() for vs in V]
+        self.Corrs = [np.real(np.reshape(vs[num_modes:], (2 * num_modes, 2 * num_modes))).tolist() for vs in self.results['V']]
             
         return self.Corrs
     
-    def get_Modes(self, num_modes):
+    def get_Modes(self, num_modes=None):
         """Method to obtain the classical mode amplitudes.
 
         Parameters
         ----------
-        num_modes : int
+        num_modes : int, optional
             Number of classical modes.
         
         Returns
@@ -261,11 +279,12 @@ class HLESolver():
             # get modes
             return self.Modes
 
-        # extract frequently used variables
-        V = self.results['V']
+        # detect number of modes if not given
+        if num_modes is None:
+            num_modes = self.__detect_num_modes()
 
         # update correlations
-        self.Modes = [vs[:num_modes] for vs in V]
+        self.Modes = [vs[:num_modes] for vs in self.results['V']]
             
         return self.Modes
 
@@ -299,6 +318,11 @@ class HLESolver():
             Directory where the results are cached.
         cache_file : str, optional
             File where the results are cached.
+
+        Returns
+        -------
+        results : dict
+            Times and calculated values.
         """
 
         # validate parameters
@@ -327,13 +351,6 @@ class HLESolver():
                 'V': np.load(cache_path + '.npz')['arr_0'].tolist()
             }
 
-            # extract frequently used variables
-            V = self.results['V']
-
-            # set modes and correlations
-            self.Modes = [vs[:num_modes] for vs in V]
-            self.Corrs = [np.real(np.reshape(vs[num_modes:], (2 * num_modes, 2 * num_modes))).tolist() for vs in V]
-
             # display loaded
             if show_progress:
                 logger.info('-------------------Results Loaded---------------------\n')
@@ -355,3 +372,5 @@ class HLESolver():
                 # display saved
                 if show_progress:
                     logger.info('-------------------Results Saved----------------------\n')
+
+        return self.results

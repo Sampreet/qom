@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.BasePlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-06'
-__updated__ = '2021-03-03'
+__updated__ = '2021-03-22'
 
 # dependencies
 from typing import Union
@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 # data types
 t_axis = Union[DynamicAxis, MultiAxis, StaticAxis]
 
+# TODO: Refine `get_colors`.
 # TODO: Verify `get_limits`.
 
 class BasePlotter():
@@ -76,7 +77,7 @@ class BasePlotter():
         # frequently used variables
         _type = params.get('type', 'line')
         _axes_params = self.__get_axes_params(axes, params)
-        _palette = params.get('palette', 'Blues')
+        _palette = params.get('palette', 'RdBu')
         _bins = params.get('bins', self.bins)
 
         # se;ect axes
@@ -229,6 +230,40 @@ class BasePlotter():
         # return
         return _font_dict
 
+    def get_colors(self, palette: str='RdBu', bins: int=11):
+        """Method to obtain the colors in a color palette.
+
+        Parameters
+        ----------
+        palette : str
+            Default or diverging color palette.
+        bins : int
+            Number of bins.
+        
+        Returns
+        -------
+        colors : list
+            Colors in the palette.
+        """
+
+        # default color palettes
+        if not palette in self.custom_palettes:
+            colors = sns.color_palette(palette, n_colors=bins, as_cmap=False)
+
+        # custom color palettes
+        else:
+            # frequently used variables
+            _palettes = self.custom_palettes[palette]
+            _dim = len(_palettes)
+            _bins = int(bins / _dim) + bins % _dim
+            
+            # list of colors
+            colors = sns.color_palette(_palettes[0], n_colors=_bins, as_cmap=False)
+            for i in range(1, _dim):
+                colors += sns.color_palette(_palettes[i], n_colors=_bins, as_cmap=False)
+
+        return colors
+
     def get_limits(self, mini: float, maxi: float, res: int=2):
         """Function to get limits from the minimum and maximum values of an array upto a certain resolution.
 
@@ -277,39 +312,5 @@ class BasePlotter():
 
         # return
         return _mini, _maxi, _prec
-
-    def get_colors(self, palette: str='Blues', bins: int=11):
-        """Method to obtain the colors in a color palette.
-
-        Parameters
-        ----------
-        palette : str
-            Default or diverging color palette.
-        bins : int
-            Number of bins.
-        
-        Returns
-        -------
-        colors : list
-            Colors in the palette.
-        """
-
-        # default color palettes
-        if not palette in self.custom_palettes:
-            colors = sns.color_palette(palette, n_colors=bins, as_cmap=False)
-
-        # custom color palettes
-        else:
-            # frequently used variables
-            _palettes = self.custom_palettes[palette]
-            _dim = len(_palettes)
-            _bins = int(bins / _dim) + bins % _dim
-            
-            # list of colors
-            colors = sns.color_palette(_palettes[0], n_colors=_bins, as_cmap=False)
-            for i in range(1, _dim):
-                colors += sns.color_palette(_palettes[i], n_colors=_bins, as_cmap=False)
-
-        return colors
 
 
