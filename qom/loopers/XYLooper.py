@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.XYLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-03-22'
+__updated__ = '2021-05-12'
 
 # dependencies
 from typing import Union
@@ -48,7 +48,7 @@ class XYLooper(BaseLooper):
         # display initialization
         logger.info('--------------------Looper Initialized-----------------\t\n')
 
-    def loop(self, mode: str='serial', grad: bool=False, grad_position: t_position='all', grad_mono_idx: int=0, plot: bool=False):
+    def loop(self, mode: str='serial', grad: bool=False, grad_position: t_position='all', grad_mono_idx: int=0, plot: bool=False, width: float=5.0, height: float=5.0):
         """Method to calculate the output of a given function for each X-axis and Y-axis point.
         
         Parameters
@@ -71,6 +71,10 @@ class XYLooper(BaseLooper):
             Index of the monotonic patch, superseded by looper parameter `grad_mono_idx`.
         plot: bool, optional
             Option to plot the results.
+        width : float, optional
+            Width of the figure.
+        height : float, optional
+            Height of the figure.
 
         Returns
         -------
@@ -130,15 +134,9 @@ class XYLooper(BaseLooper):
 
         # plot results
         if plot:
-            self.plot_results()
+            self.plot_results(width, height)
     
             # update log
             logger.info('--------------------Results Plotted--------------------\t\n')
 
         return self.results
-
-
-
-        
-
-

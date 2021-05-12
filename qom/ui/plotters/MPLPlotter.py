@@ -31,6 +31,7 @@ t_list = Union[list, np.ndarray]
 # TODO: Add annotations.
 # TODO: Options for 3D plot parameters.
 # TODO: Options for `ticklabel_format` and padding.
+# TODO: Options for saving plots.
 
 class MPLPlotter(BasePlotter):
     """Class to handle matplotlib plots.
@@ -274,8 +275,16 @@ class MPLPlotter(BasePlotter):
         if 'surface' in _type:
             self.plots =_mpl_axes.plot_surface(_xs, _ys, _zeros, rstride=1, cstride=1, cmap=_cmap)
 
-    def __resize_plot(self):
-        """Method to resize the plot."""
+    def __resize_plot(self, width: float=5.0, height: float=5.0):
+        """Method to resize the plot.
+        
+        Parameters
+        ----------
+        width : float
+            Width of the figure.
+        height : float 
+            Height of the figure.
+        """
 
         # extractfrequently used variables
         _cbar_position = self.params['cbar']['position']
@@ -283,11 +292,11 @@ class MPLPlotter(BasePlotter):
         # resize figure
         if self.cbar is not None:
             if _cbar_position == 'top' or _cbar_position == 'bottom':
-                plt.gcf().set_size_inches(5, 5.5)
+                plt.gcf().set_size_inches(width, height + 0.5)
             else:
-                plt.gcf().set_size_inches(5.5, 5)
+                plt.gcf().set_size_inches(width + 0.5, height)
         else:
-            plt.gcf().set_size_inches(5, 5)
+            plt.gcf().set_size_inches(width, height)
 
     def __update_1D(self, xs: t_list, vs: t_list, head: bool):
         """Method to udpate 1D plots.
@@ -544,17 +553,21 @@ class MPLPlotter(BasePlotter):
 
         return ax_twin
 
-    def save(self, filename: str):
+    def save(self, filename: str, width: float=5.0, height: float=5.0):
         """Method to save the figure.
 
         Parameters
         ----------
         filename : str
             Name of the saved file.
+        width : float
+            Width of the figure.
+        height : float 
+            Height of the figure.
         """
 
         # resize plot
-        self.__resize_plot()
+        self.__resize_plot(width, height)
         
         # save to file
         plt.savefig(filename, dpi=300)
@@ -623,17 +636,21 @@ class MPLPlotter(BasePlotter):
         # draw colorbar
         self.cbar.draw_all()
 
-    def show(self, hold: bool=False):
+    def show(self, hold: bool=False, width: float=5.0, height: float=5.0):
         """Method to display the figure.
 
         Parameters
         ----------
         hold : bool, optional
             Option to hold the plot. Default is False.
+        width : float
+            Width of the figure.
+        height : float 
+            Height of the figure.
         """
         
         # resize plot
-        self.__resize_plot()
+        self.__resize_plot(width, height)
 
         # draw data
         plt.draw()

@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.6.9 - 2021/05/12 - 00 - Updated Loopers and Plotters
+* Updated `qom/loopers` module:
+    * Added wrapper method to `qom/loopers/BaseLooper` module.
+    * Added plot size option in `loop` methods.
+* Added resize option in `qom/ui/plotters/MPLPlotter` module.
+
 ## v0.6.8 - 2021/03/25 - 00 - Added Examples
 * Added notebooks to demonstrate `loopers`, `solvers` and `systems`.
 * Added threshold method in `qom/loopers/BaseLooper` module.

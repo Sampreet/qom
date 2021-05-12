@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.XLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-03-22'
+__updated__ = '2021-05-12'
 
 # dependencies
 import logging
@@ -43,7 +43,7 @@ class XLooper(BaseLooper):
         # display initialization
         logger.info('---------------------Looper Initialized-----------------\t\n')
 
-    def loop(self, mode: str='serial', grad: bool=False, plot: bool=False):
+    def loop(self, mode: str='serial', grad: bool=False, plot: bool=False, width: float=5.0, height: float=5.0):
         """Method to calculate the output of a given function for each X-axis point.
         
         Parameters
@@ -57,6 +57,10 @@ class XLooper(BaseLooper):
             Option to calculate gradients, superseded by looper parameter `grad`.
         plot: bool, optional
             Option to plot the results.
+        width : float, optional
+            Width of the figure.
+        height : float, optional
+            Height of the figure.
 
         Returns
         -------
@@ -81,7 +85,7 @@ class XLooper(BaseLooper):
 
         # plot results
         if plot:
-            self.plot_results()
+            self.plot_results(width, height)
     
             # update log
             logger.info('---------------------Results Plotted--------------------\t\n')

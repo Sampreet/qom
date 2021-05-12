@@ -13,6 +13,7 @@ from decimal import Decimal
 from typing import Union
 import copy
 import logging
+import os
 import multiprocessing
 import numpy as np
 import threading
@@ -399,8 +400,21 @@ class BaseLooper():
         if int(progress * 1000) % 10 == 0:
             logger.info('Calculating the values: Progress = {progress:3.2f}'.format(progress=progress))
 
-    def plot_results(self):
-        """Method to plot the results."""
+    def plot_results(self, width: float=5.0, height: float=5.0):
+        """Method to plot the results.
+        
+        Parameters
+        ----------
+        width : float, optional
+            Width of the figure.
+        height : float, optional 
+            Height of the figure.
+
+        Returns
+        -------
+        plotter : :class:`qom.ui.MPLPlotter`
+            Instance of MPLPLotter.
+        """
 
         # validate parameters
         if 'plotter' not in self.params:
@@ -420,5 +434,65 @@ class BaseLooper():
         
         # update plotter
         plotter.update(_xs, _ys, _zs, _vs)
-        plotter.show(True)
+        plotter.show(True, width, height)
+
+        return plotter
+
+    def wrap(self, file_path: str=None, plot: bool=False, width: float=5.0, height: float=5.0):
+        """Method to wrap the looper.
+
+        Parameters
+        ----------
+        file_path : str, optional
+            Path to the data file.
+        plot: bool, optional
+            Option to plot the results.
+        width : float, optional
+            Width of the figure.
+        height : float, optional
+            Height of the figure.
+
+        Returns
+        -------
+        looper : :class:`qom.loopers.*`
+            Instance of the looper.
+        """
+
+        # initialize variables
+        X = self.params['looper']['X']
+        Y = None
+        Z = None
+        # complete filename
+        for key in X:
+            file_path += '_' + str(X[key])
+        # update for XYLooper
+        if 'XY' in self.code:
+            Y = self.params['looper']['Y']
+            for key in Y:
+                file_path += '_' + str(Y[key])
+        # update for XYZLooper
+        if 'XYZ' in self.code:
+            Z = self.params['looper']['Z']
+            for key in Z:
+                file_path += '_' + str(Z[key])
+
+        # attempt to load results if exists
+        if os.path.isfile(file_path + '.npz'):
+            self.results = {
+                'X': X,
+                'Y': Y,
+                'Z': Z,
+                'V': np.load(file_path + '.npz')['arr_0'].tolist()
+            }
+            logger.info('------------------Results Loaded---------------------\t\n')
+        # loop and save results
+        else:
+            self.loop()
+            np.savez_compressed(file_path, np.array(self.results['V']))
+            
+        # plot results
+        if plot:
+            self.plot_results(width, height)
+
+        return self
 
