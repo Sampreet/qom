@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.7.0 - 2021/05/14 - 00 - Stationary Measures
+* Added stationary measure functions in `qom/systems/BaseSystem` module.
+
 ## v0.6.9 - 2021/05/12 - 00 - Updated Loopers and Plotters
 * Updated `qom/loopers` module:
     * Added wrapper method to `qom/loopers/BaseLooper` module.

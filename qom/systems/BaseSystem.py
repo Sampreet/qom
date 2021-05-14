@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-03-25'
+__updated__ = '2021-05-14'
 
 # dependencies
 from typing import Union
@@ -622,6 +622,49 @@ class BaseSystem():
 
         return S_Pearson
 
+    def get_measure_stationary(self, solver_params: dict, modes: list, corrs: list):
+        """Method to obtain the a stationary measure.
+        
+        Parameters
+        ----------
+        solver_params : dict
+            Parameters for the solver.
+        corrs : list
+            Matrix of quantum correlations.
+        modes : list
+            Values of classical mode amplitudes.
+        
+        Returns
+        -------
+        measure : float
+            The stationary measure.
+        """
+
+        # extract frequently used variables
+        _show_progress = solver_params.get('show_progress', False)
+        _measure_type = solver_params['measure_type']
+        _module_names = {
+            'corr_ele': __name__,
+            'mode_amp': __name__,
+            'qcm': 'qom.solvers.QCMSolver'
+        }
+
+        # display progress
+        if _show_progress:
+            logger.info('Computing ({module_name})...'.format(module_name=_module_names[_measure_type]))
+
+        # correlation matrix elements
+        if _measure_type == 'corr_ele':
+            measure = self.get_corr_ele(solver_params, corrs)
+        # mode amplidutes
+        elif _measure_type == 'mode_amp':
+            measure = self.get_mode_amp(solver_params, modes)
+        # quantum correlation measure
+        elif _measure_type == 'qcm':
+            measure = self.get_qcm(solver_params, modes, corrs)
+
+        return measure
+
     def get_mode_amp(self, solver_params: dict, modes: list):
         """Method to obtain the amplitude of a particular mode.
 
@@ -680,13 +723,11 @@ class BaseSystem():
     
         return measure
 
-    def get_steady_state_modes_corrs(self, solver_params: dict, get_rates_modes, iv: t_array, get_A, get_D, func_type: str='complex'):
+    def get_stationary_modes_corrs(self, get_rates_modes, iv: t_array, get_A, get_D, func_type: str='complex'):
         """Method to obtain the steady states of the classical mode amplitudes and quantum correlations from the Heisenberg and Lyapunov equations.
 
         Parameters
         ----------
-        solver_params : dict
-            Parameters for the solver.
         get_rates_modes : function
             Set of rates of the classical mode amplitudes for a given list of modes. If the function is complex-valued, `func_type` parameter should be passed as 'complex'.
         iv : list or numpy.array
@@ -708,51 +749,56 @@ class BaseSystem():
             All the correlations calculated at steady-state.
         """
 
-        # complex-valued function
-        if func_type == 'complex':
-            # real-valued function
-            def get_rates_modes_real(values_real):
-                """Function to obtain the rates of the optical and mechanical modes.
-                
-                Returns
-                -------
-                values_real : list
-                    List of real-valued values of the modes.
-                
-                Returns
-                -------
-                mode_rates_real : list
-                    List of real-valued rates splitted as real and imaginary parts for each mode.
-                """
-                
-                # convert to complex
-                values = [values_real[2 * i] + 1j * values_real[2 * i + 1] for i in range(int(len(values_real) / 2))] 
+        # if modes are to be calculated
+        if get_rates_modes is not None:
+            # complex-valued function
+            if func_type == 'complex':
+                # real-valued function
+                def get_rates_modes_real(values_real):
+                    """Function to obtain the rates of the optical and mechanical modes.
+                    
+                    Returns
+                    -------
+                    values_real : list
+                        List of real-valued values of the modes.
+                    
+                    Returns
+                    -------
+                    mode_rates_real : list
+                        List of real-valued rates splitted as real and imaginary parts for each mode.
+                    """
+                    
+                    # convert to complex
+                    values = [values_real[2 * i] + 1j * values_real[2 * i + 1] for i in range(int(len(values_real) / 2))] 
 
-                # complex-valued mode rates
-                mode_rates = get_rates_modes(values)
+                    # complex-valued mode rates
+                    mode_rates = get_rates_modes(values)
 
-                # convert to real
-                mode_rates_real = list()
-                for mode_rate in mode_rates:
-                    mode_rates_real.append(np.real(mode_rate))
-                    mode_rates_real.append(np.imag(mode_rate))
+                    # convert to real
+                    mode_rates_real = list()
+                    for mode_rate in mode_rates:
+                        mode_rates_real.append(np.real(mode_rate))
+                        mode_rates_real.append(np.imag(mode_rate))
 
-                return mode_rates_real
+                    return mode_rates_real
 
-            # real-valued initial values
-            iv_real = list()
-            for value in iv:
-                iv_real.append(np.real(value))
-                iv_real.append(np.imag(value))
+                # real-valued initial values
+                iv_real = list()
+                for value in iv:
+                    iv_real.append(np.real(value))
+                    iv_real.append(np.imag(value))
+            else:
+                # real-valued function
+                get_rates_modes_real = get_rates_modes
+                # real-valued initial values
+                iv_real = iv
+        
+            # solve for modes
+            roots_real = so.fsolve(get_rates_modes_real, iv_real)
+            modes = [roots_real[2 * i] + 1j * roots_real[2 * i + 1] for i in range(int(len(roots_real) / 2))] 
+        # modes not required
         else:
-            # real-valued function
-            get_rates_modes_real = get_rates_modes
-            # real-valued initial values
-            iv_real = iv
-    
-        # solve for modes
-        roots_real = so.fsolve(get_rates_modes_real, iv_real)
-        modes = [roots_real[2 * i] + 1j * roots_real[2 * i + 1] for i in range(int(len(roots_real) / 2))] 
+            modes = None
 
         # get matrices
         _A = get_A(modes)
