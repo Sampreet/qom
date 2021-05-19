@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.ODESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-02-08'
+__updated__ = '2021-05-19'
 
 # dependencies
 from typing import Union
@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 # datatypes
 t_array = Union[list, np.matrix, np.ndarray]
 
-# TODO: Add old API submodules in `set_integrator_params`.
 # TODO: Validate parameters.
 
 class ODESolver():
@@ -124,7 +123,7 @@ class ODESolver():
         self.c = copy.deepcopy(c)
 
         # old API method
-        if self.method == 'ode':
+        if self.params['method'] == 'ode':
             self.integrator.set_f_params(c)
 
     def set_integrator_params(self, T, value_type='complex'):
@@ -234,6 +233,8 @@ class ODESolver():
             # update constants
             if c_func is not None:
                 self.set_func_params(c_func(i))
+            else:
+                self.set_func_params(self.c)
 
             # step
             _v = self.step(T[i], T[i - 1])

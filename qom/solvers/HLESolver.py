@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.HLESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-03-22'
+__updated__ = '2021-05-19'
 
 # dependencies
 from decimal import Decimal
@@ -137,7 +137,7 @@ class HLESolver():
         # update attribute
         self.T = _ts
 
-    def __set_results(self, ode_func, iv, c, ode_func_corrs=None, num_modes=None):
+    def __set_results(self, ode_func, iv, c=list(), ode_func_corrs=None, num_modes=None):
         """Method to solve the ODEs and update the results.
 
         Parameters
@@ -288,7 +288,7 @@ class HLESolver():
             
         return self.Modes
 
-    def solve(self, ode_func, iv, c=None, ode_func_corrs=None, num_modes=None, method=None, cache=True, cache_dir='data', cache_file='V'):
+    def solve(self, ode_func, iv, c=list(), ode_func_corrs=None, num_modes=None, method=None, cache=True, cache_dir='data', cache_file='V'):
         """Method to obtain the solutions of the ODEs.
 
         Parameters

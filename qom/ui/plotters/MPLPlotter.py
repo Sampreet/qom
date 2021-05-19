@@ -6,14 +6,13 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2021-03-25'
+__updated__ = '2021-05-19'
 
 # dependencies
 from matplotlib.colors import LinearSegmentedColormap, Normalize
 from matplotlib.font_manager import FontProperties 
 from matplotlib.lines import Line2D
 from typing import Union
-import copy
 import logging
 import matplotlib.pyplot as plt
 import numpy as np

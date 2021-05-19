@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.7.1 - 2021/05/19 - 00 - Added ODE Wrapper
+* Minor fixes to handle constants in `qom/solvers` modules.
+* Added function to wrap ODEs in `qom/systems/BaseSystem` module.
+* Minor fixes to `qom/ui/plotters/MPLPlotter` module. 
+
 ## v0.7.0 - 2021/05/14 - 00 - Stationary Measures
 * Added stationary measure functions in `qom/systems/BaseSystem` module.
 

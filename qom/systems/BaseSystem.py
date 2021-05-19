@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-05-14'
+__updated__ = '2021-05-19'
 
 # dependencies
 from typing import Union
@@ -253,62 +253,6 @@ class BaseSystem():
 
         return ele
 
-    def get_dynamics_modes_corrs(self, solver_params: dict, ode_func, ivc_func, ode_func_corrs=None):
-        """Method to obtain the dynamics of the classical mode amplitudes and quantum correlations from the Heisenberg and Lyapunov equations.
-
-        Parameters
-        ----------
-        solver_params : dict
-            Parameters for the solver.
-        ode_func : function
-            Set of ODEs returning rate equations of the classical mode amplitudes and quantum correlations. If `ode_func_corrs` parameter is given, this function is treated as the function for the modes only.
-        ivc_func : function
-            Function returning the initial values and constants.
-        ode_func_corrs : function, optional
-            Set of ODEs returning rate equations of the quantum correlations.
-
-        Returns
-        -------
-        Modes : list
-            All the modes calculated at all times.
-        Corrs : list
-            All the correlations calculated at all times.
-        T : list
-            Times at which values are calculated.
-        """
-
-        # extract frequently used variables
-        _method = solver_params.get('method', 'RK45')
-        _cache = solver_params.get('cache', False)
-        _cache_dir = solver_params.get('cache_dir', 'data')
-        _cache_file = solver_params.get('cache_file', 'V')
-
-        # get initial values and constants
-        iv, c = ivc_func()
-
-        # initialize solver
-        solver = HLESolver(solver_params)
-
-        # cache path
-        if _cache:
-            # update directory
-            if _cache_dir == 'data':
-                _cache_dir += '\\' + self.code + '\\' + str(solver.T[0]) + '_' + str(solver.T[-1]) + '_' + str(len(solver.T))
-            # update filename
-            if _cache_file == 'V' and self.params is not None:
-                for key in self.params:
-                    _cache_file += '_' + str(self.params[key])
-        
-        # solve and set results
-        solver.solve(ode_func, iv, c, ode_func_corrs, self.num_modes, _method, _cache, _cache_dir, _cache_file)
-
-        # get modes, correlations and times
-        Modes = solver.get_Modes(self.num_modes)
-        Corrs = solver.get_Corrs(self.num_modes)
-        T = solver.T
-        
-        return Modes, Corrs, T
-
     def get_eigenvalues_A(self, get_A, modes: list):
         """Function to obtain the eigenvalues of the drift matrix.
 
@@ -455,7 +399,7 @@ class BaseSystem():
         # return
         return N_o
 
-    def get_measure_average(self, solver_params: dict, ode_func, ivc_func, ode_func_corrs=None, plot: bool=False, plotter_params: dict=None):
+    def get_measure_average(self, solver_params: dict, ode_func, get_ivc, ode_func_corrs=None, plot: bool=False, plotter_params: dict=None):
         """Method to obtain the average value of a measure.
         
         Parameters
@@ -464,7 +408,7 @@ class BaseSystem():
             Parameters for the solver.
         ode_func : function
             Set of ODEs returning rate equations of the classical mode amplitudes and quantum correlations. If `ode_func_corrs` parameter is given, this function is treated as the function for the modes only.
-        ivc_func : function
+        get_ivc : function
             Function returning the initial values and constants.
         ode_func_corrs : function, optional
             Set of ODEs returning rate equations of the quantum correlations.
@@ -480,14 +424,14 @@ class BaseSystem():
         """
 
         # get measures at all times
-        M = self.get_measure_dynamics(solver_params, ode_func, ivc_func, ode_func_corrs, plot, plotter_params)
+        M = self.get_measure_dynamics(solver_params, ode_func, get_ivc, ode_func_corrs, plot, plotter_params)
 
         # calculate average
         M_avg = np.mean(M)
 
         return M_avg
     
-    def get_measure_dynamics(self, solver_params: dict, ode_func, ivc_func, ode_func_corrs=None, plot: bool=False, plotter_params: dict=None):
+    def get_measure_dynamics(self, solver_params: dict, ode_func, get_ivc, ode_func_corrs=None, plot: bool=False, plotter_params: dict=None):
         """Method to obtain the dynamics of a particular measure.
 
         Parameters
@@ -496,7 +440,7 @@ class BaseSystem():
             Parameters for the solver.
         ode_func : function
             Set of ODEs returning rate equations of the classical mode amplitudes and quantum correlations. If `ode_func_corrs` parameter is given, this function is treated as the function for the modes only.
-        ivc_func : function
+        get_ivc : function
             Function returning the initial values and constants.
         ode_func_corrs : function, optional
             Set of ODEs returning rate equations of the quantum correlations.
@@ -515,7 +459,7 @@ class BaseSystem():
         self.__validate_params_measure(solver_params)
 
         # get mode and correlation dynamics
-        Modes, Corrs, T = self.get_dynamics_modes_corrs(solver_params, ode_func, ivc_func, ode_func_corrs)
+        Modes, Corrs, T = self.get_modes_corrs_dynamics(solver_params, ode_func, get_ivc, ode_func_corrs)
 
         # extract frequently used variables
         _show_progress = solver_params.get('show_progress', False)
@@ -575,7 +519,7 @@ class BaseSystem():
 
         return M
 
-    def get_measure_pearson(self, solver_params: dict, ode_func, ivc_func, ode_func_corrs=None, plot: bool=False, plotter_params: dict=None):
+    def get_measure_pearson(self, solver_params: dict, ode_func, get_ivc, ode_func_corrs=None, plot: bool=False, plotter_params: dict=None):
         r"""Method to obtain the Pearson synchronization measure.
 
         The implementation measure reads as [2],
@@ -591,7 +535,7 @@ class BaseSystem():
             Parameters for the solver.
         ode_func : function
             Set of ODEs returning rate equations of the classical mode amplitudes and quantum correlations. If `ode_func_corrs` parameter is given, this function is treated as the function for the modes only.
-        ivc_func : function
+        get_ivc : function
             Function returning the initial values and constants.
         ode_func_corrs : function, optional
             Set of ODEs returning rate equations of the quantum correlations.
@@ -610,7 +554,7 @@ class BaseSystem():
         self.__validate_params_corr_ele(solver_params, 3)
 
         # get measures at all times
-        M = self.get_measure_dynamics(solver_params, ode_func, ivc_func, ode_func_corrs, plot, plotter_params)
+        M = self.get_measure_dynamics(solver_params, ode_func, get_ivc, ode_func_corrs, plot, plotter_params)
 
         # get mean values
         mean_ii = np.mean([m[0] for m in M])
@@ -693,6 +637,168 @@ class BaseSystem():
 
         return amp
 
+    def get_modes_corrs_dynamics(self, solver_params: dict, ode_func, get_ivc, ode_func_corrs=None):
+        """Method to obtain the dynamics of the classical mode amplitudes and quantum correlations from the Heisenberg and Lyapunov equations.
+
+        Parameters
+        ----------
+        solver_params : dict
+            Parameters for the solver.
+        ode_func : function
+            Set of ODEs returning rate equations of the classical mode amplitudes and quantum correlations. If `ode_func_corrs` parameter is given, this function is treated as the function for the modes only.
+        get_ivc : function
+            Function returning the initial values and constants.
+        ode_func_corrs : function, optional
+            Set of ODEs returning rate equations of the quantum correlations.
+
+        Returns
+        -------
+        Modes : list
+            All the modes calculated at all times.
+        Corrs : list
+            All the correlations calculated at all times.
+        T : list
+            Times at which values are calculated.
+        """
+
+        # extract frequently used variables
+        _method = solver_params.get('method', 'RK45')
+        _cache = solver_params.get('cache', False)
+        _cache_dir = solver_params.get('cache_dir', 'data')
+        _cache_file = solver_params.get('cache_file', 'V')
+
+        # get initial values and constants
+        iv, c = get_ivc()
+        # handle null constants
+        if c is None:
+            c = list()
+
+        # initialize solver
+        solver = HLESolver(solver_params)
+
+        # cache path
+        if _cache:
+            # update directory
+            if _cache_dir == 'data':
+                _cache_dir += '\\' + self.code + '\\' + str(solver.T[0]) + '_' + str(solver.T[-1]) + '_' + str(len(solver.T))
+            # update filename
+            if _cache_file == 'V' and self.params is not None:
+                for key in self.params:
+                    _cache_file += '_' + str(self.params[key])
+        
+        # solve and set results
+        solver.solve(ode_func, iv, c, ode_func_corrs, self.num_modes, _method, _cache, _cache_dir, _cache_file)
+
+        # get modes, correlations and times
+        Modes = solver.get_Modes(self.num_modes)
+        Corrs = solver.get_Corrs(self.num_modes)
+        T = solver.T
+        
+        return Modes, Corrs, T
+
+    def get_modes_corrs_stationary(self, get_rates_modes, get_ivc, get_A, func_type: str='complex'):
+        """Method to obtain the steady states of the classical mode amplitudes and quantum correlations from the Heisenberg and Lyapunov equations.
+
+        Parameters
+        ----------
+        get_rates_modes : function
+            Set of rates of the classical mode amplitudes for a given list of modes. If the function is complex-valued, `func_type` parameter should be passed as 'complex'.
+        get_ivc : function
+            Function returning the initial values and constants.
+        get_A : function
+            Function to obtain the drift matrix given the list of modes as parameter.
+        func_type : str, optional
+            Return data-type of `ode_func_modes`. Available options are:
+                'real' : Real-valued.
+                'complex' : Complex-valued.
+
+        Returns
+        -------
+        modes : list
+            All the modes calculated at steady-state.
+        corrs : list
+            All the correlations calculated at steady-state.
+        """
+
+        # extract the modes and correlations
+        _dim    = [2 * self.num_modes, 2 * self.num_modes]
+
+        # get initial values and constants
+        iv, c = get_ivc()
+        # handle null constants
+        if c is None:
+            c = list()
+
+        # if modes are to be calculated
+        if get_rates_modes is not None:
+            # complex-valued function
+            if func_type == 'complex':
+                # real-valued function
+                def get_rates_modes_real(modes_real):
+                    """Function to obtain the rates of the optical and mechanical modes.
+                    
+                    Returns
+                    -------
+                    modes_real : list
+                        List of real-valued values of the modes.
+                    
+                    Returns
+                    -------
+                    mode_rates_real : list
+                        List of real-valued rates splitted as real and imaginary parts for each mode.
+                    """
+                    
+                    # convert to complex
+                    modes = [modes_real[2 * i] + 1j * modes_real[2 * i + 1] for i in range(int(len(modes_real) / 2))] 
+
+                    # complex-valued mode rates
+                    mode_rates = get_rates_modes(modes)
+
+                    # convert to real
+                    mode_rates_real = list()
+                    for mode_rate in mode_rates:
+                        mode_rates_real.append(np.real(mode_rate))
+                        mode_rates_real.append(np.imag(mode_rate))
+
+                    return mode_rates_real
+
+                # real-valued initial values
+                iv_real = list()
+                for value in iv:
+                    iv_real.append(np.real(value))
+                    iv_real.append(np.imag(value))
+            else:
+                # real-valued function
+                get_rates_modes_real = get_rates_modes
+                # real-valued initial values
+                iv_real = iv
+        
+            # solve for modes
+            roots_real = so.fsolve(get_rates_modes_real, iv_real)
+            modes = [roots_real[2 * i] + 1j * roots_real[2 * i + 1] for i in range(int(len(roots_real) / 2))] 
+        # modes not required
+        else:
+            modes = None
+
+        # get parameters
+        if len(c) >= _dim[0] * _dim[1]:
+            params = c[_dim[0] * _dim[1]:]
+        else: 
+            params = list()
+
+        # get matrices
+        _A = get_A(modes, params)
+        _D = np.array(c[:_dim[0] * _dim[1]]).reshape(_dim)
+
+        # convert to numpy arrays
+        _A = np.array(_A) if type(_A) is list else _A
+        _D = np.array(_D) if type(_D) is list else _D
+
+        # solve for correlations
+        corrs = sl.solve_lyapunov(_A, -_D)
+        
+        return modes, corrs
+
     def get_qcm(self, solver_params: dict, modes: list, corrs: list):
         """Method to obtain a particular measure of quantum correlations.
 
@@ -723,95 +829,54 @@ class BaseSystem():
     
         return measure
 
-    def get_stationary_modes_corrs(self, get_rates_modes, iv: t_array, get_A, get_D, func_type: str='complex'):
-        """Method to obtain the steady states of the classical mode amplitudes and quantum correlations from the Heisenberg and Lyapunov equations.
-
+    def ode_func(self, t, v, c):
+        """Function for the rate equations of the modes and quadrature correlations.
+        
+        The variables are complex-valued, hence the model requires a complex-valued integrator.
+        
         Parameters
         ----------
-        get_rates_modes : function
-            Set of rates of the classical mode amplitudes for a given list of modes. If the function is complex-valued, `func_type` parameter should be passed as 'complex'.
-        iv : list or numpy.array
-            Iniatial values of the modes.
-        get_A : function
-            Function to obtain the drift matrix given the list of modes as parameter.
-        get_D : function
-            Function to obtain the noise matrix.
-        func_type : str, optional
-            Return data-type of `ode_func_modes`. Available options are:
-                'real' : Real-valued.
-                'complex' : Complex-valued.
+        t : *float*
+            Time at which the rate is calculated.
+        v : list
+            Complex-valued variables defining the system.
+        c : list
+            Constants of the integration. First (4 * num_modes^2) elements contain the noise matrix. Remaining elements contain the constant parameters.
 
         Returns
         -------
-        modes : list
-            All the modes calculated at steady-state.
-        corrs : list
-            All the correlations calculated at steady-state.
+        rates : list
+            Rates of the complex-valued variables defining the system.
         """
 
-        # if modes are to be calculated
-        if get_rates_modes is not None:
-            # complex-valued function
-            if func_type == 'complex':
-                # real-valued function
-                def get_rates_modes_real(values_real):
-                    """Function to obtain the rates of the optical and mechanical modes.
-                    
-                    Returns
-                    -------
-                    values_real : list
-                        List of real-valued values of the modes.
-                    
-                    Returns
-                    -------
-                    mode_rates_real : list
-                        List of real-valued rates splitted as real and imaginary parts for each mode.
-                    """
-                    
-                    # convert to complex
-                    values = [values_real[2 * i] + 1j * values_real[2 * i + 1] for i in range(int(len(values_real) / 2))] 
+        # extract the modes and correlations
+        _dim    = [2 * self.num_modes, 2 * self.num_modes]
+        modes   = v[0:self.num_modes]
+        corrs   = np.real(v[self.num_modes:]).reshape(_dim)
+        D       = np.array(c[:_dim[0] * _dim[1]]).reshape(_dim)
+        if len(c) >= _dim[0] * _dim[1]:
+            params = c[_dim[0] * _dim[1]:]
+        else: 
+            params = list()
 
-                    # complex-valued mode rates
-                    mode_rates = get_rates_modes(values)
+        # mode rates
+        mode_rates  = self.get_mode_rates(modes, params, t)
 
-                    # convert to real
-                    mode_rates_real = list()
-                    for mode_rate in mode_rates:
-                        mode_rates_real.append(np.real(mode_rate))
-                        mode_rates_real.append(np.imag(mode_rate))
+        # drift matrix
+        A = self.get_A(modes, params)
 
-                    return mode_rates_real
+        # quadrature correlation rate equation
+        dcorrs_dt = A.dot(corrs) + corrs.dot(np.transpose(A)) + D
 
-                # real-valued initial values
-                iv_real = list()
-                for value in iv:
-                    iv_real.append(np.real(value))
-                    iv_real.append(np.imag(value))
-            else:
-                # real-valued function
-                get_rates_modes_real = get_rates_modes
-                # real-valued initial values
-                iv_real = iv
-        
-            # solve for modes
-            roots_real = so.fsolve(get_rates_modes_real, iv_real)
-            modes = [roots_real[2 * i] + 1j * roots_real[2 * i + 1] for i in range(int(len(roots_real) / 2))] 
-        # modes not required
-        else:
-            modes = None
+        # mirror matrix
+        for i in range(len(dcorrs_dt)):
+            for j in range(0, i):
+                dcorrs_dt[i, j] = dcorrs_dt[j, i]
 
-        # get matrices
-        _A = get_A(modes)
-        _D = get_D()
+        # convert to 1D list and concatenate all rates
+        rates = mode_rates + [np.complex(element) for element in dcorrs_dt.flatten()]
 
-        # convert to numpy arrays
-        _A = np.array(_A) if type(_A) is list else _A
-        _D = np.array(_D) if type(_D) is list else _D
-
-        # solve for correlations
-        corrs = sl.solve_lyapunov(_A, -_D)
-        
-        return modes, corrs
+        return rates
 
     def plot_measures(self, plotter_params: dict, T: list, M: list):
         """Method to plot the measures.
