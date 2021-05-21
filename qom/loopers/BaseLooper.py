@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-03-22'
+__updated__ = '2021-05-21'
 
 # dependencies
 from decimal import Decimal
@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 # datatypes
 t_position = Union[str, int, float, np.float32, np.float64]
 
+# TODO: Fix `get_multithreaded_results`.
 # TODO: Fix `get_multiprocessed_results`.
 # TODO: Handle multi-valued points for gradients in `get_X_results`.
 # TODO: Handle monotonic modes in `get_index`.
@@ -139,6 +140,9 @@ class BaseLooper():
         assert 'var' in _axis, 'Key `{}` should contain key `var` for the name of the variable'.format(axis)
         self.axes[axis]['var'] = _axis['var']
 
+        # check index of variable
+        self.axes[axis]['idx'] = _axis.get('idx', None)
+
         # if axis values are provided
         _val = _axis.get('val', None)
         if _val is not None and type(_val) is list:
@@ -189,6 +193,9 @@ class BaseLooper():
         looper_mode = self.params['looper'].get('mode', mode)
         show_progress = self.params['looper'].get('show_progress', False)
         x_var = self.axes['X']['var']
+        x_idx = None
+        if type(system_params[x_var]) is list:
+            x_idx = self.axes['X']['idx']
         x_val = self.axes['X']['val']
         x_dim = len(x_val)
 
@@ -211,7 +218,10 @@ class BaseLooper():
                     logger.info('Calculating the values: Progress = {progress:3.2f}'.format(progress=progress))
                 # calculate value
                 _val = x_val[i]
-                system_params[x_var] = _val
+                if x_idx is not None:
+                    system_params[x_var][x_idx] = _val
+                else:
+                    system_params[x_var] = _val
                 # calculate value
                 self.func(system_params, _val, logger, results)
 

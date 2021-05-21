@@ -6,12 +6,14 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-05-19'
+__updated__ = '2021-05-21'
 
 # dependencies
 from typing import Union
+import copy
 import logging
 import numpy as np
+from numpy.matrixlib.defmatrix import _convert_from_string
 import scipy.constants as sc
 import scipy.linalg as sl
 import scipy.optimize as so
@@ -19,6 +21,7 @@ import scipy.optimize as so
 # qom modules
 from qom.solvers import HLESolver
 from qom.solvers import QCMSolver
+from qom.solvers import RHCSolver
 from qom.ui.plotters import MPLPlotter
 
 # module logger
@@ -424,7 +427,7 @@ class BaseSystem():
         """
 
         # get measures at all times
-        M = self.get_measure_dynamics(solver_params, ode_func, get_ivc, ode_func_corrs, plot, plotter_params)
+        M, T = self.get_measure_dynamics(solver_params, ode_func, get_ivc, ode_func_corrs, plot, plotter_params)
 
         # calculate average
         M_avg = np.mean(M)
@@ -517,7 +520,7 @@ class BaseSystem():
             if _show_progress:
                 logger.info('------------------Results Plotted--------------------\n')
 
-        return M
+        return M, T[_range_min:_range_max]
 
     def get_measure_pearson(self, solver_params: dict, ode_func, get_ivc, ode_func_corrs=None, plot: bool=False, plotter_params: dict=None):
         r"""Method to obtain the Pearson synchronization measure.
@@ -554,7 +557,7 @@ class BaseSystem():
         self.__validate_params_corr_ele(solver_params, 3)
 
         # get measures at all times
-        M = self.get_measure_dynamics(solver_params, ode_func, get_ivc, ode_func_corrs, plot, plotter_params)
+        M, T = self.get_measure_dynamics(solver_params, ode_func, get_ivc, ode_func_corrs, plot, plotter_params)
 
         # get mean values
         mean_ii = np.mean([m[0] for m in M])
@@ -797,7 +800,65 @@ class BaseSystem():
         # solve for correlations
         corrs = sl.solve_lyapunov(_A, -_D)
         
-        return modes, corrs
+        return modes, _convert_from_string
+
+    def get_rhc_count_dynamics(self, solver_params: dict, ode_func, get_ivc, get_A, ode_func_corrs=None):
+        """Function to obtain the number of positive real roots of the drift matrix using the Routh-Hurwitz criterion.
+
+        Parameters
+        ----------
+        solver_params : dict
+            Parameters for the solver.
+        ode_func : function
+            Set of ODEs returning rate equations of the classical mode amplitudes and quantum correlations. If `ode_func_corrs` parameter is given, this function is treated as the function for the modes only.
+        get_ivc : function
+            Function returning the initial values and constants.
+        get_A : function
+            Function to obtain the drift matrix given the list of modes and parameters.
+        ode_func_corrs : function, optional
+            Set of ODEs returning rate equations of the quantum correlations.
+        
+        Returns
+        -------
+        Counts : list
+            Number of positive real roots of the drift matrix.
+        """
+
+        # get modes
+        Modes, _, T = self.get_modes_corrs_dynamics(solver_params, ode_func, get_ivc, ode_func_corrs)
+
+        # extract frequently used variables
+        _show_progress = solver_params.get('show_progress', False)
+        _range_min = solver_params.get('range_min', 0)
+        _range_max = solver_params.get('range_max', len(T))
+
+        # extract parameters
+        _, c = get_ivc()
+        params = c[4 * self.num_modes**2:]
+
+        # display initialization
+        if _show_progress:
+            logger.info('------------------Obtaining Counts-------------------\n')
+
+        # initialize counter
+        Counts = list()
+        # iterate for all times in given range
+        for i in range(_range_min, _range_max):
+            # update progress
+            progress = float(i - _range_min)/float(_range_max - _range_min - 1) * 100
+            # display progress
+            if _show_progress and int(progress * 1000) % 10 == 0:
+                logger.info('Computing ({module_name}): Progress = {progress:3.2f}'.format(module_name=__name__, progress=progress))
+            # drift matrix
+
+            A = get_A(Modes[i], params)
+            # indices of the RHC sequence
+            solver = RHCSolver(A)
+            _idxs = solver.get_indices()
+            # update counter
+            Counts.append(len(_idxs))
+
+        return Counts, T[_range_min:_range_max]
 
     def get_qcm(self, solver_params: dict, modes: list, corrs: list):
         """Method to obtain a particular measure of quantum correlations.

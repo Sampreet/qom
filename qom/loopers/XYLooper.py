@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.XYLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-05-12'
+__updated__ = '2021-05-21'
 
 # dependencies
 from typing import Union
@@ -84,7 +84,9 @@ class XYLooper(BaseLooper):
 
         # extract frequently used variables
         system_params = self.params['system']
-        ys = self.axes['Y']['val']
+        y_var = self.axes['Y']['var']
+        y_idx = self.axes['Y']['idx']
+        y_val = self.axes['Y']['val']
 
         # supersede looper parameters
         grad = self.params['looper'].get('grad', grad)
@@ -98,19 +100,23 @@ class XYLooper(BaseLooper):
         _vs = list()
 
         # iterate Y-axis values
-        for k in range(len(ys)):
+        for k in range(len(y_val)):
             # update progress
-            self.update_progress(k, len(ys))
+            self.update_progress(k, len(y_val))
 
             # update system parameter
-            system_params[self.axes['Y']['var']] = ys[k]
+            _val = y_val[k]
+            if y_idx is not None:
+                system_params[y_var][y_idx] = _val
+            else:
+                system_params[y_var] = _val
 
             # get X-axis values
             _temp_xs, _temp_vs = self.get_X_results(mode, grad)
 
             # upate lists
             _xs.append(_temp_xs)
-            _ys.append([ys[k]] * len(_temp_xs))
+            _ys.append([_val] * len(_temp_xs))
             _vs.append(_temp_vs)
 
         # update attributes

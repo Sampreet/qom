@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.XYZLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-28'
-__updated__ = '2021-05-12'
+__updated__ = '2021-05-21'
 
 # dependencies
 from typing import Union
@@ -85,9 +85,13 @@ class XYZLooper(BaseLooper):
 
         # extract frequently used variables
         system_params = self.params['system']
-        ys = self.axes['Y']['val']
-        zs = self.axes['Z']['val']
-        dim = len(ys) * len(zs)
+        y_var = self.axes['Y']['var']
+        z_var = self.axes['Z']['var']
+        y_idx = self.axes['Y']['idx']
+        z_idx = self.axes['Z']['idx']
+        y_val = self.axes['Y']['val']
+        z_val = self.axes['Z']['val']
+        dim = len(y_val) * len(z_val)
 
         # supersede looper parameters
         grad = self.params['looper'].get('grad', grad)
@@ -107,12 +111,18 @@ class XYZLooper(BaseLooper):
             self.update_progress(k, dim)
 
             # get values
-            _y = ys[int(k % len(ys))]
-            _z = zs[int(k / len(ys))]
+            _y = y_val[int(k % len(y_val))]
+            _z = z_val[int(k / len(y_val))]
 
             # update system parametes
-            system_params[self.axes['Y']['var']] = _y
-            system_params[self.axes['Z']['var']] = _z
+            if y_idx is not None:
+                system_params[y_var][y_idx] = _y
+            else:
+                system_params[y_var] = _y
+            if z_idx is not None:
+                system_params[z_var][z_idx] = _z
+            else:
+                system_params[z_var] = _z
 
             # get X-axis values
             _temp_xs, _temp_vs = self.get_X_results(mode, grad)
@@ -125,10 +135,10 @@ class XYZLooper(BaseLooper):
 
         # reshape results
         _, _x_dim = np.shape(_xs)
-        _xs = np.reshape(_xs, (len(zs), len(ys), _x_dim)).tolist()
-        _ys = np.reshape(_ys, (len(zs), len(ys), _x_dim)).tolist()
-        _zs = np.reshape(_zs, (len(zs), len(ys), _x_dim)).tolist()
-        _vs = np.reshape(_vs, (len(zs), len(ys), _x_dim)).tolist()
+        _xs = np.reshape(_xs, (len(z_val), len(y_val), _x_dim)).tolist()
+        _ys = np.reshape(_ys, (len(z_val), len(y_val), _x_dim)).tolist()
+        _zs = np.reshape(_zs, (len(z_val), len(y_val), _x_dim)).tolist()
+        _vs = np.reshape(_vs, (len(z_val), len(y_val), _x_dim)).tolist()
 
         # update attributes
         self.results = {}

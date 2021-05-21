@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.7.2 - 2021/05/21 - 00 - Added RHC Wrapper
+* Added support for parameter indexing in `qom/loopers` modules.
+* Added function to wrap RHCSolver in `qom/systems/BaseSystem` module.
+
 ## v0.7.1 - 2021/05/19 - 00 - Added ODE Wrapper
 * Minor fixes to handle constants in `qom/solvers` modules.
 * Added function to wrap ODEs in `qom/systems/BaseSystem` module.
