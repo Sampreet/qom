@@ -170,6 +170,11 @@ ROOT_DIR/
 │   │   ├───gui.py
 │   │   └───log.py
 │   │   
+│   ├───utils/
+│   │   ├───__init__.py
+│   │   ├───foo_bar.py
+│   │   └───...
+│   │   
 │   └───__init__.py
 |
 │───qom_tf/

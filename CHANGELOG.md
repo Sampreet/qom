@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.7.3 - 2021/05/25 - 00 - Added Looper Wrapper
+* Directory creation and minor fixes to `qom/loopers/BaseLooper`.
+* Minor fixes to `qom/systems/BaseSystem` an `qom/ui/axes/MultiAxis`.
+* Fixed figure overlap in `qom/ui/plotters/MPLPlotter`.
+* Added `wrap_looper` in `qom/utils/wrappers` to wrap `qom/loopers` classes.
+* Updated `README`.
+
 ## v0.7.2 - 2021/05/21 - 00 - Added RHC Wrapper
 * Added support for parameter indexing in `qom/loopers` modules.
 * Added function to wrap RHCSolver in `qom/systems/BaseSystem` module.

@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-05-21'
+__updated__ = '2021-05-25'
 
 # dependencies
 from typing import Union
@@ -19,10 +19,10 @@ import scipy.linalg as sl
 import scipy.optimize as so
 
 # qom modules
-from qom.solvers import HLESolver
-from qom.solvers import QCMSolver
-from qom.solvers import RHCSolver
-from qom.ui.plotters import MPLPlotter
+from ..solvers import HLESolver
+from ..solvers import QCMSolver
+from ..solvers import RHCSolver
+from ..ui.plotters import MPLPlotter
 
 # module logger
 logger = logging.getLogger(__name__)
@@ -857,6 +857,10 @@ class BaseSystem():
             _idxs = solver.get_indices()
             # update counter
             Counts.append(len(_idxs))
+
+        # display completion
+        if _show_progress:
+            logger.info('------------------Counts Obtained--------------------\n')
 
         return Counts, T[_range_min:_range_max]
 

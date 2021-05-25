@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2021-05-19'
+__updated__ = '2021-05-25'
 
 # dependencies
 from matplotlib.colors import LinearSegmentedColormap, Normalize
@@ -85,7 +85,7 @@ class MPLPlotter(BasePlotter):
         _cbar_position = self.params['cbar']['position']
 
         # initialize figure
-        _fig = plt.gcf()
+        _fig = plt.figure()
         self.mpl_spec = _fig.add_gridspec(ncols=3, nrows=3, width_ratios=[1, 8, 1], height_ratios=[1, 8, 1])
         # initialize and validate colorbar
         self.cbar = None
@@ -104,7 +104,7 @@ class MPLPlotter(BasePlotter):
         plt.rcParams['mathtext.fontset'] = _font_dicts['math']
 
         # update title
-        _mpl_axes.set_title(self.params['title'], fontdict=_font_dicts['label'], pad=12)
+        plt.title(self.params['title'], fontdict=_font_dicts['label'], pad=12)
 
         # udpate ticks
         plt.ticklabel_format(axis='both', style='plain')

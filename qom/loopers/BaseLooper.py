@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-05-21'
+__updated__ = '2021-05-25'
 
 # dependencies
 from decimal import Decimal
@@ -19,7 +19,7 @@ import numpy as np
 import threading
 
 # qom dependencies
-from qom.ui.plotters import MPLPlotter
+from ..ui.plotters import MPLPlotter
 
 # module logger
 logger = logging.getLogger(__name__)
@@ -212,10 +212,8 @@ class BaseLooper():
             # iterate
             for i in range(x_dim):
                 # update progress
-                progress = float(i)/float(x_dim - 1) * 100
-                # display progress
-                if show_progress and int(progress * 1000) % 10 == 0:
-                    logger.info('Calculating the values: Progress = {progress:3.2f}'.format(progress=progress))
+                if show_progress :
+                    self.update_progress(i, x_dim)
                 # calculate value
                 _val = x_val[i]
                 if x_idx is not None:
@@ -393,23 +391,6 @@ class BaseLooper():
 
         return thres
 
-    def update_progress(self, pos, dim):
-        """Method to update the progress of the calculation.
-        
-        Parameters
-        ----------
-        pos : int
-            Index of current iteration.
-        dim : int 
-            Total number of iterations.
-        """
-        
-        # calculate progress
-        progress = float(pos) / float(dim - 1) * 100
-        # display progress
-        if int(progress * 1000) % 10 == 0:
-            logger.info('Calculating the values: Progress = {progress:3.2f}'.format(progress=progress))
-
     def plot_results(self, width: float=5.0, height: float=5.0):
         """Method to plot the results.
         
@@ -469,40 +450,72 @@ class BaseLooper():
         """
 
         # initialize variables
-        X = self.params['looper']['X']
+        X = self.axes['X']
         Y = None
         Z = None
         # complete filename
-        for key in X:
-            file_path += '_' + str(X[key])
+        for key in self.params['looper']['X']:
+            file_path += '_' + str(self.params['looper']['X'][key])
         # update for XYLooper
         if 'XY' in self.code:
-            Y = self.params['looper']['Y']
-            for key in Y:
-                file_path += '_' + str(Y[key])
+            Y = self.axes['Y']
+            for key in self.params['looper']['Y']:
+                file_path += '_' + str(self.params['looper']['Y'][key])
         # update for XYZLooper
         if 'XYZ' in self.code:
-            Z = self.params['looper']['Z']
-            for key in Z:
-                file_path += '_' + str(Z[key])
+            Z = self.axes['Z']
+            for key in self.params['looper']['Z']:
+                file_path += '_' + str(self.params['looper']['Z'][key])
 
         # attempt to load results if exists
         if os.path.isfile(file_path + '.npz'):
             self.results = {
-                'X': X,
-                'Y': Y,
-                'Z': Z,
+                'X': X['val'],
+                'Y': Y['val'] if Y is not None else None,
+                'Z': Z['val'] if Z is not None else None,
                 'V': np.load(file_path + '.npz')['arr_0'].tolist()
             }
+            
+            # display completion
             logger.info('------------------Results Loaded---------------------\t\n')
         # loop and save results
         else:
             self.loop()
+
+            # create directories
+            file_dir = file_path[:len(file_path) - len(file_path.split('/')[-1])]
+            try:
+                os.makedirs(file_dir)
+            except FileExistsError:
+                # update log
+                logger.debug('Directory {dir_name} already exists\n'.format(dir_name=file_dir))
+
+            # save data
             np.savez_compressed(file_path, np.array(self.results['V']))
+            
+            # display completion
+            logger.info('------------------Results Saved----------------------\t\n')
             
         # plot results
         if plot:
             self.plot_results(width, height)
 
         return self
+
+    def update_progress(self, pos, dim):
+        """Method to update the progress of the calculation.
+        
+        Parameters
+        ----------
+        pos : int
+            Index of current iteration.
+        dim : int 
+            Total number of iterations.
+        """
+        
+        # calculate progress
+        progress = float(pos) / float(dim - 1) * 100
+        # display progress
+        if int(progress * 1000) % 10 == 0:
+            logger.info('Calculating the values: Progress = {progress:3.2f}'.format(progress=progress))
 
