@@ -11,6 +11,7 @@ Subpackages
    qom.solvers
    qom.systems
    qom.ui
+   qom.utils
 
 Module contents
 ---------------

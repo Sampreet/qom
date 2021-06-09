@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.7.3 - 2021/06/09 - 00 - Updated README
+* Updated documentation.
+* Added `_config.yml` for GitHub pages configuration.
+* Added `CONTRIBUTING`.
+* Updated `README`.
+
 ## v0.7.3 - 2021/06/01 - 00 - Fixed System Import
 * Fixed initialization import of `qom/systems/BaseSystem` module.
 

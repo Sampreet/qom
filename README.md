@@ -1,13 +1,47 @@
 # The Quantum Optomechanics Toolbox
 
+![Code Size](https://img.shields.io/github/repo-size/sampreet/qom?style=for-the-badge)
+![Last Commit](https://img.shields.io/github/last-commit/sampreet/qom?style=for-the-badge)
+
 > A library of modules for computational quantum optomechanics!
 
-## Key Features
+The Quantum Optomechanics Toolbox (packaged as `qom`) is a wrapper-styled, scalable toolbox featuring multiple modules for the calculation of stationary as well as dynamical properties of many-body quantum optomechanical systems.
+Its inheritable system classes can also be used to study other systems that follow the optomechanical model.
+Backed by numerical libraries like NumPy, Python and TensorFlow, and featuring the highly customizable visualizations offered by Matplotlib and Plotly APIs, the toolbox aims to serve as an easy-to-use alternative to writing code explicitly and avoiding repetitive exercises for presentable visuals.
 
-* Automatically managed loops and parameter validation modules.
-* Solver modules to calculate classical and quantum signatures.
-* Inheritable optomechanical systems supporting callable properties.
-* Configurable visualizations without the need for explicit plotting.
+## Features
+
+The key features of the package are
+
+* automatically managed loops and parameter validation modules,
+* solver modules to calculate classical and quantum signatures,
+* inheritable optomechanical systems supporting callable properties, and
+* configurable visualizations without the need for explicit plotting.
+
+Currently, the following works are in progress for `v0.8`:
+
+- [ ] Support for Delay Differential Equations (DDEs)
+- [ ] GUI module to run templated scripts
+- [ ] Examples and documentation updates
+
+## Installation
+
+### Dependencies
+
+The project requires `Python 3.7+` installed, preferably via the [Anaconda distribution](https://www.anaconda.com/products/individual).
+
+*Some modules also use tensor-based calculations with the CPU/GPU libraries of `TensorFlow`, an installation guide for which can be found in [Anaconda's  Documentation](https://docs.anaconda.com/anaconda/user-guide/tasks/tensorflow/).*
+
+### Installing via `pip`
+
+To install the package, download the repository as `.zip` and extract the contents.
+Now, execute the following from *outside* the top-level directory, `ROOT_DIR`, inside which `setup.py` is located:
+
+```bash
+pip install ROOT_DIR
+```
+
+Once the package is installed, its modules can be imported.
 
 ## Basic Usage
 
@@ -73,8 +107,7 @@ The complete example can be found in the [`SOSMSystem Example`](./examples/qom_s
 
 ### UI
 
-#### Plotters
-
+User-interface modules like `qom.ui.log` and `qom.ui.gui` provide console as well as graphical features to keep track of parameters and progress.
 Plotters wrap independent packages of Python under an equivalent syntax. 
 An implementation of `qom.ui.plotters.MPLPlotter` wrapping `matplotlib` is given below:
 
@@ -100,108 +133,9 @@ plotter = MPLPlotter(axes, params['plotter'])
 plotter.show(True)
 ```
 
-## Development
+### Utils
 
-### Dependencies
+Utility functions provide an extra layer of ease over the other modules.
+For example, the `qom.utils.wrappers` module contain various functions that wrap loopers and systems, together with an option to use plotter modules to visualize the results trimming several lines of code.
 
-The project requires `Python 3.7+` installed, preferably via the [Anaconda distribution](https://www.anaconda.com/products/individual).
-
-*Some modules also use tensor-based calculations with the CPU/GPU libraries of `TensorFlow`, an installation guide for which can be found in [Anaconda's  Documentation](https://docs.anaconda.com/anaconda/user-guide/tasks/tensorflow/).*
-
-### Structure of the Repository
-
-```
-ROOT_DIR/
-|
-│───docs/
-│   ├───source/
-│   │   ├───conf.py
-│   │   ├───foobar.rst
-│   │   └───...
-│   │   
-│   ├───make.bat
-│   └───Makefile
-|
-│───examples/
-│   ├───foo_bar.ipynb
-│   └───...
-|
-│───qom/
-│   ├───loopers/
-│   │   ├───__init__.py
-│   │   ├───FooBarLooper.py
-│   │   └───...
-│   │   
-│   ├───solvers/
-│   │   ├───__init__.py
-│   │   ├───FooBarSolver.py
-│   │   └───...
-│   │   
-│   ├───systems/
-│   │   ├───__init__.py
-│   │   ├───FooBarSystem.py
-│   │   └───...
-│   │   
-│   ├───ui/
-│   │   ├───axes/
-│   │   │   ├───__init__.py
-│   │   │   ├───FooBarAxis.py
-│   │   │   └───...
-│   │   │
-│   │   ├───plotters/
-│   │   │   ├───__init__.py
-│   │   │   ├───FooBarPlotter.py
-│   │   │   └───...
-│   │   │
-│   │   ├───widgets/
-│   │   │   ├───icons/
-│   │   │   │   ├───foo_bar.png
-│   │   │   │   └───...
-│   │   │   │
-│   │   │   ├───stylesheets/
-│   │   │   │   ├───foo_bar.ss
-│   │   │   │   └───...
-│   │   │   │
-│   │   │   ├───__init__.py
-│   │   │   ├───FooBarWidget.py
-│   │   │   └───...
-│   │   │
-│   │   ├───__init__.py
-│   │   ├───gui.py
-│   │   └───log.py
-│   │   
-│   ├───utils/
-│   │   ├───__init__.py
-│   │   ├───foo_bar.py
-│   │   └───...
-│   │   
-│   └───__init__.py
-|
-│───qom_tf/
-│   └───...
-│
-├───.gitignore
-├───CHANGELOG.md
-├───MANIFEST.in
-├───README.md
-├───requirements.txt
-└───setup.py
-```
-
-### Installing in Editable Mode
-
-To install the package in editable mode, execute the following from *outside* the top-level directory, `ROOT_DIR`, inside which `setup.py` is located:
-
-```bash
-pip install -e ROOT_DIR
-```
-
-### Building the Documentation
-
-To auto-generate and build the API documentation, navigate to the `ROOT_DIR/docs` folder and execute:
-
-```bash
-sphinx-apidoc -o source ../qom
-make html
-```
-
+A complete API documentation can be found [here](https://sampreet.github.io/qom).

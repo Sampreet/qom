@@ -9,6 +9,7 @@ Subpackages
 
    qom.ui.axes
    qom.ui.plotters
+   qom.ui.widgets
 
 Submodules
 ----------
