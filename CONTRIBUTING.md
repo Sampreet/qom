@@ -1,5 +1,7 @@
 # Contributing to The Quantum Optomechanics Toolbox
 
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg?style=for-the-badge)](./code_of_conduct.md)
+
 Feel free to contribute to the code by forking this repository in your profile.
 All pull requests from subsequent branches will be reviewed.
 If you encountered any bugs while using the package, kindly report them in the [issues](https://github.com/Sampreet/qom/issues) page.
@@ -14,7 +16,7 @@ The repository follows the following template:
 ```
 ROOT_DIR/
 |
-│───docs/
+├───docs/
 │   ├───source/
 │   │   ├───conf.py
 │   │   ├───foobar.rst
@@ -23,11 +25,11 @@ ROOT_DIR/
 │   ├───make.bat
 │   └───Makefile
 |
-│───examples/
+├───examples/
 │   ├───foo_bar.ipynb
 │   └───...
 |
-│───qom/
+├───qom/
 │   ├───loopers/
 │   │   ├───__init__.py
 │   │   ├───FooBarLooper.py
@@ -78,12 +80,14 @@ ROOT_DIR/
 │   │   
 │   └───__init__.py
 |
-│───qom_tf/
+├───tests/
+│   ├───foo_bar.py
 │   └───...
 │
 ├───.gitignore
 ├───_config.yml
 ├───CHANGELOG.md
+├───CODE_OF_CONDUCT.md
 ├───CONTRIBUTING.md
 ├───MANIFEST.in
 ├───README.md

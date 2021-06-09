@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.7.3 - 2021/06/10 - 01 - Removed TF Modules
+* Updated documentation configuration in `docs`.
+* Removed `qom_tf` package.
+* Added `CODE_OF_CONDUCT` for GitHub pages configuration.
+* Updated `CONTRIBUTING`.
+* Updated `README`.
+* Removed TensorFlow dependencies from `requirements`.
+
 ## v0.7.3 - 2021/06/09 - 00 - Updated README
 * Updated documentation.
 * Added `_config.yml` for GitHub pages configuration.

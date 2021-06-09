@@ -4,7 +4,3 @@ numpy>=1.10
 scipy>=1.0
 seaborn>=0.10
 setuptools>=40.0
-
-# qom_tf
-tensorflow>=2.0
-tensorflow-probability>=1.0

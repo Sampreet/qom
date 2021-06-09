@@ -3,34 +3,35 @@
 ![Code Size](https://img.shields.io/github/repo-size/sampreet/qom?style=for-the-badge)
 ![Last Commit](https://img.shields.io/github/last-commit/sampreet/qom?style=for-the-badge)
 
+![Open Issues](https://img.shields.io/github/issues-raw/sampreet/qom?style=flat-square)
+![Closed Issues](https://img.shields.io/github/issues-closed-raw/sampreet/qom?style=flat-square)
+![Milestone](https://img.shields.io/github/milestones/progress/sampreet/qom/1?style=flat-square)
+
 > A library of modules for computational quantum optomechanics!
 
 The Quantum Optomechanics Toolbox (packaged as `qom`) is a wrapper-styled, scalable toolbox featuring multiple modules for the calculation of stationary as well as dynamical properties of many-body quantum optomechanical systems.
 Its inheritable system classes can also be used to study other systems that follow the optomechanical model.
-Backed by numerical libraries like NumPy, Python and TensorFlow, and featuring the highly customizable visualizations offered by Matplotlib and Plotly APIs, the toolbox aims to serve as an easy-to-use alternative to writing code explicitly and avoiding repetitive exercises for presentable visuals.
+Backed by numerical libraries like NumPy and SciPy, and featuring the highly customizable visualizations offered by Matplotlib and Seaborn APIs, the toolbox aims to serve as an easy-to-use alternative to writing code explicitly and avoiding repetitive exercises for presentable visuals.
 
-## Features
+### Key Features!
 
-The key features of the package are
+* Automatically managed loops and parameter validation modules.
+* Solver modules to calculate classical and quantum signatures.
+* Inheritable optomechanical systems supporting callable properties.
+* Configurable visualizations without the need for explicit plotting.
 
-* automatically managed loops and parameter validation modules,
-* solver modules to calculate classical and quantum signatures,
-* inheritable optomechanical systems supporting callable properties, and
-* configurable visualizations without the need for explicit plotting.
+### Up Next!
 
-Currently, the following works are in progress for `v0.8`:
-
-- [ ] Support for Delay Differential Equations (DDEs)
+- [ ] Support for Delay Differential Equations
 - [ ] GUI module to run templated scripts
-- [ ] Examples and documentation updates
+- [ ] Multithreaded looping
+- [ ] Project website
 
 ## Installation
 
 ### Dependencies
 
 The project requires `Python 3.7+` installed, preferably via the [Anaconda distribution](https://www.anaconda.com/products/individual).
-
-*Some modules also use tensor-based calculations with the CPU/GPU libraries of `TensorFlow`, an installation guide for which can be found in [Anaconda's  Documentation](https://docs.anaconda.com/anaconda/user-guide/tasks/tensorflow/).*
 
 ### Installing via `pip`
 
@@ -66,7 +67,7 @@ thres = looper.get_thresholds()
 ```
 
 Here, `func` is a function containing the steps of each iteration and `params` is a dictionary containing the parameters required for the looper, solver, system and plotter. 
-The complete example can be found in the [`XLooper Example`](./examples/qom_loopers_XLooper.ipynb) notebook.
+The complete example can be found in the [XLooper notebook](./examples/qom_loopers_XLooper.ipynb).
 
 ### Solvers
 
@@ -86,7 +87,7 @@ corrs = solver.get_Corrs(num_modes)
 ```
 
 Here, `solver_params` is a dictionary containing the parameters required by `HLESolver`, `ode_func` is a function returning the rates of the modes and correlations, `iv` are their initial values and `num_modes` are the number of modes of the system.
-The complete example can be found in the [`HLESolver Example`](./examples/qom_solvers_HLESolver.ipynb) notebook.
+The complete example can be found in the [HLESolver notebook](./examples/qom_solvers_HLESolver.ipynb).
 
 
 ### Systems
@@ -103,7 +104,7 @@ N_o = system.get_mean_optical_occupancy(system.params['lambda_l'], system.params
 ```
 
 Here, `MySystem` is a class inheriting `SOSMSystem`, initialized by `system_params`, which is a dictionary containing the parameters of the system.
-The complete example can be found in the [`SOSMSystem Example`](./examples/qom_systems_SOSMSystem.ipynb) notebook.
+The complete example can be found in the [SOSMSystem notebook](./examples/qom_systems_SOSMSystem.ipynb).
 
 ### UI
 
@@ -138,4 +139,9 @@ plotter.show(True)
 Utility functions provide an extra layer of ease over the other modules.
 For example, the `qom.utils.wrappers` module contain various functions that wrap loopers and systems, together with an option to use plotter modules to visualize the results trimming several lines of code.
 
-A complete API documentation can be found [here](https://sampreet.github.io/qom).
+A complete API documentation is available in the [official website](https://sampreet.github.io/qom).
+
+## Contributing
+
+If you want to contribute to The Quantum Optomechanics Toolbox, check out the [contribution guidelines](./CONTRIBUTING.md).
+Also, make sure you adhere to the [code of conduct](./CODE_OF_CONDUCT.md).
