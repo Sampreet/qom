@@ -1,6 +1,7 @@
 # qom
-matplotlib>=3.0
-numpy>=1.10
-scipy>=1.0
-seaborn>=0.10
-setuptools>=40.0
+matplotlib>=3.3
+numpy>=1.19
+pyqt5>=5.9
+scipy>=1.5
+seaborn>=0.11
+sympy>=1.6

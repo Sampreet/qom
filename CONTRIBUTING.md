@@ -1,6 +1,6 @@
 # Contributing to The Quantum Optomechanics Toolbox
 
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg?style=for-the-badge)](./code_of_conduct.md)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-1.2-4baaaa.svg?style=for-the-badge)](./CODE_OF_CONDUCT.md)
 
 Feel free to contribute to the code by forking this repository in your profile.
 All pull requests from subsequent branches will be reviewed.
@@ -84,14 +84,17 @@ ROOT_DIR/
 │   ├───foo_bar.py
 │   └───...
 │
-├───.gitignore
 ├───_config.yml
+├───.gitignore
 ├───CHANGELOG.md
 ├───CODE_OF_CONDUCT.md
 ├───CONTRIBUTING.md
+├───LICENSE
 ├───MANIFEST.in
+├───pyproject.toml
 ├───README.md
 ├───requirements.txt
+├───setup.cfg
 └───setup.py
 ```
 

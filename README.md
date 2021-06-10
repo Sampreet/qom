@@ -31,15 +31,23 @@ Backed by numerical libraries like NumPy and SciPy, and featuring the highly cus
 
 ### Dependencies
 
-The project requires `Python 3.7+` installed, preferably via the [Anaconda distribution](https://www.anaconda.com/products/individual).
+The project requires `Python 3.8+` installed, preferably via the [Anaconda distribution](https://www.anaconda.com/products/individual).
 
-### Installing via `pip`
+### Installing from PyPI
 
-To install the package, download the repository as `.zip` and extract the contents.
+To install the package and its requirements from the Python Package Index, execute: 
+
+```bash
+pip install -i https://test.pypi.org/simple/ qom
+```
+
+### Installing Locally
+
+To install the package locally, download the repository as `.zip` and extract the contents.
 Now, execute the following from *outside* the top-level directory, `ROOT_DIR`, inside which `setup.py` is located:
 
 ```bash
-pip install ROOT_DIR
+pip install -e ROOT_DIR
 ```
 
 Once the package is installed, its modules can be imported.

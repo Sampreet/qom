@@ -1,6 +1,12 @@
 # Changelog
 
-## v0.7.3 - 2021/06/10 - 01 - Removed TF Modules
+## v0.7.5 - 2021/06/10 - 00 - PyPI Packaging
+* Updated link to `CODE_OF_CONDUCT` in `CONTRIBUTING`.
+* Added `LICENSE` for BSD licensing.
+* Updated `requirements` and `setup`.
+* Updated `README`.
+
+## v0.7.3 - 2021/06/09 - 01 - Removed TF Modules
 * Updated documentation configuration in `docs`.
 * Removed `qom_tf` package.
 * Added `CODE_OF_CONDUCT` for GitHub pages configuration.
