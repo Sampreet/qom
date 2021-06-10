@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.7.5 - 2021/06/10 - 01 - Removed GitHub Pages
+* Removed `_config.yml` files.
+
 ## v0.7.5 - 2021/06/10 - 00 - PyPI Packaging
 * Updated link to `CODE_OF_CONDUCT` in `CONTRIBUTING`.
 * Added `LICENSE` for BSD licensing.
