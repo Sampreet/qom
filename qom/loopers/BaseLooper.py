@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-05-25'
+__updated__ = '2021-07-01'
 
 # dependencies
 from decimal import Decimal
@@ -31,7 +31,6 @@ t_position = Union[str, int, float, np.float32, np.float64]
 # TODO: Fix `get_multiprocessed_results`.
 # TODO: Handle multi-valued points for gradients in `get_X_results`.
 # TODO: Handle monotonic modes in `get_index`.
-# TODO: Add `get_thresholds`.
 # TODO: Handle exceptions in `plot_results`.
 
 class BaseLooper():
@@ -166,6 +165,155 @@ class BaseLooper():
             _val = _val.tolist()
             # update axis
             self.axes[axis]['val'] = _val
+
+    def get_index(self, axis_values: list, calc_values: list=None, position: t_position='mean', mono_idx: int=0):
+        """Function to calculate the index of a particular position in a list.
+        
+        Parameters
+        ----------
+        axis_values : list
+            Values of the axis.
+        calc_values : list, optional
+            Values of the calculation.
+        position: str or float, optional
+            A value denoting the position or a mode to calculate the position. For a mode other than 'mean', the `mono_idx` parameter should be filled. The different modes can be:
+                'mean': Mean of the axis values.
+                'mono_mean': Mean of the monotonic patches in calculated values.
+                'mono_min': Local minima of the monotonic patches.
+                'mono_max': Local maxima of the monotonic patches.
+        mono_idx: int, optional
+            Index of the monotonic patch.
+
+        Returns
+        -------
+        idx : list
+            Indices of the required positions.
+        """
+        
+        # fixed position
+        if not type(position) is str:
+            idx = abs(np.asarray(axis_values) - position).argmin()
+        # mean mode
+        elif position == 'mean':
+            idx = abs(np.asarray(axis_values) - np.mean(axis_values)).argmin()
+        # monotonic modes
+        else:
+            idx = 0
+
+        return idx
+
+    def get_multiprocessed_results(self, var, val):
+        """Method to obtain results of multiprocessed execution of a given function. (*Under construction.*)
+
+        Parameters
+        ----------
+        var : str
+            Name of the variable.
+        val : list
+            Values of the variable.
+        """
+
+        # extract frequently used variables
+        system_params = self.params['system']
+        dim = len(val)
+
+        # initialize axes
+        results = list()
+        pool = multiprocessing.Pool(processes=4)
+
+        # start all threads
+        for i in range(dim):            
+            # udpate a deep copy
+            _system_params = copy.deepcopy(system_params)
+            _system_params[var] = val[i]
+            # obtain results using multiprocessing pool
+            results.append(pool.apply(self.func, args=(_system_params, val[i], logger, results)))
+
+        # sort results by first entry
+        results = sorted(results)
+
+        return results
+
+    def get_multithreaded_results(self, var, val):
+        """Method to obtain results of multithreaded execution of a given function.
+
+        Parameters
+        ----------
+        var : str
+            Name of the variable.
+        val : list
+            Values of the variable.
+        """
+
+        # extract frequently used variables
+        system_params = self.params['system']
+        dim = len(val)
+
+        # initialize axes
+        results = list()
+        threads = list()
+
+        # start all threads
+        for i in range(dim):            
+            # udpate a deep copy
+            _system_params = copy.deepcopy(system_params)
+            _system_params[var] = val[i]
+            # create thread and pass parameters to function
+            _thread = threading.Thread(target=self.func, args=(_system_params, val[i], logger, results, ))
+            threads.append(_thread)
+            # start thread
+            _thread.start()
+        
+        # join all threads
+        main_thread = threading.main_thread()
+        for _thread in threading.enumerate():
+            if _thread is not main_thread:
+                _thread.join()
+
+        # sort results by first entry
+        results = sorted(results)
+
+        return results
+
+    def get_thresholds(self, thres_mode='minmax'):
+        """Method to calculate the threshold values for the results.
+
+        Parameters
+        ----------
+        thres_mode : str
+            Mode of calculation of threshold values. Options are:
+                'minmax' : Minimum value at which maximum is reached.
+                'minmin' : Minimum value at which minimum is reached.
+        
+        Returns
+        -------
+        thres : dict
+            Threshold values.
+        """
+
+        # mode selector
+        _selector = {
+            'minmax': np.argmax,
+            'minmin': np.argmin
+        }
+
+        # initialize
+        thres = {}
+
+        # XLooper
+        if self.code == 'XLooper':
+            _index = _selector[thres_mode](self.results['V'])
+            thres['X'] = self.axes['X']['val'][_index]
+            thres['V'] = self.results['V'][_index]
+        # XYLooper
+        if self.code == 'XYLooper':
+            _x_dim = len(self.axes['X']['val'])
+            _index = _selector[thres_mode](self.results['V'])
+            thres['X'] = self.axes['X']['val'][_index % _x_dim]
+            thres['Y'] = self.axes['Y']['val'][int(_index / _x_dim)]
+            thres['V'] = self.results['V'][int(_index / _x_dim)][_index % _x_dim]
+
+        return thres
     
     def get_X_results(self, mode: str='serial', grad: bool=False):
         """Method to obtain results for variation in X-axis.
@@ -189,13 +337,11 @@ class BaseLooper():
         """
 
         # extract frequently used variables
-        system_params = self.params['system']
+        system_params = copy.deepcopy(self.params['system'])
         looper_mode = self.params['looper'].get('mode', mode)
         show_progress = self.params['looper'].get('show_progress', False)
         x_var = self.axes['X']['var']
-        x_idx = None
-        if type(system_params[x_var]) is list:
-            x_idx = self.axes['X']['idx']
+        x_idx = self.axes['X']['idx']
         x_val = self.axes['X']['val']
         x_dim = len(x_val)
 
@@ -242,154 +388,6 @@ class BaseLooper():
             vs = np.gradient(vs, xs)
 
         return xs, vs
-
-    def get_multithreaded_results(self, var, val):
-        """Method to obtain results of multithreaded execution of a given function.
-
-        Parameters
-        ----------
-        var : str
-            Name of the variable.
-        val : list
-            Values of the variable.
-        """
-
-        # extract frequently used variables
-        system_params = self.params['system']
-        dim = len(val)
-
-        # initialize axes
-        results = list()
-        threads = list()
-
-        # start all threads
-        for i in range(dim):            
-            # udpate a deep copy
-            _system_params = copy.deepcopy(system_params)
-            _system_params[var] = val[i]
-            # create thread and pass parameters to function
-            _thread = threading.Thread(target=self.func, args=(_system_params, val[i], logger, results, ))
-            threads.append(_thread)
-            # start thread
-            _thread.start()
-        
-        # join all threads
-        main_thread = threading.main_thread()
-        for _thread in threading.enumerate():
-            if _thread is not main_thread:
-                _thread.join()
-
-        # sort results by first entry
-        results = sorted(results)
-
-        return results
-
-    def get_multiprocessed_results(self, var, val):
-        """Method to obtain results of multiprocessed execution of a given function. (*Under construction.*)
-
-        Parameters
-        ----------
-        var : str
-            Name of the variable.
-        val : list
-            Values of the variable.
-        """
-
-        # extract frequently used variables
-        system_params = self.params['system']
-        dim = len(val)
-
-        # initialize axes
-        results = list()
-        pool = multiprocessing.Pool(processes=4)
-
-        # start all threads
-        for i in range(dim):            
-            # udpate a deep copy
-            _system_params = copy.deepcopy(system_params)
-            _system_params[var] = val[i]
-            # obtain results using multiprocessing pool
-            results.append(pool.apply(self.func, args=(_system_params, val[i], logger, results)))
-
-        # sort results by first entry
-        results = sorted(results)
-
-        return results
-
-    def get_index(self, axis_values: list, calc_values: list=None, position: t_position='mean', mono_idx: int=0):
-        """Function to calculate the index of a particular position in a list.
-        
-        Parameters
-        ----------
-        axis_values : list
-            Values of the axis.
-        calc_values : list, optional
-            Values of the calculation.
-        position: str or float, optional
-            A value denoting the position or a mode to calculate the position. For a mode other than 'mean', the `mono_idx` parameter should be filled. The different modes can be:
-                'mean': Mean of the axis values.
-                'mono_mean': Mean of the monotonic patches in calculated values.
-                'mono_min': Local minima of the monotonic patches.
-                'mono_max': Local maxima of the monotonic patches.
-        mono_idx: int, optional
-            Index of the monotonic patch.
-
-        Returns
-        -------
-        idx : list
-            Indices of the required positions.
-        """
-        
-        # fixed position
-        if not type(position) is str:
-            idx = abs(np.asarray(axis_values) - position).argmin()
-        # mean mode
-        elif position == 'mean':
-            idx = abs(np.asarray(axis_values) - np.mean(axis_values)).argmin()
-        # monotonic modes
-        else:
-            idx = 0
-
-        return idx
-
-    def get_thresholds(self, thres_mode='minmax'):
-        """Method to calculate the threshold values for the results.
-
-        Parameters
-        ----------
-        thres_mode : str
-            Mode of calculation of threshold values. Options are:
-                'minmax' : Minimum value at which maximum is reached.
-        
-        Returns
-        -------
-        thres : dict
-            Threshold values.
-        """
-
-        # mode selector
-        _selector = {
-            'minmax': np.argmax,
-            'minmin': np.argmin
-        }
-
-        # initialize
-        thres = {}
-
-        # XLooper
-        if self.code == 'XLooper':
-            _index = _selector[thres_mode](self.results['V'])
-            thres['X'] = self.axes['X']['val'][_index]
-            thres['V'] = self.results['V'][_index]
-        # XYLooper
-        if self.code == 'XYLooper':
-            _x_dim = len(self.axes['X']['val'])
-            _index = _selector[thres_mode](self.results['V'])
-            thres['X'] = self.axes['X']['val'][_index % _x_dim]
-            thres['Y'] = self.axes['Y']['val'][int(_index / _x_dim)]
-            thres['V'] = self.results['V'][int(_index / _x_dim)][_index % _x_dim]
-
-        return thres
 
     def plot_results(self, width: float=5.0, height: float=5.0):
         """Method to plot the results.
@@ -453,15 +451,18 @@ class BaseLooper():
         X = self.axes['X']
         Y = None
         Z = None
-        # complete filename
+        # complete filename with system parameters
+        for key in self.params['system']:
+            file_path += '_' + str(self.params['system'][key])
+        # update for XLooper variable
         for key in self.params['looper']['X']:
             file_path += '_' + str(self.params['looper']['X'][key])
-        # update for XYLooper
+        # update for XYLooper variable
         if 'XY' in self.code:
             Y = self.axes['Y']
             for key in self.params['looper']['Y']:
                 file_path += '_' + str(self.params['looper']['Y'][key])
-        # update for XYZLooper
+        # update for XYZLooper variable
         if 'XYZ' in self.code:
             Z = self.axes['Z']
             for key in self.params['looper']['Z']:

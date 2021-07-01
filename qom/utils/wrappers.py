@@ -6,7 +6,7 @@
 __name__    = 'qom.utils.wrappers'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-05-25'
-__updated__ = '2021-05-25'
+__updated__ = '2021-06-25'
 
 # dependencies
 import numpy as np
@@ -28,6 +28,7 @@ def wrap_looper(SystemClass, params, func_name, looper_name, file_path, plot=Fal
         Name of the function to loop. Available functions are:
             'max_eigenvalue': Maximum eigenvalue of the drift matrix.
             'measure_average': Average measure (fallback).
+            'measure_dynamics': Dynamics of measure.
             'measure_pearson': Pearson synchronization measure.
     looper_name : str
         Name of the looper. Available loopers are:
@@ -55,24 +56,6 @@ def wrap_looper(SystemClass, params, func_name, looper_name, file_path, plot=Fal
     # initialize system
     system = SystemClass(params['system'])
 
-    # function to calculate average measure
-    def func_measure_average(system_params, val, logger, results):
-        # update parameters
-        system.params = system_params
-        # get average measure
-        M_avg = system.get_measure_average(params['solver'], system.ode_func, system.get_ivc)
-        # update results
-        results.append((val, M_avg))
-
-    # function to calculate Pearson synchronization
-    def func_measure_pearson(system_params, val, logger, results):
-        # update parameters
-        system.params = system_params
-        # get measure
-        m = system.get_measure_pearson(params['solver'], system.ode_func, system.get_ivc)
-        # update results
-        results.append((val, m))
-
     # function to calculate maximum eigenvalue of the drift matrix
     def func_max_eigenvalue(system_params, val, logger, results):
         # update parameters
@@ -86,11 +69,40 @@ def wrap_looper(SystemClass, params, func_name, looper_name, file_path, plot=Fal
         # update results
         results.append((val, eig_max))
 
+    # function to calculate average measure
+    def func_measure_average(system_params, val, logger, results):
+        # update parameters
+        system.params = system_params
+        # get average measure
+        M_avg = system.get_measure_average(params['solver'], system.ode_func, system.get_ivc)
+        # update results
+        results.append((val, M_avg))
+
+    # function to calculate measure dynamics
+    def func_measure_dynamics(system_params, val, logger, results):
+        # update parameters
+        system.params = system_params
+        # get measure dynamics
+        M, T = system.get_measure_dynamics(params['solver'], system.ode_func, system.get_ivc)
+        # update results
+        results.append((val, [M]))
+
+    # function to calculate Pearson synchronization
+    def func_measure_pearson(system_params, val, logger, results):
+        # update parameters
+        system.params = system_params
+        # get measure
+        m = system.get_measure_pearson(params['solver'], system.ode_func, system.get_ivc)
+        # update results
+        results.append((val, m))
+
     # select function
-    if func_name == 'measure_pearson':
-        func = func_measure_pearson
-    elif func_name == 'max_eigenvalue':
+    if func_name == 'max_eigenvalue':
         func = func_max_eigenvalue
+    elif func_name == 'measure_dynamics':
+        func = func_measure_dynamics
+    elif func_name == 'measure_pearson':
+        func = func_measure_pearson
     else:
         func = func_measure_average
 

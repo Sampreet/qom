@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.7.6 - 2021/07/01 - 00 - Updated Loopers
+* Updated `examples` for updated loopers.
+* Updated `qom/loopers`:
+    * Minor fixes to cached filename and rearrangement in `BaseLooper` module.
+    * Added deep copy of parameters in `XYLooper` and `XYZLooper` modules.
+* Rearranged methods in `qom/solvers/ODESolver` module.
+* Updated drift matrix template in `qom/systems/BaseSystem` module.
+* Fixed milti-instance logging in `qom/ui/log` module.
+* Added dynamics wrapper in `qom/utils/wrappers` module.
+* Updated `setup` and `README`.
+
 ## v0.7.5 - 2021/06/10 - 01 - Removed GitHub Pages
 * Removed `_config.yml` files.
 

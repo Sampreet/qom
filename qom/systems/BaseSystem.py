@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-05-25'
+__updated__ = '2021-06-25'
 
 # dependencies
 from typing import Union
@@ -928,7 +928,7 @@ class BaseSystem():
         mode_rates  = self.get_mode_rates(modes, params, t)
 
         # drift matrix
-        A = self.get_A(modes, params)
+        A = self.get_A(modes, params, t)
 
         # quadrature correlation rate equation
         dcorrs_dt = A.dot(corrs) + corrs.dot(np.transpose(A)) + D

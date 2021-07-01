@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.log'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-02-05'
-__updated__ = '2021-01-01'
+__updated__ = '2021-07-01'
 
 # dependencies
 import datetime as dt
@@ -33,15 +33,18 @@ def init_log(log_format='full', debug=False):
 
     # get logger
     main_logger = logging.getLogger('qom')
-    main_logger.setLevel(logging.INFO)
-    if debug:
-        main_logger.setLevel(logging.DEBUG)
-    logging.captureWarnings(True)
 
-    # set stream handler
-    formatter = get_formatter(log_format)
-    handler = get_handler(formatter)
-    main_logger.addHandler(handler)
+    # if logger instance does not exist
+    if not main_logger.hasHandlers():
+        main_logger.setLevel(logging.INFO)
+        if debug:
+            main_logger.setLevel(logging.DEBUG)
+        logging.captureWarnings(True)
+
+        # set stream handler
+        formatter = get_formatter(log_format)
+        handler = get_handler(formatter)
+        main_logger.addHandler(handler)
 
     # test
     logger.info('------------------------------Logger Initialized-----------------\n')

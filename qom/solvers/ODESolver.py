@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.ODESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-05-19'
+__updated__ = '2021-07-01'
 
 # dependencies
 from typing import Union
@@ -164,41 +164,6 @@ class ODESolver():
             else:
                 self.method = 'RK45'
 
-    def step(self, t_e, t_s=0):
-        """Method to perform one step of the integration.
-
-        Parameters
-        ----------
-        t_e : float
-            Ending point of the integration.
-        t_s : float, optional
-            Starting point of the integration.
-
-        Returns
-        -------
-        v : list
-            Values of the integrated variables at the end time.
-        """
-
-        # extract frequently used variables
-        method = self.params['method']
-
-        # new API methods
-        if method in self.new_APIs:
-            # solve
-            _sols = si.solve_ivp(self.func, (t_s, t_e), self.v, method=method, args=(self.c, ) if self.c is not None else None)
-
-            # update initial values
-            self.v = [y[-1] for y in _sols.y]
-
-            # extract attributes
-            v = [y[-1] for y in _sols.y]
-        # old API method
-        else:
-            v = self.integrator.integrate(t_e).tolist()
-
-        return v
-
     def solve(self, T, c_func=None):
         """Method to solve a complete integration.
 
@@ -246,3 +211,38 @@ class ODESolver():
             vs.append(_v)
 
         return vs
+
+    def step(self, t_e, t_s=0):
+        """Method to perform one step of the integration.
+
+        Parameters
+        ----------
+        t_e : float
+            Ending point of the integration.
+        t_s : float, optional
+            Starting point of the integration.
+
+        Returns
+        -------
+        v : list
+            Values of the integrated variables at the end time.
+        """
+
+        # extract frequently used variables
+        method = self.params['method']
+
+        # new API methods
+        if method in self.new_APIs:
+            # solve
+            _sols = si.solve_ivp(self.func, (t_s, t_e), self.v, method=method, args=(self.c, ) if self.c is not None else None)
+
+            # update initial values
+            self.v = [y[-1] for y in _sols.y]
+
+            # extract attributes
+            v = [y[-1] for y in _sols.y]
+        # old API method
+        else:
+            v = self.integrator.integrate(t_e).tolist()
+
+        return v

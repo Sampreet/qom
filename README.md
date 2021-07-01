@@ -1,11 +1,11 @@
 # The Quantum Optomechanics Toolbox
 
-![Code Size](https://img.shields.io/github/repo-size/sampreet/qom?style=for-the-badge)
-![Last Commit](https://img.shields.io/github/last-commit/sampreet/qom?style=for-the-badge)
+[![Code Size](https://img.shields.io/github/repo-size/sampreet/qom?style=for-the-badge)](#)
+[![Last Commit](https://img.shields.io/github/last-commit/sampreet/qom?style=for-the-badge)](#)
 
-![Open Issues](https://img.shields.io/github/issues-raw/sampreet/qom?style=flat-square)
-![Closed Issues](https://img.shields.io/github/issues-closed-raw/sampreet/qom?style=flat-square)
-![Milestone](https://img.shields.io/github/milestones/progress/sampreet/qom/1?style=flat-square)
+[![Open Issues](https://img.shields.io/github/issues-raw/sampreet/qom?style=flat-square)](https://github.com/Sampreet/qom/issues?q=is%3Aopen+is%3Aissue)
+[![Closed Issues](https://img.shields.io/github/issues-closed-raw/sampreet/qom?style=flat-square)](https://github.com/Sampreet/qom/issues?q=is%3Aissue+is%3Aclosed)
+[![Milestone](https://img.shields.io/github/milestones/progress/sampreet/qom/1?style=flat-square)](https://github.com/Sampreet/qom/milestones)
 
 > A library of modules for computational quantum optomechanics!
 
