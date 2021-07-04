@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.7.7 - 2021/07/04 - 00 - Fixed Multithread
+* Fixed multithreading and wrapping in `qom/loopers/BaseLooper` module.
+* Added maximum eigenvalue and minor fixes in `qom/systems/BaseSystem` module.
+* Updated `qom/utils/log` with thread IDs for logging.
+* Updated maximum eigenvalue and minor fixes in `qom/utils/wrappers` module.
+* Updated `setup` and `README`.
+
 ## v0.7.6 - 2021/07/01 - 00 - Updated Loopers
 * Updated `examples` for updated loopers.
 * Updated `qom/loopers`:

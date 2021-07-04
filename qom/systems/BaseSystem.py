@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-06-25'
+__updated__ = '2021-07-04'
 
 # dependencies
 from typing import Union
@@ -133,6 +133,27 @@ class BaseSystem():
         if count is not None:
             assert len(_idx_row) == count, 'Keys "idx_row" and "idx_col" should contain exactly {} entries'.format(count)
     
+    def __validate_params_eigs_max(self, solver_params: dict):
+        """Method to validate parameters for maximum eigenvalue of the drift matrix.
+
+        Parameters
+        ----------
+        solver_params : dict
+            Parameters for the solver.
+        """
+
+        # validate parameters
+        assert 'idx_eig' in solver_params, 'Solver parameters should contain the key "idx_eig" for the eigenvalue indices'
+
+        # extract frequently used variables
+        _idx_eig = solver_params['idx_eig']
+
+        # validate limits
+        if type(_idx_eig) is int:
+            _idx_eig = [_idx_eig]
+        for idx in _idx_eig:
+            assert idx < 2 * self.num_modes, 'Eigenvalue indices should not exceed total number of quadratures'
+    
     def __validate_params_measure(self, solver_params: dict):
         """Method to validate parameters for measures.
 
@@ -256,29 +277,65 @@ class BaseSystem():
 
         return ele
 
-    def get_eigenvalues_A(self, get_A, modes: list):
-        """Function to obtain the eigenvalues of the drift matrix.
+    def get_eig_max(self, solver_params: dict, ode_func, get_ivc, get_A, ode_func_corrs=None):
+        """Function to obtain the maximum eigenvalue of the drift matrix.
 
         Parameters
         ----------
+        solver_params : dict
+            Parameters for the solver.
+        ode_func : function
+            Set of ODEs returning rate equations of the classical mode amplitudes and quantum correlations. If `ode_func_corrs` parameter is given, this function is treated as the function for the modes only.
+        get_ivc : function
+            Function returning the initial values and constants.
         get_A : function
             Function to obtain the drift matrix given the list of modes as parameter.
-        modes : list
-            Values of the optical and mechancial modes.
+        ode_func_corrs : function, optional
+            Set of ODEs returning rate equations of the quantum correlations.
         
         Returns
         -------
-        eigenvalues : list
-            Eigenvalues of the drift matrix.
+        eig_max : list
+            Maximum eigenvalue of the drift matrix.
         """
 
+        # validate parameters
+        self. __validate_params_eigs_max(solver_params)
+
+        # update a deep copy of parameters
+        _solver_params = copy.deepcopy(solver_params)
+        _solver_params['measure_type'] = 'mode_amp'
+        _solver_params['idx_mode'] = [i for i in range(self.num_modes)]
+
+        # get averaged modes
+        modes = self.get_measure_average(_solver_params, ode_func, get_ivc, ode_func_corrs)
+
+        # extract parameters
+        _, c = get_ivc()
+        params = c[4 * self.num_modes**2:]
+
         # drift matrix
-        A = get_A(modes)
+        A = get_A(modes, params, np.inf)
 
-        # eigenvalues of the drift matrix
-        eigenvalues = np.linalg.eig(A)[0]
+        # extract frequently used variables
+        _idx_eig = solver_params['idx_eig']
+        
+        # single mode
+        if type(_idx_eig) is int:
+            _idx_eig = [_idx_eig]
 
-        return eigenvalues
+        # initialize lists
+        eigs = list()
+        
+        # update eigenvalues
+        eigenvalues, _ = np.linalg.eig(A)
+        for idx in _idx_eig:
+            eigs.append(eigenvalues[idx])
+
+        # calculate maximum eigenvalue
+        eig_max = np.max(eigs)
+
+        return eig_max
 
     def get_mean_optical_amplitude(self, lambda_l: t_float, mu: t_float, gamma_o: t_float, P_l: t_float, Delta: t_float, C: t_float=0, mode='basic'):
         r"""Method to obtain the mean optical amplitude.
@@ -429,8 +486,8 @@ class BaseSystem():
         # get measures at all times
         M, T = self.get_measure_dynamics(solver_params, ode_func, get_ivc, ode_func_corrs, plot, plotter_params)
 
-        # calculate average
-        M_avg = np.mean(M)
+        # calculate average over first axis
+        M_avg = np.mean(M, 0)
 
         return M_avg
     
@@ -724,7 +781,7 @@ class BaseSystem():
         """
 
         # extract the modes and correlations
-        _dim    = [2 * self.num_modes, 2 * self.num_modes]
+        _dim = [2 * self.num_modes, 2 * self.num_modes]
 
         # get initial values and constants
         iv, c = get_ivc()
@@ -790,7 +847,7 @@ class BaseSystem():
             params = list()
 
         # get matrices
-        _A = get_A(modes, params)
+        _A = get_A(modes, params, np.inf)
         _D = np.array(c[:_dim[0] * _dim[1]]).reshape(_dim)
 
         # convert to numpy arrays
@@ -831,6 +888,7 @@ class BaseSystem():
         _show_progress = solver_params.get('show_progress', False)
         _range_min = solver_params.get('range_min', 0)
         _range_max = solver_params.get('range_max', len(T))
+        _t_ss = solver_params.get('t_max', T[-1] - T[0]) / solver_params.get('t_dim', len(T))
 
         # extract parameters
         _, c = get_ivc()
@@ -851,7 +909,7 @@ class BaseSystem():
                 logger.info('Computing ({module_name}): Progress = {progress:3.2f}'.format(module_name=__name__, progress=progress))
             # drift matrix
 
-            A = get_A(Modes[i], params)
+            A = get_A(Modes[i], params, i * _t_ss)
             # indices of the RHC sequence
             solver = RHCSolver(A)
             _idxs = solver.get_indices()

@@ -65,7 +65,7 @@ def get_formatter(log_format='full'):
 
     # default format
     if log_format == 'full':
-        return FullFormatter('%(processName)-24s %(levelname)-7s %(asctime)s: (%(name)s) %(message)s\r'.format())
+        return FullFormatter('%(threadName)-24s %(levelname)-7s %(asctime)s: (%(name)s) %(message)s\r'.format())
 
     # short format
     if log_format == 'short':

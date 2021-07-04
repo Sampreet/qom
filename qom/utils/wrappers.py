@@ -6,7 +6,7 @@
 __name__    = 'qom.utils.wrappers'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-05-25'
-__updated__ = '2021-06-25'
+__updated__ = '2021-07-04'
 
 # dependencies
 import numpy as np
@@ -15,7 +15,7 @@ import numpy as np
 from ..ui import init_log
 from ..loopers import XLooper, XYLooper, XYZLooper
 
-def wrap_looper(SystemClass, params, func_name, looper_name, file_path, plot=False, width=5.0, height=5.0):
+def wrap_looper(SystemClass, params: dict, func_name: str, looper_name: str, file_path: str=None, plot: bool=False, width: float=5.0, height: float=5.0):
     """Function to wrap loopers.
     
     Parameters
@@ -26,7 +26,7 @@ def wrap_looper(SystemClass, params, func_name, looper_name, file_path, plot=Fal
         All parameters.
     func_name : str
         Name of the function to loop. Available functions are:
-            'max_eigenvalue': Maximum eigenvalue of the drift matrix.
+            'eig_max': Maximum eigenvalue of the drift matrix.
             'measure_average': Average measure (fallback).
             'measure_dynamics': Dynamics of measure.
             'measure_pearson': Pearson synchronization measure.
@@ -35,7 +35,7 @@ def wrap_looper(SystemClass, params, func_name, looper_name, file_path, plot=Fal
             'XLooper': 1D looper (fallback).
             'XYLooper': 2D looper.
             'XYZLooper': 3D looper.
-    file_path : str
+    file_path : str, optional
         Path and prefix of the .npz file.
     plot: bool, optional
         Option to plot the results.
@@ -53,26 +53,19 @@ def wrap_looper(SystemClass, params, func_name, looper_name, file_path, plot=Fal
     # initialize logger
     init_log()
 
-    # initialize system
-    system = SystemClass(params['system'])
-
     # function to calculate maximum eigenvalue of the drift matrix
-    def func_max_eigenvalue(system_params, val, logger, results):
+    def func_eig_max(system_params, val, logger, results):
         # update parameters
-        system.params = system_params
-        # get dynamics
-        Modes, _, _ = system.get_modes_corrs_dynamics(params['solver'], system.ode_func, system.get_ivc)
-        # get average modes
-        modes = [np.mean([m[i] for m in Modes]) for i in range(len(Modes[0]))]
-        # calculate maximum eigenvalue
-        eig_max = system.get_max_eigenvalue(system.get_A, modes)
+        system = SystemClass(system_params)
+        # get maximum eigenvalue
+        eig_max = system.get_eig_max(params['solver'], system.ode_func, system.get_ivc, system.get_A)
         # update results
         results.append((val, eig_max))
 
     # function to calculate average measure
     def func_measure_average(system_params, val, logger, results):
         # update parameters
-        system.params = system_params
+        system = SystemClass(system_params)
         # get average measure
         M_avg = system.get_measure_average(params['solver'], system.ode_func, system.get_ivc)
         # update results
@@ -81,7 +74,7 @@ def wrap_looper(SystemClass, params, func_name, looper_name, file_path, plot=Fal
     # function to calculate measure dynamics
     def func_measure_dynamics(system_params, val, logger, results):
         # update parameters
-        system.params = system_params
+        system = SystemClass(system_params)
         # get measure dynamics
         M, T = system.get_measure_dynamics(params['solver'], system.ode_func, system.get_ivc)
         # update results
@@ -90,15 +83,15 @@ def wrap_looper(SystemClass, params, func_name, looper_name, file_path, plot=Fal
     # function to calculate Pearson synchronization
     def func_measure_pearson(system_params, val, logger, results):
         # update parameters
-        system.params = system_params
+        system = SystemClass(system_params)
         # get measure
         m = system.get_measure_pearson(params['solver'], system.ode_func, system.get_ivc)
         # update results
         results.append((val, m))
 
     # select function
-    if func_name == 'max_eigenvalue':
-        func = func_max_eigenvalue
+    if func_name == 'eig_max':
+        func = func_eig_max
     elif func_name == 'measure_dynamics':
         func = func_measure_dynamics
     elif func_name == 'measure_pearson':

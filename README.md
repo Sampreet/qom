@@ -1,5 +1,6 @@
 # The Quantum Optomechanics Toolbox
 
+[![Version](https://img.shields.io/badge/version-0.7.7-red?style=for-the-badge)](#)
 [![Code Size](https://img.shields.io/github/repo-size/sampreet/qom?style=for-the-badge)](#)
 [![Last Commit](https://img.shields.io/github/last-commit/sampreet/qom?style=for-the-badge)](#)
 
@@ -24,8 +25,8 @@ Backed by numerical libraries like NumPy and SciPy, and featuring the highly cus
 
 - [ ] Support for Delay Differential Equations
 - [ ] GUI module to run templated scripts
-- [ ] Multithreaded looping
-- [ ] Project website
+- [x] Multithreaded looping
+- [x] Project website
 
 ## Installation
 
