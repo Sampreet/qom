@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.7.7 - 2021/07/06 - 00 - Minor Fixes
+* Fixed stationary method in `qom/systems/BaseSystem` module.
+
 ## v0.7.7 - 2021/07/04 - 00 - Fixed Multithread
 * Fixed multithreading and wrapping in `qom/loopers/BaseLooper` module.
 * Added maximum eigenvalue and minor fixes in `qom/systems/BaseSystem` module.

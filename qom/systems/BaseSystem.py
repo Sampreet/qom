@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-07-04'
+__updated__ = '2021-07-06'
 
 # dependencies
 from typing import Union
@@ -756,12 +756,12 @@ class BaseSystem():
         
         return Modes, Corrs, T
 
-    def get_modes_corrs_stationary(self, get_rates_modes, get_ivc, get_A, func_type: str='complex'):
+    def get_modes_corrs_stationary(self, get_mode_rates, get_ivc, get_A, func_type: str='complex'):
         """Method to obtain the steady states of the classical mode amplitudes and quantum correlations from the Heisenberg and Lyapunov equations.
 
         Parameters
         ----------
-        get_rates_modes : function
+        get_mode_rates : function
             Set of rates of the classical mode amplitudes for a given list of modes. If the function is complex-valued, `func_type` parameter should be passed as 'complex'.
         get_ivc : function
             Function returning the initial values and constants.
@@ -781,7 +781,7 @@ class BaseSystem():
         """
 
         # extract the modes and correlations
-        _dim = [2 * self.num_modes, 2 * self.num_modes]
+        _dim = 2 * self.num_modes
 
         # get initial values and constants
         iv, c = get_ivc()
@@ -789,12 +789,18 @@ class BaseSystem():
         if c is None:
             c = list()
 
+        # get parameters
+        if len(c) >= _dim**2:
+            params = c[_dim**2:]
+        else: 
+            params = list()
+
         # if modes are to be calculated
-        if get_rates_modes is not None:
+        if get_mode_rates is not None:
             # complex-valued function
             if func_type == 'complex':
                 # real-valued function
-                def get_rates_modes_real(modes_real):
+                def get_mode_rates_real(modes_real):
                     """Function to obtain the rates of the optical and mechanical modes.
                     
                     Returns
@@ -809,10 +815,10 @@ class BaseSystem():
                     """
                     
                     # convert to complex
-                    modes = [modes_real[2 * i] + 1j * modes_real[2 * i + 1] for i in range(int(len(modes_real) / 2))] 
+                    modes = [modes_real[2 * i] + 1j * modes_real[2 * i + 1] for i in range(self.num_modes)]
 
                     # complex-valued mode rates
-                    mode_rates = get_rates_modes(modes)
+                    mode_rates = get_mode_rates(modes, params, np.inf)
 
                     # convert to real
                     mode_rates_real = list()
@@ -824,40 +830,34 @@ class BaseSystem():
 
                 # real-valued initial values
                 iv_real = list()
-                for value in iv:
-                    iv_real.append(np.real(value))
-                    iv_real.append(np.imag(value))
+                for mode in iv[:self.num_modes]:
+                    iv_real.append(np.real(mode))
+                    iv_real.append(np.imag(mode))
             else:
                 # real-valued function
-                get_rates_modes_real = get_rates_modes
+                get_mode_rates_real = get_mode_rates
                 # real-valued initial values
                 iv_real = iv
         
             # solve for modes
-            roots_real = so.fsolve(get_rates_modes_real, iv_real)
+            roots_real = so.fsolve(get_mode_rates_real, iv_real)
             modes = [roots_real[2 * i] + 1j * roots_real[2 * i + 1] for i in range(int(len(roots_real) / 2))] 
         # modes not required
         else:
             modes = None
 
-        # get parameters
-        if len(c) >= _dim[0] * _dim[1]:
-            params = c[_dim[0] * _dim[1]:]
-        else: 
-            params = list()
-
         # get matrices
         _A = get_A(modes, params, np.inf)
-        _D = np.array(c[:_dim[0] * _dim[1]]).reshape(_dim)
+        _D = np.array(c[:_dim**2]).reshape((_dim, _dim))
 
         # convert to numpy arrays
         _A = np.array(_A) if type(_A) is list else _A
         _D = np.array(_D) if type(_D) is list else _D
 
         # solve for correlations
-        corrs = sl.solve_lyapunov(_A, -_D)
+        corrs = sl.solve_lyapunov(_A, _D)
         
-        return modes, _convert_from_string
+        return modes, corrs
 
     def get_rhc_count_dynamics(self, solver_params: dict, ode_func, get_ivc, get_A, ode_func_corrs=None):
         """Function to obtain the number of positive real roots of the drift matrix using the Routh-Hurwitz criterion.
@@ -953,7 +953,7 @@ class BaseSystem():
         return measure
 
     def ode_func(self, t, v, c):
-        """Function for the rate equations of the modes and quadrature correlations.
+        """Wrapper function for the rate equations of the modes and quadrature correlations.
         
         The variables are complex-valued, hence the model requires a complex-valued integrator.
         
