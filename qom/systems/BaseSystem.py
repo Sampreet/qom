@@ -855,7 +855,7 @@ class BaseSystem():
         _D = np.array(_D) if type(_D) is list else _D
 
         # solve for correlations
-        corrs = sl.solve_lyapunov(_A, _D)
+        corrs = sl.solve_lyapunov(_A, - _D)
         
         return modes, corrs
 

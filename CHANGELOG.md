@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.7.7 - 2021/07/09 - 00 - Bugfixes
+* Fixed copy bug in `qom/loopers/XYLooper` and `qom/loopers/XYZLooper` modules.
+* Fixed Lyapunov equation bug in `qom/systems/BaseSystem` module.
+* Added looper function handling in `qom/utils/wrappers` module.
+
 ## v0.7.7 - 2021/07/06 - 00 - Minor Fixes
 * Fixed stationary method in `qom/systems/BaseSystem` module.
 

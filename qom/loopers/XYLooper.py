@@ -6,11 +6,10 @@
 __name__    = 'qom.loopers.XYLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-07-01'
+__updated__ = '2021-07-09'
 
 # dependencies
 from typing import Union
-import copy
 import logging
 import numpy as np
 
@@ -84,7 +83,7 @@ class XYLooper(BaseLooper):
         """
 
         # extract frequently used variables
-        system_params = copy.deepcopy(self.params['system'])
+        system_params = self.params['system']
         y_var = self.axes['Y']['var']
         y_idx = self.axes['Y']['idx']
         y_val = self.axes['Y']['val']

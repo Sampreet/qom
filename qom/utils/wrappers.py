@@ -6,16 +6,13 @@
 __name__    = 'qom.utils.wrappers'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-05-25'
-__updated__ = '2021-07-04'
-
-# dependencies
-import numpy as np
+__updated__ = '2021-07-09'
 
 # qom modules
 from ..ui import init_log
 from ..loopers import XLooper, XYLooper, XYZLooper
 
-def wrap_looper(SystemClass, params: dict, func_name: str, looper_name: str, file_path: str=None, plot: bool=False, width: float=5.0, height: float=5.0):
+def wrap_looper(SystemClass, params: dict, func, looper_name: str, file_path: str=None, plot: bool=False, width: float=5.0, height: float=5.0):
     """Function to wrap loopers.
     
     Parameters
@@ -24,8 +21,8 @@ def wrap_looper(SystemClass, params: dict, func_name: str, looper_name: str, fil
         Class containing the system.
     params : dict
         All parameters.
-    func_name : str
-        Name of the function to loop. Available functions are:
+    func_name : str or function
+        Name of the function of the function to loop. Available function names are:
             'eig_max': Maximum eigenvalue of the drift matrix.
             'measure_average': Average measure (fallback).
             'measure_dynamics': Dynamics of measure.
@@ -90,22 +87,25 @@ def wrap_looper(SystemClass, params: dict, func_name: str, looper_name: str, fil
         results.append((val, m))
 
     # select function
-    if func_name == 'eig_max':
-        func = func_eig_max
-    elif func_name == 'measure_dynamics':
-        func = func_measure_dynamics
-    elif func_name == 'measure_pearson':
-        func = func_measure_pearson
+    if type(func) is str:
+        if func == 'eig_max':
+            looper_func = func_eig_max
+        elif func == 'measure_dynamics':
+            looper_func = func_measure_dynamics
+        elif func == 'measure_pearson':
+            looper_func = func_measure_pearson
+        else:
+            looper_func = func_measure_average
     else:
-        func = func_measure_average
+        looper_func = func
 
     # select looper
     if looper_name == 'XYLooper':
-        looper = XYLooper(func, params)
+        looper = XYLooper(looper_func, params)
     elif looper_name == 'XYZLooper':
-        looper = XYZLooper(func, params)
+        looper = XYZLooper(looper_func, params)
     else:
-        looper = XLooper(func, params)
+        looper = XLooper(looper_func, params)
         
     # wrap looper
     looper.wrap(file_path, plot, width, height)
