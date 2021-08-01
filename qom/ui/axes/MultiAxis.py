@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Class to handle a multi-value axis."""
+"""Module to handle a multi-value axis."""
 
 __name__    = 'qom.ui.axes.MultiAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-10'
-__updated__ = '2021-05-25'
+__updated__ = '2021-08-02'
 
 # TODO: set color and style variants.
 
 # dependencies
 import logging
-import numpy as np
 
 # qom modules
 from .BaseAxis import BaseAxis
@@ -23,36 +22,34 @@ logger = logging.getLogger(__name__)
 class MultiAxis(BaseAxis):
     """Class to handle a multi-value axis.
 
-    Inherits :class:`qom.ui.axes.BaseAxis`.
-
     Parameters
     ----------
-    axis_data : int or list or dict
-        Data for the axis.
+    params : dict or list
+        Parameters for the axis supporting a list of values or a dictionary of parameters. Refer :class:`qom.ui.axes.BaseAxis` for currently supported keys.
     """
 
-    def __init__(self, axis_data={}):
+    def __init__(self, params={}):
         """Class constructor for MultiAxis."""
 
         # initialize super class
-        super().__init__(axis_data)
+        super().__init__(params)
 
         # set var
-        self.var = axis_data.get('var', 'multi_axis')
+        self.var = params.get('var', 'multi_axis')
 
         # set name
-        self.name = axis_data.get('name', '')
+        self.name = params.get('name', '')
 
         # set unit
-        self.unit = axis_data.get('unit', '')
+        self.unit = params.get('unit', '')
 
-        # set legends
-        self.legends = axis_data.get('legend', '')
+        # set params
+        self.legends = params.get('legend', '')
         if self.legends == '':
             self.legends = ['{name} = {value} {unit}'.format(name=self.name, value=v, unit=self.unit) for v in self.val]
 
         # set colors
-        _colors = axis_data.get('colors', [])
+        _colors = params.get('colors', [])
         # if colors are defined
         if type(_colors) is list and len(_colors) == self.dim:
             self.colors = _colors
@@ -61,7 +58,7 @@ class MultiAxis(BaseAxis):
             self.colors = None
 
         # set sizes
-        _sizes = axis_data.get('sizes', [])
+        _sizes = params.get('sizes', [])
         # if sizes are defined
         if type(_sizes) is list and len(_sizes) == self.dim:
             self.sizes = _sizes
@@ -70,7 +67,7 @@ class MultiAxis(BaseAxis):
             self.sizes = [2 for i in range(self.dim)]
 
         # set styles
-        _styles = axis_data.get('styles', [])
+        _styles = params.get('styles', [])
         # if styles are defined
         if type(_styles) is list and len(_styles) == self.dim:
             self.styles = _styles

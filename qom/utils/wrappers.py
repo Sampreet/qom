@@ -1,41 +1,58 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Utility functions to wrap subpackages."""
+"""Module for utility functions to wrap subpackages."""
 
 __name__    = 'qom.utils.wrappers'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-05-25'
-__updated__ = '2021-07-09'
+__updated__ = '2021-08-01'
+
+# dependencies
+import numpy as np
 
 # qom modules
 from ..ui import init_log
 from ..loopers import XLooper, XYLooper, XYZLooper
 
-def wrap_looper(SystemClass, params: dict, func, looper_name: str, file_path: str=None, plot: bool=False, width: float=5.0, height: float=5.0):
+def wrap_looper(SystemClass, params: dict, func, looper, file_path: str=None, plot: bool=False, hold: bool=True, width: float=5.0, height: float=5.0):
     """Function to wrap loopers.
+
+    Requires already defined callables ``func_ode``, ``get_mode_rates``, ``get_ivc``, ``get_A`` and ``get_oss_args`` inside the system class.
     
     Parameters
     ----------
     SystemClass : :class:`qom.systems.*`
         Class containing the system.
     params : dict
-        All parameters.
-    func_name : str or function
-        Name of the function of the function to loop. Available function names are:
-            'eig_max': Maximum eigenvalue of the drift matrix.
-            'measure_average': Average measure (fallback).
-            'measure_dynamics': Dynamics of measure.
-            'measure_pearson': Pearson synchronization measure.
-    looper_name : str
-        Name of the looper. Available loopers are:
-            'XLooper': 1D looper (fallback).
-            'XYLooper': 2D looper.
-            'XYZLooper': 3D looper.
+        All parameters as defined in :class:`qom.loopers.BaseLooper`.
+    func : str or callable
+        Code of the function or the function to loop, following the format defined in :class:`qom.loopers.BaseLooper`. Available function codes are:
+            ==============  ================================================
+            value           meaning
+            ==============  ================================================
+            "aes"           averaged eigenvalue of the drift matrix.
+            "ams"           average of a measure (fallback).
+            "dms"           dynamics of a measure.
+            "les"           Lyapunov exponents.
+            "moo"           mean optical occupancies.
+            "pcc"           Pearson correlation factor.
+            ==============  ================================================
+    looper : str or class
+        Code of the looper or the looper class. Available loopers names are:
+            ==============  ================================================
+            value           meaning
+            ==============  ================================================
+            "x_looper"       1D looper (:class:`qom.loopers.XLooper`) (fallback).
+            "xy_looper"      2D looper (:class:`qom.loopers.XYLooper`).
+            "xyz_looper"     3D looper (:class:`qom.loopers.XYZLooper`).
+            ==============  ================================================
     file_path : str, optional
         Path and prefix of the .npz file.
     plot: bool, optional
         Option to plot the results.
+    hold : bool, optional
+        Option to hold the plot.
     width : float, optional
         Width of the figure.
     height : float, optional
@@ -50,64 +67,81 @@ def wrap_looper(SystemClass, params: dict, func, looper_name: str, file_path: st
     # initialize logger
     init_log()
 
-    # function to calculate maximum eigenvalue of the drift matrix
-    def func_eig_max(system_params, val, logger, results):
+    # function to calculate averaged eigenvalues of the drift matrix
+    def func_aes(system_params, val, logger, results):
         # update parameters
         system = SystemClass(system_params)
-        # get maximum eigenvalue
-        eig_max = system.get_eig_max(params['solver'], system.ode_func, system.get_ivc, system.get_A)
+        # get averaged eigenvalues
+        aes = system.get_averaged_eigenvalues(solver_params=params['solver'], func_ode=system.func_ode, get_ivc=system.get_ivc, get_A=system.get_A)
         # update results
-        results.append((val, eig_max))
+        results.append((val, [aes]))
 
-    # function to calculate average measure
-    def func_measure_average(system_params, val, logger, results):
+    # function to calculate average of a measure
+    def func_ams(system_params, val, logger, results):
         # update parameters
         system = SystemClass(system_params)
-        # get average measure
-        M_avg = system.get_measure_average(params['solver'], system.ode_func, system.get_ivc)
+        # get measure average
+        ams = system.get_measure_average(solver_params=params['solver'], func_ode=system.func_ode, get_ivc=system.get_ivc, get_A=system.get_A)
         # update results
-        results.append((val, M_avg))
+        results.append((val, ams))
 
-    # function to calculate measure dynamics
-    def func_measure_dynamics(system_params, val, logger, results):
+    # function to calculate dynamics of a measure
+    def func_dms(system_params, val, logger, results):
         # update parameters
         system = SystemClass(system_params)
         # get measure dynamics
-        M, T = system.get_measure_dynamics(params['solver'], system.ode_func, system.get_ivc)
+        dms, _ = system.get_measure_dynamics(solver_params=params['solver'], func_ode=system.func_ode, get_ivc=system.get_ivc, get_A=system.get_A)
         # update results
-        results.append((val, [M]))
+        results.append((val, [dms]))
 
-    # function to calculate Pearson synchronization
-    def func_measure_pearson(system_params, val, logger, results):
+    # function to obtain the maximum Lyapunov exponent
+    def func_les(system_params, val, logger, results):
+        # update system
+        system = SystemClass(system_params)
+        # get Lyapunov exponents
+        les = system.get_lyapunov_exponents(solver_params=params['solver'], get_mode_rates=system.get_mode_rates, get_ivc=system.get_ivc, get_A=system.get_A)
+        # update results
+        results.append((val, [les]))
+
+    # function to calculate mean optical occupancies
+    def func_moo(system_params, val, logger, results):
         # update parameters
         system = SystemClass(system_params)
-        # get measure
-        m = system.get_measure_pearson(params['solver'], system.ode_func, system.get_ivc)
+        # get mean optical occupancies
+        moo, _ = system.get_mean_optical_occupancies(get_ivc=system.get_ivc, get_oss_args=system.get_oss_args)
         # update results
-        results.append((val, m))
+        results.append((val, [moo]))
+
+    # function to calculate Pearson correlation coefficient
+    def func_pcc(system_params, val, logger, results):
+        # update parameters
+        system = SystemClass(system_params)
+        # get Pearson correlation coefficient
+        pcc = system.get_pearson_correlation_coefficient(solver_params=params['solver'], func_ode=system.func_ode, get_ivc=system.get_ivc)
+        # update results
+        results.append((val, pcc))
 
     # select function
     if type(func) is str:
-        if func == 'eig_max':
-            looper_func = func_eig_max
-        elif func == 'measure_dynamics':
-            looper_func = func_measure_dynamics
-        elif func == 'measure_pearson':
-            looper_func = func_measure_pearson
-        else:
-            looper_func = func_measure_average
-    else:
-        looper_func = func
+        func = {
+            'aes': func_aes,
+            'ams': func_ams,
+            'dms': func_dms,
+            'les': func_les, 
+            'moo': func_moo,
+            'pcc': func_pcc
+        }.get(func, func_ams)
 
     # select looper
-    if looper_name == 'XYLooper':
-        looper = XYLooper(looper_func, params)
-    elif looper_name == 'XYZLooper':
-        looper = XYZLooper(looper_func, params)
-    else:
-        looper = XLooper(looper_func, params)
+    if type(looper) is str:
+        if looper == 'xy_looper':
+            looper = XYLooper(func, params)
+        elif looper == 'xyz_looper':
+            looper = XYZLooper(func, params)
+        else:
+            looper = XLooper(func, params)
         
     # wrap looper
-    looper.wrap(file_path, plot, width, height)
+    looper.wrap(file_path=file_path, plot=plot, hold=hold, width=width, height=height)
 
     return looper

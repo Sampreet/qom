@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Class to interface axes."""
+"""Module to interface axes."""
 
 __name__    = 'qom.ui.axes.BaseAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-10'
-__updated__ = '2021-01-01'
+__updated__ = '2021-08-02'
 
 # dependencies
 import logging
@@ -20,21 +20,44 @@ logger = logging.getLogger(__name__)
 class BaseAxis():
     """Class to interface axes.
 
-    Initializes `val`, `dim`, `bound`, `ticks` and `tick_labels` properties. Inherited objects need to set the other properties individually.
+    Initializes ``val``, ``dim``, ``bound``, ``ticks`` and ``tick_labels`` properties. Inherited objects need to set the other properties individually.
 
     Parameters
     ----------
-        params : dict
-            Data for the axis.
+    params : dict or list
+        Parameters for the axis supporting a list of values or a dictionary of parameters. Currently supported keys are:
+            ==============  ====================================================
+            key             value
+            ==============  ====================================================
+            "bound"         (*str*) option to check user-defined bounds, assuming either of "both", "lower", "none" or "upper".
+            "colors"        (*str*) color for plots.
+            "dim"           (*int*) dimension of the axis.
+            "label"         (*str*) label of the axis.
+            "legends"       (*list*) legends of the axis.
+            "max"           (*float*) max value of the axis.
+            "min"           (*float*) min value of the axis.
+            "name"          (*str*) display name of the axis.
+            "sizes"         (*list*) sizes of the plots.
+            "styles"        (*list*) styles of the plots.
+            "tick_labels"   (*list*) tick labels of the plots.
+            "ticks"         (*list*) ticks of the plots.
+            "unit"          (*str*) unit of the plots.
+            "val"           (*list*) values of the plots.
+            "var"           (*str*) variable of the plots.
+            ==============  ====================================================
     """
 
     @property
     def bound(self):
         """str: Option to check user-defined bounds:
-            * 'none' : Not bounded.
-            * 'lower' : Lower bound.
-            * 'upper' : Upper bound.
-            * 'both' : Both lower and upper bound.
+            ==========  ====================================================
+            value       meaning
+            ==========  ====================================================
+            "both"      both upper and lower bounds.
+            "lower"     lower bound.
+            "none"      not bounded (fallback).
+            "upper"     uper bound.
+            ==========  ====================================================
         """
 
         return self.__bound

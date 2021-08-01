@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Class to interface a 1D looper."""
+"""Module to interface a 1D looper."""
 
 __name__    = 'qom.loopers.XLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-05-12'
+__updated__ = '2021-08-01'
 
 # dependencies
 import logging
-import numpy as np
 
 # qom modules
 from .BaseLooper import BaseLooper
@@ -20,60 +19,58 @@ logger = logging.getLogger(__name__)
 
 class XLooper(BaseLooper):
     """Class to interface a 1D looper.
-    
-    Inherits :class:`qom.systems.BaseSystem`.
 
     Parameters
     ----------
-    func : function
-        Function to loop.
+    func : callable
+        Function to loop, formatted as ``func(system_params, val, logger, results)``, where ``system_params`` is a dictionary of the parameters for the system, ``val`` is the current value of the looping parameter, ``logger`` is an instance of the module logger and ``results`` is a list of tuples each containing ``val`` and the value calculated within the function.
     params : dict
-        Parameters for the system, looper and figure.
+        Parameters for the looper and optionally, the system and the plotter. The "looper" key is a dictionary containing the key "X", with the keys "var" and "val" for the name of the parameter to loop and its corresponding values, along with additional options (refer notes).
+
+    
+    .. note:: All the options defined under the "looper" dictionary in ``params`` supersede individual function arguments. Refer :class:`qom.loopers.BaseLooper` for a complete list of supported options.
     """
     
     def __init__(self, func, params: dict):
         """Class constructor for XLooper."""
 
         # initialize super class
-        super().__init__(func, params, 'XLooper', '1D Looper')
+        super().__init__(func=func, params=params, code='x_looper', name='1D Looper')
 
         # set axes
-        self._set_axis('X')
+        self._set_axis(axis='X')
 
         # display initialization
         logger.info('---------------------Looper Initialized-----------------\t\n')
 
-    def loop(self, mode: str='serial', grad: bool=False, plot: bool=False, width: float=5.0, height: float=5.0):
+    def loop(self, grad: bool=False, mode: str='serial'):
         """Method to calculate the output of a given function for each X-axis point.
         
         Parameters
         ----------
-        mode : str, optional
-            Mode of execution:
-                'serial': Single-thread computation.
-                'multithread': Multi-thread computation.
-                'multiprocess': Multi-processor computation.
         grad : bool, optional
-            Option to calculate gradients, superseded by looper parameter `grad`.
-        plot: bool, optional
-            Option to plot the results.
-        width : float, optional
-            Width of the figure.
-        height : float, optional
-            Height of the figure.
+            Option to calculate gradients.
+        mode : str, optional
+            Mode of computation. Available modes are:
+                ==================  ====================================================
+                value               meaning
+                ==================  ====================================================
+                "multiprocess"      multi-processor execution.
+                "multithread"       multi-thread execution.
+                "serial"            single-thread execution (fallback).
+                ==================  ====================================================
 
         Returns
         -------
         results : dict
-            Axes and calculated values.
+            Axes and calculated values containing the keys "X" and "V".
         """
 
         # supersede looper parameters
         grad = self.params['looper'].get('grad', grad)
-        plot = self.params['looper'].get('plot', plot)
 
         # get X-axis values
-        _xs, _vs = self.get_X_results(mode, grad)
+        _xs, _vs = self.get_X_results(grad=grad, mode=mode)
 
         # update attributes
         self.results = {}
@@ -81,13 +78,6 @@ class XLooper(BaseLooper):
         self.results['V'] = _vs
 
         # display completion
-        logger.info('---------------------Values Obtained--------------------\t\n')
-
-        # plot results
-        if plot:
-            self.plot_results(width, height)
-    
-            # update log
-            logger.info('---------------------Results Plotted--------------------\t\n')
+        logger.info('---------------------Results Obtained-------------------\t\n')
 
         return self.results

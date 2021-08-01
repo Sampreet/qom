@@ -1,79 +1,78 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Class to solve ordinary differential equations."""
+"""Module to solve ordinary differential equations."""
 
 __name__    = 'qom.solvers.ODESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-07-01'
+__updated__ = '2021-08-01'
 
 # dependencies
-from typing import Union
 import copy
 import logging
-import numpy as np
 import scipy.integrate as si
 
 # module logger
 logger = logging.getLogger(__name__)
 
-# datatypes
-t_array = Union[list, np.matrix, np.ndarray]
-
-# TODO: Validate parameters.
-
 class ODESolver():
     r"""Class to solve ordinary differential equations.
 
-    Initializes `func`, `iv`, and `c` properties.
+    Initializes ``integrator`` and ``T`` properties.
 
     Parameters
     ----------
     params : dict
-        Parameters for the solver.
-    func : function
-        Set of ODEs returning rate equations of the input variables.
-    v : list or np.matrix or np.ndarray
-        Values of the last iteration.
-    c : list or np.matrix or np.ndarray, optional
+        Parameters for the solver. Refer notes below for all available options.
+    func : callable
+        Function returning the rate equations of the input variables, formatted as ``func(t, v, c)``, where ``t`` is the time at which the integration is performed, ``v`` is a list of variables and ``c`` is a list of constants. The output should match the dimension of ``v``.
+    iv : list
+        Initial values for the function.
+    c : list, optional
         Constants for the function.
     method : str, optional
-        Method used to solve the ODEs:
-            'BDF': :class:`scipy.integrate.BDF`.
-            'DOP853': :class:`scipy.integrate.DOP853`.
-            'LSODA': :class:`scipy.integrate.LSODA`.
-            'ode': :class:`scipy.integrate.ode`.
-            'Radau': :class:`scipy.integrate.Radau`.
-            'RK23': :class:`scipy.integrate.RK23`.
-            'RK45': :class:`scipy.integrate.RK45` (default).
+        Method used to solve the ODEs (:class:`scipy.integrate.*`). If the method used is "ode", parameter ``integrator`` needs to be provided. Currently available Python-based methods are:
+            ==========  ====================================================
+            value       meaning
+            ==========  ====================================================
+            "BDF"       backward-differentiation formulas.
+            "DOP853"    explicit Runge-Kutta method of order 8(5, 3).
+            "LSODA"     Adams/BDF method with automatic stiffness detection and switching.
+            "Radau"     implicit Runge-Kutta of Radau IIA family of order 5.
+            "RK23"      explicit Runge-Kutta method of order 3(2).
+            "RK45"      explicit Runge-Kutta method of order 5(4) (fallback).
+            ==========  ====================================================
+    
+        Currently available FORTRAN-based are:
+            ==========  ====================================================
+            value       meaning
+            ==========  ====================================================
+            "dop853"    explicit Runge-Kutta method of order 8(5, 3).
+            "dopri5"    explicit Runge-Kutta method of order 5(4).
+            "lsoda"     real-valued Adams/BDF method with automatic stiffness detection and switching.
+            "vode"      real-valued implicit Adams/BDF methods.
+            "zvode"     complex-valued implicit Adams/BDF methods (fallback).
+            ==========  ====================================================
+
+    Notes
+    -----
+    The "solver" dictionary in ``params`` currently supports the following keys:
+        ==================  ====================================================
+        key                 value
+        ==================  ====================================================
+        "method"            (*str*) method used to solve the ODEs. Currently available methods are "BDF", "DOP853", "dop853", "dopri5", "LSODA", "lsoda", "Radau", "RK23", "RK45" (fallback), "vode" and "zvode". 
+        "show_progress"     (*bool*) option to display the progress of the integration.
+        ==================  ====================================================
+
+    .. note:: All the options defined in ``params`` supersede individual function arguments.
     """
 
     # attributes
-    code = 'ode'
+    code = 'ode_solver'
     name = 'Ordinary Differential Equations Solver'
-    new_APIs = ['BDF', 'DOP853', 'LSODA', 'Radau', 'RK23', 'RK45']
-    old_APIs = ['ode']
-
-    @property
-    def c(self):
-        """list or np.matrix or np.ndarray: Constants for the function."""
-
-        return self.__c
-    
-    @c.setter
-    def c(self, c):
-        self.__c = c
-
-    @property
-    def func(self):
-        """function: Set of ODEs returning rate equations of the input variables."""
-
-        return self.__func
-    
-    @func.setter
-    def func(self, func):
-        self.__func = func
+    new_methods = ['BDF', 'DOP853', 'LSODA', 'Radau', 'RK23', 'RK45']
+    old_methods = ['dop853', 'dopri5', 'lsoda', 'vode', 'zvode']
 
     @property
     def integrator(self):
@@ -86,133 +85,99 @@ class ODESolver():
         self.__integrator = integrator
 
     @property
-    def v(self):
-        """list or np.matrix or np.ndarray: Values of the last iteration."""
+    def T(self):
+        """list: Times at which values are calculated."""
 
-        return self.__v
+        return self.__T
     
-    @v.setter
-    def v(self, v):
-        self.__v = v
+    @T.setter
+    def T(self, T):
+        self.__T = T
 
-    def __init__(self, params, func, iv, c=None, method='RK45'):
+    def __init__(self, params: dict, func, iv: list, c: list=None, method: str='RK45'):
         """Class constructor for ODESolver."""
 
-        # set parameters
-        self.params = {
-            'show_progress': params.get('show_progress', False),
-            'method': params.get('method', method),
-            'value_type': params.get('value_type', 'complex')
-        }
+        # supersede solver parameters
+        params['method'] = params.get('method', method)
 
-        # set properties
+        # validate parameters
+        supported_methods = self.new_methods + self.old_methods
+        assert method in supported_methods, 'Parameter ``method`` should assume one of {}'.format(supported_methods)
+
+        # set attributes
+        self.params = params
         self.func = func
         self.v = copy.deepcopy(iv)
         self.c = copy.deepcopy(c)
 
-    def set_func_params(self, c):
-        """Method to update the parameters for the function.
+        # set properties
+        if self.params['method'] in self.old_methods:
+            # get integrator
+            self.integrator = si.ode(self.func)
 
-        Parameters
-        ----------
-        c : list or np.matrix or np.ndarray
-            Constants for the function.  
-        """
+            # set integrator
+            self.integrator.set_integrator(self.params['method'])
+        self.T = None
 
-        # update constants
-        self.c = copy.deepcopy(c)
-
-        # old API method
-        if self.params['method'] == 'ode':
-            self.integrator.set_f_params(c)
-
-    def set_integrator_params(self, T, value_type='complex'):
-        """Method to set the parameters for the integrator.
-
-        Parameters
-        ----------
-        T : list
-            Times at which values are calculated.
-        value_type : str, optional
-            Type of values of the function variables. Required for method "ode" method. Options are:
-                'real': Real-valued variables.
-                'complex': Complex-valued variables.
-        """
-
-        # extract frequently used variables
-        method = self.params['method']
-        value_type = self.params['value_type']
-
-        # check method
-        if method not in self.new_APIs:
-            # FORTRAN-based old API method of scipy.integrate
-            if method == 'ode':
-                # get integrator
-                self.integrator = si.ode(self.func)
-
-                # for complex ode solver
-                if value_type.find('complex') != -1:
-                    self.integrator.set_integrator('zvode')
-                    
-                # set initial values and constants
-                self.integrator.set_initial_value(self.v, T[0])
-
-                # set constants
-                if self.c is not None:
-                    self.integrator.set_f_params(self.c)
-            # default to RK45
-            else:
-                self.method = 'RK45'
-
-    def solve(self, T, c_func=None):
+    def solve(self, T: list, func_c=None):
         """Method to solve a complete integration.
 
         Parameters
         ----------
         T : list
             Times at which the values are calculated.
-        c_func : function
-            Function to obtain the time-dependent constants of the integration.
+        func_c : function, optional
+            Function returning the time-dependent constants of the integration, formatted as ``func_c(i)``, where ``i`` is the *i*-th step of integration.
 
         Returns
         -------
         vs : list
             Lists of values of the variable for all times.
         """
+
         # extract frequently used variables
-        show_progress = self.params['show_progress']
         method = self.params['method']
-        t_dim = len(T)
+        show_progress = self.params.get('show_progress', False)
+
+        # update times
+        self.T = T
+        _dim = len(T)
+
+        # update params
+        if method in self.old_methods:                
+            # set initial values and constants
+            self.integrator.set_initial_value(self.v, self.T[0])
+
+            # set constants
+            if self.c is not None:
+                self.integrator.set_f_params(self.c)
 
         # initialize lists
         vs = [copy.deepcopy(self.v)]
 
         # for each time step, calculate the integration values
-        for i in range(1, t_dim):
+        for i in range(1, _dim):
             # update progress
-            progress = float(i - 1)/float(t_dim - 1) * 100
+            progress = float(i - 1)/float(_dim - 1) * 100
             # display progress
             if show_progress and int(progress * 1000) % 10 == 0:
-                logger.info('Integrating (scipy.integrate.{method}): Progress = {progress:3.2f}'.format(method=method, progress=progress))
+                logger.info('Integrating (scipy.integrate.{method}): Progress = {progress:3.2f}'.format(method=method if method in self.new_methods else 'ode', progress=progress))
 
             # update constants
-            if c_func is not None:
-                self.set_func_params(c_func(i))
-            else:
-                self.set_func_params(self.c)
+            self.c = func_c(i) if func_c is not None else self.c
 
             # step
-            _v = self.step(T[i], T[i - 1])
+            _v = self.step(t_e=self.T[i], t_s=self.T[i - 1])
 
             # update log
-            logger.debug('t = {}\tv = {}'.format(T[i], _v))
+            logger.debug('t = {}\tv = {}'.format(self.T[i], _v))
 
             # update lists
             vs.append(_v)
 
         return vs
 
-    def step(self, t_e, t_s=0):
+    def step(self, t_e: float, t_s: float=0):
         """Method to perform one step of the integration.
 
         Parameters
@@ -231,18 +196,18 @@ class ODESolver():
         # extract frequently used variables
         method = self.params['method']
 
-        # new API methods
-        if method in self.new_APIs:
-            # solve
-            _sols = si.solve_ivp(self.func, (t_s, t_e), self.v, method=method, args=(self.c, ) if self.c is not None else None)
-
-            # update initial values
-            self.v = [y[-1] for y in _sols.y]
-
-            # extract attributes
-            v = [y[-1] for y in _sols.y]
         # old API method
-        else:
+        if method in self.old_methods:
+            self.integrator.set_f_params(self.c)
             v = self.integrator.integrate(t_e).tolist()
+        # new API methods
+        else:
+            # solve
+            _sols = si.solve_ivp(self.func, (t_s, t_e), self.v, method=method, rtol=1e-9, atol=1e-13, args=(self.c, ) if self.c is not None else None)
+            # extract final values
+            v = [y[-1] for y in _sols.y]
+            
+        # update initial values
+        self.v = copy.deepcopy(v)
 
         return v

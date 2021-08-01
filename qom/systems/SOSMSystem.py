@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Class to interface a single-optical single-mechanical system."""
+"""Module to interface a single-optical single-mechanical system."""
 
 __name__    = 'qom.systems.SOSMSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-01-25'
+__updated__ = '2021-08-02'
 
 # dependencies
 import logging
@@ -19,22 +19,17 @@ logger = logging.getLogger(__name__)
 
 class SOSMSystem(BaseSystem):
     """Class to interface a single-optical single-mechanical system.
-    
-    Inherits :class:`qom.systems.BaseSystem`.
         
     Parameters
     ----------
     params : dict
         Parameters for the system.
+
+    .. note:: All the options defined in ``params`` supersede individual function arguments. Refer :class:`qom.systems.BaseSystem` for a complete list of supported options.
     """
 
     def __init__(self, params):
         """Class constructor for SOSMSystem."""
 
         # initialize super class
-        super().__init__(params)
-
-        # set attributes
-        self.code = 'sosms'
-        self.name = 'SOSMSystem'
-        self.num_modes = 2
+        super().__init__(params, 'dodm_system', 'Double-optical Double-mechanical System', num_modes=2)

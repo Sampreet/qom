@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Class to handle a dynamic axis."""
+"""Module to handle a dynamic axis."""
 
 __name__    = 'qom.ui.axes.DynamicAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-17'
-__updated__ = '2021-01-11'
+__updated__ = '2021-08-02'
 
 # dependencies
 import logging
-import numpy as np
 
 # qom modules
 from .BaseAxis import BaseAxis
@@ -21,35 +20,33 @@ logger = logging.getLogger(__name__)
 class DynamicAxis(BaseAxis):
     """Class to handle a dynamic axis.
 
-    Inherits :class:`qom.ui.axes.BaseAxis`.
-
     Parameters
     ----------
-    axis_data : int or list or dict
-        Data for the axis.
+    params : dict or list
+        Parameters for the axis supporting a list of values or a dictionary of parameters. Refer :class:`qom.ui.axes.BaseAxis` for currently supported keys.
     """
 
-    def __init__(self, axis_data={}):
+    def __init__(self, params={}):
         """Class constructor for DynamicAxis."""
 
         # initialize super class
-        super().__init__(axis_data)
+        super().__init__(params)
 
         # set var 
-        self.var = axis_data.get('var', 'dynamic_axis')
+        self.var = params.get('var', 'dynamic_axis')
 
         # set name
-        self.name = axis_data.get('name', '')
+        self.name = params.get('name', '')
 
         # set unit
-        self.unit = axis_data.get('unit', '')
+        self.unit = params.get('unit', '')
 
         # set bound
-        self.bound = axis_data.get('bound', 'none')
+        self.bound = params.get('bound', 'none')
 
         # set label
-        if axis_data.get('label', '') == '':
+        if params.get('label', '') == '':
             self.label = self.name + ' (' + self.unit + ')' if self.unit != '' else self.name
         # supersede axis_data
         else:
-            self.label = axis_data['label']
+            self.label = params['label']

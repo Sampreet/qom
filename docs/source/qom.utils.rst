@@ -1,21 +1,8 @@
 qom.utils package
 =================
 
-Submodules
-----------
+.. toctree::
+   :maxdepth: 1
+   :caption: Modules:
 
-qom.utils.wrappers module
--------------------------
-
-.. automodule:: qom.utils.wrappers
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: qom.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   qom.utils.wrappers

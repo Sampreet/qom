@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.7.8 - 2021/08/02 - 00 - Added Lyapunov Exponents
+* Remodelled `docs` with class-based documentation support.
+* Removed all notebooks from `examples`.
+* Restructured `qom/loopers` modules:
+    * Updated documentation, axis scaling, properties and parameters for `BaseLooper`.
+    * Revised parameters and removed plotter options for `loop` methods in `XLooper`, `XYLooper` and `XYZLooper`.
+* Updated `qom/solvers` modules:
+    * Merged methods and modified workflows for `HLESolver` and `ODESolver`.
+    * Minor fixes and reference additions for `QCMSOlver` and `RHCSolver`.
+* Restructured `qom/systems` modules:
+    * Added Lyapunov exponents, modified solver integrations and resolved parameters for `BaseSystem`.
+    * Minor fixes to attributes in `DODMSystem`, `DOSMSystem`, `SODMSystem` and `SOSMSystem`.
+* Updated documentation and minor fixes to `qom.ui.axes` and `qom.ui.plotters` modules.
+* Added Lyapunov exponents-based functions and minor fixes to `qom.utils.wrappers` module.
+* Updated `docs` with new appearance and class-based pages. 
+* Updated `README` and `setup`.
+
 ## v0.7.7 - 2021/07/09 - 00 - Bugfixes
 * Fixed copy bug in `qom/loopers/XYLooper` and `qom/loopers/XYZLooper` modules.
 * Fixed Lyapunov equation bug in `qom/systems/BaseSystem` module.

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Class to handle matplotlib plots."""
+"""Module to handle matplotlib plots."""
 
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2021-05-25'
+__updated__ = '2021-07-30'
 
 # dependencies
 from matplotlib.colors import LinearSegmentedColormap, Normalize
@@ -16,16 +16,12 @@ from typing import Union
 import logging
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 
 # qom modules
 from .BasePlotter import BasePlotter
 
 # module logger
 logger = logging.getLogger(__name__)
-
-# data types
-t_list = Union[list, np.ndarray]
 
 # TODO: Add annotations.
 # TODO: Options for 3D plot parameters.
@@ -34,19 +30,17 @@ t_list = Union[list, np.ndarray]
 
 class MPLPlotter(BasePlotter):
     """Class to handle matplotlib plots.
-
-    Inherits :class:`qom.ui.plotters.BasePlotter`.
         
     Parameters
     ----------
     axes : dict
-        Axes for the plot.
+        Axes for the plot containing one or more keys for the axes ("X", "Y" or "Z"), each either a list of values, or dictionary containing "min", "max" and "dim" keys or a single "val" key with a non-empty list. Refer :class:`qom.ui.axes.BaseAxis` for all currently supported keys.
     params : dict
-        Parameters of the plot.
+        Parameters of the plot. Refer :class:`qom.ui.plotters.BasePlotter` for all currently supported keys.
     mpl_spec : :class:`matplotlib.gridspec.GridSpec`
         Grid for the plot.
-    mpl_spec : :class:`matplotlib.gridspec.GridSpec`
-        Grid for the plot.
+
+    .. note:: All the options defined in ``params`` supersede individual function arguments. Refer :class:`qom.ui.plotters.BasePlotter` for a complete list of supported options.
     """
 
     # attributes
@@ -110,7 +104,11 @@ class MPLPlotter(BasePlotter):
         plt.ticklabel_format(axis='both', style='plain')
 
         # update x-axis
+        _mpl_axes.set_xscale(self.params['x_scale'])
         self.__update_axis(_mpl_axes, 'x', self.axes['X'])
+
+        # update y-axis
+        _mpl_axes.set_yscale(self.params['y_scale'])
 
         # 1D plot
         if _type in self.types_1D:
@@ -221,8 +219,10 @@ class MPLPlotter(BasePlotter):
         # extract frequently used variables
         _type = self.params['type']
         _mpl_axes = plt.gca()
-        _font_dicts = self.params['font_dicts']
         _cmap = LinearSegmentedColormap.from_list(self.params['palette'], self.params['colors'])
+
+        # update view
+        _mpl_axes.set_facecolor('grey')
 
         # initailize values
         _xs, _ys = np.meshgrid(self.axes['X'].val, self.axes['Y'].val)
@@ -297,7 +297,7 @@ class MPLPlotter(BasePlotter):
         else:
             plt.gcf().set_size_inches(width, height)
 
-    def __update_1D(self, xs: t_list, vs: t_list, head: bool):
+    def __update_1D(self, xs, vs, head: bool):
         """Method to udpate 1D plots.
         
         Parameters
@@ -309,6 +309,14 @@ class MPLPlotter(BasePlotter):
         head : boolean
             Option to display the head for line-type plots.
         """
+
+        # validate parameters
+        supported_types = Union[list, np.ndarray].__args__
+        assert isinstance(xs, supported_types), 'Parameter ``xs`` should be a list or numpy array'
+        assert isinstance(vs, supported_types), 'Parameter ``vs`` should be a list or numpy array'
+
+        # supersede plotter parameters
+        head = self.params.get('head', head)
 
         # frequently used variables
         _type = self.params['type']
@@ -366,7 +374,7 @@ class MPLPlotter(BasePlotter):
         # update limits
         _mpl_axes.set_ylim(_mini, _maxi)
 
-    def __update_2D(self, vs: t_list):
+    def __update_2D(self, vs):
         """Method to udpate 2D plots.
         
         Parameters
@@ -375,10 +383,12 @@ class MPLPlotter(BasePlotter):
             V-axis values.
         """
 
+        # validate parameters
+        assert isinstance(vs, Union[list, np.ndarray].__args__), 'Parameter ``vs`` should be a list or numpy array'
+
         # frequently used variables
         _type = self.params['type']
         _mpl_axes = plt.gca()
-        _font_dicts = self.params['font_dicts']
         _cmap = LinearSegmentedColormap.from_list(self.params['palette'], self.params['colors'])
         _rave = np.ravel(vs)
 
@@ -419,7 +429,7 @@ class MPLPlotter(BasePlotter):
         if self.params['cbar']['show']:
             self.set_cbar(_mini, _maxi, _prec)
 
-    def __update_3D(self, vs: t_list):
+    def __update_3D(self, vs):
         """Method to udpate 3D plots.
         
         Parameters
@@ -428,10 +438,12 @@ class MPLPlotter(BasePlotter):
             Z-axis or V-axis values.
         """
 
+        # validate parameters
+        assert isinstance(vs, Union[list, np.ndarray].__args__), 'Parameter ``vs`` should be a list or numpy array'
+
         # frequently used variables
         _type = self.params['type']
         _mpl_axes = plt.gca()
-        _font_dicts = self.params['font_dicts']
         _cmap = LinearSegmentedColormap.from_list(self.params['palette'], self.params['colors'])
 
         # initialize values
@@ -536,7 +548,6 @@ class MPLPlotter(BasePlotter):
         """
 
         # frequently used variables
-        _type = self.params['type']
         _font_dicts = self.params['font_dicts']
         _font_props = self.__get_font_props(_font_dicts['tick'])
 
@@ -641,12 +652,16 @@ class MPLPlotter(BasePlotter):
         Parameters
         ----------
         hold : bool, optional
-            Option to hold the plot. Default is False.
+            Option to hold the plot.
         width : float
             Width of the figure.
         height : float 
             Height of the figure.
         """
+
+        # supersede plotter parameterswidth
+        width = self.params.get('width', width)
+        height = self.params.get('height', height)
         
         # resize plot
         self.__resize_plot(width, height)
@@ -654,7 +669,6 @@ class MPLPlotter(BasePlotter):
         # draw data
         plt.draw()
         plt.tight_layout()
-        # plt.subplots_adjust(top=0.99, bottom=0.06, left=0.06, right=0.99)
 
         # display plot
         if hold:
@@ -662,7 +676,7 @@ class MPLPlotter(BasePlotter):
         else:
             plt.pause(1e-9)
 
-    def update(self, xs: t_list=None, ys: t_list=None, zs: t_list=None, vs: t_list=None, head: bool=False):
+    def update(self, xs=None, ys=None, zs=None, vs=None, head: bool=False):
         """Method to update the figure.
         
         Parameters
@@ -678,6 +692,16 @@ class MPLPlotter(BasePlotter):
         head : bool, optional
             Option to display the head for line-type plots. Default is False.
         """
+
+        # validate parameters
+        supported_types = Union[list, np.ndarray].__args__
+        assert xs is None or isinstance(xs, supported_types), 'Parameter ``xs`` should be a list or numpy array'
+        assert ys is None or isinstance(ys, supported_types), 'Parameter ``xs`` should be a list or numpy array'
+        assert zs is None or isinstance(zs, supported_types) or zs is None, 'Parameter ``xs`` should be a list or numpy array'
+        assert isinstance(vs, supported_types), 'Parameter ``vs`` should be a list or numpy array'
+
+        # supersede plotter parameterswidth
+        head = self.params.get('head', head)
 
         # extract frequently used variables
         _type = self.params['type']

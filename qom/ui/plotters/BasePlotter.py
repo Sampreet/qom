@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Class to interface plotters."""
+"""Module to interface plotters."""
 
 __name__    = 'qom.ui.plotters.BasePlotter'
 __authors__ = ['Sampreet Kalita']
@@ -29,14 +29,105 @@ t_axis = Union[DynamicAxis, MultiAxis, StaticAxis]
 class BasePlotter():
     """Class to interface plotters.
 
-    Initializes `axes` and `params` properties.
+    Initializes ``axes`` and ``params`` properties.
     
     Parameters
     ----------
     axes : dict
-        Axes for the plot.
+        Axes for the plot containing one or more keys for the axes ("X", "Y" or "Z"), each either a list of values, or dictionary containing "min", "max" and "dim" keys or a single "val" key with a non-empty list. Refer :class:`qom.ui.axes.BaseAxis` for currently supported keys.
     params : dict
-        Parameters of the plot.
+        Parameters of the plot. Currently supported keys are:
+            ======================  ====================================================
+            key                     value
+            ======================  ====================================================
+            "bins"                  (*int*) number of colors for the plot.
+            "cbar_position"         (*str*) position of the color bar. Currently supported values are "top", "right" (default), "bottom" and "left".
+            "cbar_tick_labels"      (*list*) tick labels of the color bar.
+            "cbar_ticks"            (*list*) ticks of the color bar.
+            "cbar_title"            (*str*) title of the color bar.
+            "cbar_x_label"          (*str*) X-axis label of the color bar.
+            "cbar_y_label"          (*str*) Y-axis label of the color bar.
+            "font_math"             (*str*) math renderer for fonts. 
+            "height"                (*float*) height of the plot.
+            "label_font_family"     (*str*) font family for the label.
+            "label_font_size"       (*float*) font size for the label.
+            "label_font_stretch"    (*int*) font stretch for the label.
+            "label_font_style"      (*str*) font style for the label.
+            "label_font_variant"    (*str*) font variant for the label.
+            "label_font_weight"     (*int*) font weightt for the label.
+            "legend_location"       (*bool*) location the legend. Currently supported locations are "best" (default), "center", "center left", "center right", "lower center", "lower left", "lower right", "right", "upper center", "upper left" and "upper right".
+            "palette"               (*str*) color palette of the plot (refer attributes).
+            "show_cbar"             (*bool*) option to show the color bar.
+            "show_legend"           (*bool*) option to show the legend.
+            "tick_font_family"      (*str*) font family for the tick.
+            "tick_font_size"        (*float*) font size for the tick.
+            "tick_font_stretch"     (*int*) font stretch for the tick.
+            "tick_font_style"       (*str*) font style for the tick.
+            "tick_font_variant"     (*str*) font variant for the tick.
+            "tick_font_weight"      (*int*) font weightt for the tick.
+            "title"                 (*str*) title of the plot.
+            "type"                  (*str*) type of the plot (refer notes).
+            "v_bound"               (*str*) option to check user-defined bounds.
+            "v_label"               (*str*) label of the V-axis.
+            "v_name"                (*str*) display name of the V-axis.
+            "v_scale"               (*str*) scale of the V-axis.
+            "v_sizes"               (*list*) sizes of the V-axis.
+            "v_styles"              (*list*) styles of the V-axis.
+            "v_tick_labels"         (*list*) tick labels of the V-axis.
+            "v_ticks"               (*list*) ticks of the V-axis.
+            "v_unit"                (*str*) unit of the V-axis.
+            "width"                 (*float*) width of the plot.
+            "x_bound"               (*str*) bounds of the X-axis.
+            "x_label"               (*str*) label of the X-axis.
+            "x_name"                (*str*) display name of the X-axis.
+            "x_scale"               (*str*) scale of the X-axis.
+            "x_sizes"               (*list*) sizes of the X-axis.
+            "x_styles"              (*list*) styles of the X-axis.
+            "x_tick_labels"         (*list*) tick labels of the X-axis.
+            "x_ticks"               (*list*) ticks of the X-axis.
+            "x_unit"                (*str*) unit of the X-axis.
+            "y_bound"               (*str*) bounds of the Y-axis.
+            "y_colors"              (*str*) color for plots.
+            "y_label"               (*str*) label of the Y-axis.
+            "y_legends"             (*list*) legends of the plots.
+            "y_name"                (*str*) display name of the Y-axis.
+            "y_scale"               (*str*) scale of the Y-axis.
+            "y_sizes"               (*list*) sizes of the Y-axis.
+            "y_styles"              (*list*) styles of the Y-axis.
+            "y_tick_labels"         (*list*) tick labels of the Y-axis.
+            "y_ticks"               (*list*) ticks of the Y-axis.
+            "y_unit"                (*str*) unit of the Y-axis.
+            "z_bound"               (*str*) bounds of the Z-axis.
+            "z_label"               (*str*) label of the Z-axis.
+            "z_name"                (*str*) display name of the Z-axis.
+            "z_scale"               (*str*) scale of the Z-axis.
+            "z_sizes"               (*list*) sizes of the Z-axis.
+            "z_styles"              (*list*) styles of the Z-axis.
+            "z_tick_labels"         (*list*) tick labels of the Z-axis.
+            "z_ticks"               (*list*) ticks of the Z-axis.
+            "z_unit"                (*str*) unit of the Z-axis.
+            ======================  ====================================================
+
+    Notes
+    -----
+    Values for the keys with font paramters are currently backed by :class:`matplotlib`. Currently supported values of "\*_bounds" are "both", "lower", "none" (default) and "upper". Currently supported values of "\*_scale" are "linear" (default) and "log". Currently supported values of "type" are:
+        ==============  ====================================================
+        value           meaning
+        ==============  ====================================================
+        "contour"       contour plot.
+        "contourf"      filled contour plot.
+        "line"          single-line plot.
+        "lines"         multi-line plot.
+        "pcolormesh"    mesh color plot.
+        "scatter"       single-scatter plot.
+        "scatters"      multi-scatter plot.
+        "surface"       surface plot.
+        "surface_cx"    surface plot with projection on X-axis.
+        "surface_cy"    surface plot with projection on Y-axis.
+        "surface_cz"    surface plot with projection on Z-axis.
+        ==============  ====================================================
+
+    .. note:: All the options defined in ``params`` supersede individual function arguments.
     """
 
     # attributes
@@ -50,26 +141,6 @@ class BasePlotter():
         'rlb': ['Reds_r', 'Blues']
     }
     bins = 11
-
-    @property
-    def axes(self):
-        """dict: Axes for the plot."""
-
-        return self.__axes
-    
-    @axes.setter
-    def axes(self, axes: dict):
-        self.__axes = axes
-
-    @property
-    def params(self):
-        """dict: Parameters of the plot."""
-
-        return self.__params
-    
-    @params.setter
-    def params(self, params: dict):
-        self.__params = params
 
     def __init__(self, axes: dict, params: dict):
         """Class constructor for MPLPlotter."""
@@ -114,7 +185,13 @@ class BasePlotter():
                 'y_label': params.get('cbar_y_label', ''),
                 'ticks': params.get('cbar_ticks', None),
                 'tick_labels': params.get('cbar_tick_labels', None),
-            }
+            },
+            'v_scale': params.get('v_scale', 'linear'),
+            'x_scale': params.get('x_scale', 'linear'),
+            'y_scale': params.get('y_scale', 'linear'),
+            'z_scale': params.get('z_scale', 'linear'),
+            'width': params.get('width', 5.0),
+            'height': params.get('height', 5.0)
         }
 
     def __get_axes_params(self, axes: dict, params: dict):
@@ -166,7 +243,7 @@ class BasePlotter():
                     _valid = True
             else:
                 _valid = False
-            assert _valid, 'Axis data should either be a `list` of values, or a `dict` containing `min`, `max` and `dim` keys or a single `val` key with a non-empty list.'
+            assert _valid, 'Axis data should either be a `list` of values, or a dictionary containing "min", "max" and `dim` keys or a single `val` key with a non-empty list.'
 
             # update dimension
             _dim = _axis.get('dim', None)
@@ -177,7 +254,7 @@ class BasePlotter():
             _axis['bound'] = params.get(axis.lower() + '_bound', 'none')
             _axis['colors'] = params.get(axis.lower() + '_colors', None)
             _axis['label'] = params.get(axis.lower() + '_label', '')
-            _axis['legend'] = params.get(axis.lower() + '_legend', '')
+            _axis['legends'] = params.get(axis.lower() + '_legend', '')
             _axis['name'] = params.get(axis.lower() + '_name', '')
             _axis['sizes'] = params.get(axis.lower() + '_sizes', None)
             _axis['styles'] = params.get(axis.lower() + '_styles', None)
@@ -199,8 +276,12 @@ class BasePlotter():
             Plot parameters passed.
         text_type : str
             Type of text:
-                'label': for axes labels.
-                'tick': for axes ticks.
+                ==========  ====================================================
+                value       meaning
+                ==========  ====================================================
+                "label"     properties for axes labels.
+                "tick"      properties for axes ticks.
+                ==========  ====================================================
 
         Returns
         -------

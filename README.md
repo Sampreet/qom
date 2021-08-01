@@ -1,6 +1,6 @@
 # The Quantum Optomechanics Toolbox
 
-[![Version](https://img.shields.io/badge/version-0.7.7-red?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/version-0.7.8-red?style=for-the-badge)](#)
 [![Code Size](https://img.shields.io/github/repo-size/sampreet/qom?style=for-the-badge)](#)
 [![Last Commit](https://img.shields.io/github/last-commit/sampreet/qom?style=for-the-badge)](#)
 
@@ -56,7 +56,7 @@ Once the package is installed, its modules can be imported.
 ## Basic Usage
 
 The library features easy-to-use functions to calculate as well as visualize the trend of several quantum signatures.
-Specialized examples on usage of the various components can be found in the [`examples`](./examples) folder.
+Documentations of current modules are available on the [module index page](https://sampreet.github.io/qom/py-modindex.html).
 
 ### Loopers
 
@@ -75,8 +75,8 @@ results = looper.loop()
 thres = looper.get_thresholds()
 ```
 
-Here, `func` is a function containing the steps of each iteration and `params` is a dictionary containing the parameters required for the looper, solver, system and plotter. 
-The complete example can be found in the [XLooper notebook](./examples/qom_loopers_XLooper.ipynb).
+Here, `func` is a function containing the steps of each iteration and `params` is a dictionary containing the parameters required for the looper, solver, system and plotter.
+The complete documentation of the loopers is available [here](https://sampreet.github.io/qom/qom.loopers.html).
 
 ### Solvers
 
@@ -89,31 +89,31 @@ For example, the `qom.solvers.HLESolver` generates the time-varying solutions of
 # initialize the solver with the parameters
 solver = HLESolver(solver_params)
 # solve for the dynamics of modes and correlations
-results = solver.solve(ode_func, iv)
+results = solver.solve(func_ode, iv)
 # get modes and correlations
 modes = solver.get_Modes(num_modes)
 corrs = solver.get_Corrs(num_modes)
 ```
 
-Here, `solver_params` is a dictionary containing the parameters required by `HLESolver`, `ode_func` is a function returning the rates of the modes and correlations, `iv` are their initial values and `num_modes` are the number of modes of the system.
-The complete example can be found in the [HLESolver notebook](./examples/qom_solvers_HLESolver.ipynb).
+Here, `solver_params` is a dictionary containing the parameters required by `HLESolver`, `func_ode` is a function returning the rates of the modes and correlations, `iv` are their initial values and `num_modes` are the number of modes of the system.
+The complete documentation of the solvers is available [here](https://sampreet.github.io/qom/qom.solvers.html).
 
 
 ### Systems
 
 These classes cover some basic properties of optomechanical systems as well as wrap solvers for faster implementation.
 
-For example, the `qom.systems.SOSMSystem` class can be used to interface a single-optical-single-mechanical system. Its built-in function `get_mean_optical_occupancy` returns the intracavity photon number and can be implemented as:
+For example, the `qom.systems.SOSMSystem` class can be used to interface a single-optical-single-mechanical system. Its built-in function `get_mean_optical_occupancies` returns the intracavity photon number and can be implemented as:
 
 ```python
 # initialize the system with system parameters
 system = MySystem(system_params)
 # obtain mean occupancy of the optical mode
-N_o = system.get_mean_optical_occupancy(system.params['lambda_l'], system.params['mu'], system.params['gamma_o'], system.params['P_l'], system.params['omega_m'])
+N_o = system.get_mean_optical_occupancies(system.get_ivc, system.get_oss_args)
 ```
 
 Here, `MySystem` is a class inheriting `SOSMSystem`, initialized by `system_params`, which is a dictionary containing the parameters of the system.
-The complete example can be found in the [SOSMSystem notebook](./examples/qom_systems_SOSMSystem.ipynb).
+The complete documentation of the systems is available [here](https://sampreet.github.io/qom/qom.systems.html).
 
 ### UI
 

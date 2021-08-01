@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Class to handle Routh-Hurwitz criterion solver."""
+"""Module to handle Routh-Hurwitz criterion solver."""
 
 __name__    = 'qom.solvers.RHCSolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-03'
-__updated__ = '2021-01-06'
+__updated__ = '2021-07-31'
 
 # dependencies
 from typing import Union
@@ -23,13 +23,9 @@ t_array = Union[list, np.matrix, np.ndarray]
 class RHCSolver():
     r"""Class to handle Routh-Hurwitz criterion solver.
 
-    Initializes `coeffs`, `n` and `seq` properties. At least one of the parameters, preferably "coeffs", should be non-None.
+    Initializes ``coeffs``, ``n`` and ``seq`` properties. 
 
     An eigenvalue equation in :math:`\lambda` is obtained by equating :math:`\det(\lambda I_{n} - A_{n \times n})` to zero.
-
-    References:
-
-    [1] E. X. DeJesus and C. Kaufman, *Routh-Hurwitz Criterion in the Examination of Eigenvalues of a System of Nonlinear Ordinary Differential Equations*, Phys. Rev. A **35** (12), 5288 (1987).
 
     Parameters
     ----------
@@ -37,10 +33,17 @@ class RHCSolver():
         Drift matrix. 
     coeffs : list or numpy.ndarray, optional
         Coefficients of the characteristic equation.
+
+    References
+    ----------
+
+    .. [1] E. X. DeJesus and C. Kaufman, *Routh-Hurwitz Criterion in the Examination of Eigenvalues of a System of Nonlinear Ordinary Differential Equations*, Phys. Rev. A **35**, 5288 (1987).
+
+    .. note:: At least one of the parameters, preferably ``coeffs``, should be non-None.
     """
 
     # attribute
-    code = 'rhc'
+    code = 'rhc_solver'
     name = 'Routh Hurwitz Criterion Solver'
 
     @property
@@ -90,13 +93,13 @@ class RHCSolver():
         self.__seq = seq
 
     def __init__(self, A: t_array=None, coeffs: t_array=None):
-        """Class constructor for RHCriterion."""
+        """Class constructor for RHCSolver."""
 
         # validate parameters
-        assert A is not None or coeffs is not None, 'At least one of the parameters "A" and "coeffs" should be non-None'
+        assert A is not None or coeffs is not None, 'At least one of the parameters ``A`` and ``coeffs`` should be non-None'
 
         # if drift matrix
-        if A is not None:
+        if A is not None and coeffs is None:
             # validate shape
             _shape = np.shape(A)
             assert _shape[0] == _shape[1], 'A should be a square matrix.'
@@ -106,8 +109,8 @@ class RHCSolver():
             # set coeffs
             self._set_coeffs(A)
 
-        # if coefficients
-        if coeffs is not None:
+        # if coefficients is not null
+        else:
             # set order
             self.n = len(coeffs) - 1
             # set coefficients
@@ -116,7 +119,7 @@ class RHCSolver():
         # set Ts
         self._set_Ts()
 
-    def _set_coeffs(self, A: t_array):
+    def _set_coeffs(self, A):
         """Method to set the coefficients of the characteristic equation."""
 
         # convert to sympy matrix
@@ -158,7 +161,7 @@ class RHCSolver():
             self.seq.append(np.linalg.det(_sub_mat))
 
     def get_indices(self):
-        r"""Method to obtain the indices where the sequence, :math:`\{T_{0}, T_{1}, ..., T_{n}\}` changes sign. 
+        r"""Method to obtain the indices where the sequence, :math:`\{T_{0}, T_{1}, ..., T_{n}\}` changes sign [1]_. 
 
         Returns
         -------

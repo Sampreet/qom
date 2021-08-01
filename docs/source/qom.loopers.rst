@@ -1,45 +1,11 @@
 qom.loopers package
 ===================
 
-Submodules
-----------
+.. toctree::
+   :maxdepth: 1
+   :caption: Modules:
 
-qom.loopers.BaseLooper module
------------------------------
-
-.. automodule:: qom.loopers.BaseLooper
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-qom.loopers.XLooper module
---------------------------
-
-.. automodule:: qom.loopers.XLooper
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-qom.loopers.XYLooper module
----------------------------
-
-.. automodule:: qom.loopers.XYLooper
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-qom.loopers.XYZLooper module
-----------------------------
-
-.. automodule:: qom.loopers.XYZLooper
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: qom.loopers
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   qom.loopers.BaseLooper
+   qom.loopers.XLooper
+   qom.loopers.XYLooper
+   qom.loopers.XYZLooper

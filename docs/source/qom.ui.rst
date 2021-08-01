@@ -1,31 +1,15 @@
 qom.ui package
 ==============
 
-Subpackages
------------
-
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 1
+   :caption: Subpackages:
 
    qom.ui.axes
    qom.ui.plotters
-   qom.ui.widgets
 
-Submodules
-----------
+.. toctree::
+   :maxdepth: 1
+   :caption: Modules:
 
-qom.ui.log module
------------------
-
-.. automodule:: qom.ui.log
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: qom.ui
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   qom.ui.log
