@@ -21,10 +21,11 @@ Backed by numerical libraries like NumPy and SciPy, and featuring the highly cus
 * Inheritable optomechanical systems supporting callable properties.
 * Configurable visualizations without the need for explicit plotting.
 
-### Up Next!
+### Up Next in v0.8!
 
 - [ ] Support for Delay Differential Equations
 - [ ] GUI module to run templated scripts
+- [x] Support for Lyapunov exponents
 - [x] Multithreaded looping
 - [x] Project website
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.7.8 - 2021/08/02 - 01 - Minor Fixes
+* Updated `docs` configuration and source static files.
+* Fixed indexing issue in `qom.solvers.QCMSolver` module.
+* Added number of iterations for Lyapunov exponents in `qom.systems.BaseSystem` module.
+* Fixed legend display in `qom.ui.axes` and `qom.ui.plotters` subpackages.
+* Updated `README`.
+
 ## v0.7.8 - 2021/08/02 - 00 - Added Lyapunov Exponents
 * Remodelled `docs` with class-based documentation support.
 * Removed all notebooks from `examples`.

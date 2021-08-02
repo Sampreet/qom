@@ -30,10 +30,10 @@ class BaseAxis():
             key             value
             ==============  ====================================================
             "bound"         (*str*) option to check user-defined bounds, assuming either of "both", "lower", "none" or "upper".
-            "colors"        (*str*) color for plots.
+            "colors"        (*str*) colors for plots.
             "dim"           (*int*) dimension of the axis.
             "label"         (*str*) label of the axis.
-            "legends"       (*list*) legends of the axis.
+            "legend"        (*list*) legend of the plots.
             "max"           (*float*) max value of the axis.
             "min"           (*float*) min value of the axis.
             "name"          (*str*) display name of the axis.
@@ -97,14 +97,14 @@ class BaseAxis():
         self.__label = label
 
     @property
-    def legends(self):
+    def legend(self):
         """list: Legends of the axis."""
 
-        return self.__legends
+        return self.__legend
 
-    @legends.setter
-    def legends(self, legends):
-        self.__legends = legends
+    @legend.setter
+    def legend(self, legend):
+        self.__legend = legend
 
     @property
     def name(self):

@@ -44,9 +44,9 @@ class MultiAxis(BaseAxis):
         self.unit = params.get('unit', '')
 
         # set params
-        self.legends = params.get('legend', '')
-        if self.legends == '':
-            self.legends = ['{name} = {value} {unit}'.format(name=self.name, value=v, unit=self.unit) for v in self.val]
+        self.legend = params.get('legend', '')
+        if self.legend == '':
+            self.legend = ['{name} = {value} {unit}'.format(name=self.name, value=v, unit=self.unit) for v in self.val]
 
         # set colors
         _colors = params.get('colors', [])

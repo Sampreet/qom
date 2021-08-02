@@ -23,8 +23,7 @@ from ..ui.plotters import MPLPlotter
 # module logger
 logger = logging.getLogger(__name__)
 
-# TODO: Fix GSO and add option to select iterations in `get_lyapunov exponents`.
-# TODO: Handle other measures in `get_measure_dynamics`.
+# TODO: Fix "gso" in `get_lyapunov exponents`.
 # TODO: Add `check_limit_cycle`.
 
 class BaseSystem():
@@ -56,9 +55,10 @@ class BaseSystem():
         ==================  ====================================================
         key                 value
         ==================  ====================================================
-        "idx_e"             (*int* or *tuple* or *list*) index or indices of the elements in a list. This value should be an integer or a list of integers when the type of measure is "mode_amp" or "eigen_dm". Otherwise, it is a tuple of dimension *2* or a list of such tuples.
+        "idx_e"             (*int* or *tuple* or *list*) index or indices of the elements in a list. This value should be an integer or a list of integers when the type of measure is "mode_amp" or "eigen_dm". Otherwise, it is a tuple of dimension *2* or a list of such tuples. Refer notes for all currently supported values.
         "measure_type"      (*str*) type of measure to calculate. Currently supported types of measures are described in the next table.
         "method_le"         (*str*) method used to calculate the unit vectors and eigenvalues for Lyapunov exponents. Currently supported methods are "gso" for Gram-Schmidt orthonormalization and "svd" for singular value decomposition.
+        "num_iters"         (*int*) number of iterations to calculate the deviations for Lyapunov exponents. 
         "range_min"         (*float*) minimum index of time at which the measure is calculated.
         "range_max"         (*float*) maximum index of time at which the measure is calculated.
         "show_progress"     (*bool*) option to display the progress of the solver.
@@ -68,13 +68,13 @@ class BaseSystem():
         ==================  ====================================================
         value               meaning
         ==================  ====================================================
-        "corr_ele"          elements of the correlation matrix.
-        "discord_G"         Gaussian quantum discord.
-        "eigen_dm"          eigenvalues of the drift matrix.
-        "entan_ln"          quantum entanglement using logarithmic negativity.
-        "mode_amp"          complex-valued classical mode amplitudes.
-        "sync_c"            complete quantum synchronization.
-        "sync_p"            quantum phase synchronization.
+        "corr_ele"          elements of the correlation matrix. The corresponding "idx_e" key is a tuple or a list of tuples of the two quadrature indices.
+        "discord_G"         Gaussian quantum discord. The corresponding "idx_e" key is a tuple or a list of tuples of the two mode indices.
+        "eigen_dm"          eigenvalues of the drift matrix. The corresponding "idx_e" key is an integer or a list of integers of the quadrature indices.
+        "entan_ln"          quantum entanglement using logarithmic negativity. The corresponding "idx_e" key is a tuple or a list of tuples of the two mode indices.
+        "mode_amp"          complex-valued classical mode amplitudes. The corresponding "idx_e" key is an integer or a list of integers of the mode indices.
+        "sync_c"            complete quantum synchronization. The corresponding "idx_e" key is a tuple or a list of tuples of the two mode indices.
+        "sync_p"            quantum phase synchronization. The corresponding "idx_e" key is a tuple or a list of tuples of the two mode indices.
         ==================  ====================================================
 
     .. note:: All the options defined in ``params`` supersede individual function arguments.
@@ -195,6 +195,7 @@ class BaseSystem():
         # extract frequently used variables
         _measure_type = solver_params['measure_type']
         _idx_e = solver_params['idx_e']
+        _dim = 2 * self.num_modes
 
         # supported measure types
         supported_types = self.types_measures + self.types_qcm
@@ -213,11 +214,11 @@ class BaseSystem():
         for idx in _idx_e:
             # handle integers (mode amplitudes or eigenvalues of drift matrix)
             if type(idx) is int:
-                assert idx < self.num_modes if _measure_type == 'mode_amp' else idx < 2 * self.num_modes, 'Element indices should not exceed total number of modes or quadratures'
+                assert idx < _dim / 2 if _measure_type == 'mode_amp' else idx < _dim, 'Element indices should not exceed total number of modes or quadratures'
             # handle tuples (elements of correlation matrix or qcm)
             else:
                 assert len(idx) == 2, 'Tuples should be of lenght ``2``'
-                assert idx[0] < 2 * self.num_modes and idx[1] < 2 * self.num_modes, 'Element indices should not exceed total number of quadratures'
+                assert idx[0] < _dim and idx[1] < _dim if _measure_type == 'corr_ele' else idx[0] < _dim / 2 and idx[1] < _dim / 2, 'Element indices should not exceed total number of modes or quadratures'
 
     def func_ode(self, t, v, c):
         """Wrapper function for the rate equations of the modes and quadrature correlations. 
@@ -317,7 +318,7 @@ class BaseSystem():
 
         return eig_avg
 
-    def get_lyapunov_exponents(self, solver_params, get_mode_rates, get_ivc, get_A, method_le: str='svd'):
+    def get_lyapunov_exponents(self, solver_params, get_mode_rates, get_ivc, get_A, method_le: str='svd', num_iters: int=10000):
         """Method to obtain the Lyapunov exponents.
 
         Parameters
@@ -338,21 +339,23 @@ class BaseSystem():
                 "gso"       Gram-Schmidt orthonormalization (fallback).
                 "svd"       singular value decomposition.
                 ==========  ====================================================
+        num_iters : int, optional
+            Number of iterations for the calculation of deviations.
 
         Returns
         -------
         lambdas : float
-            The Lyapunov exponents.
+            Lyapunov exponents.
         """
 
         # supersede solver parameterss
         method_le = solver_params.get('method_le', method_le)
+        num_iters = int(solver_params.get('num_iters', num_iters))
 
         # update attributes
 
         # frequently used variables
         _dim = 2 * self.num_modes
-        _t_dim = solver_params.get('t_dim', 10001)
         iv, c = get_ivc()
         params = c[(_dim)**2:]
         _cache, _cache_dir, _cache_file = self.__get_cache_options(solver_params=solver_params)
@@ -366,10 +369,8 @@ class BaseSystem():
         Modes = solver.get_Modes(num_modes=self.num_modes)
         T = solver.T
         # extract the last element
-        idx_e = len(T) - 1
         _dt = T[1] - T[0]
-        _T = np.linspace(T[-1], T[-1] + _t_dim * _dt, _t_dim)
-        iv_modes = Modes[idx_e]
+        _T = np.linspace(T[-1], T[-1] + num_iters * _dt, num_iters + 1)
 
         # if singular value decomposition
         if method_le == 'svd':
@@ -389,7 +390,7 @@ class BaseSystem():
 
             # initial values
             iv_quads = list()
-            for m in iv_modes:
+            for m in Modes[-1]:
                 iv_quads.append(np.real(m))
                 iv_quads.append(np.imag(m))
             iv = iv_quads + np.identity(_dim, dtype=np.float_).flatten().tolist()
@@ -402,7 +403,7 @@ class BaseSystem():
             # singular value decomposition
             _, s, _ = sl.svd(W)
             # exponents
-            lambdas = [np.log10(s[i]) / _t_dim for i in range(len(s))]
+            lambdas = [np.log10(s[i]) / num_iters / _dt  for i in range(len(s))]
         # Gram-Schmidt orthonormalization    
         else:
             # ODE function
@@ -410,7 +411,7 @@ class BaseSystem():
                 return get_mode_rates(modes=modes, params=params, t=t)
 
             # initialize solver
-            solver = ODESolver(params=solver_params, func=func_ode, iv=iv_modes)
+            solver = ODESolver(params=solver_params, func=func_ode, iv=Modes[-1])
             # extract final vector for another t_dim points
             Modes = solver.solve(T=_T)
 
@@ -419,13 +420,12 @@ class BaseSystem():
             W_T = np.identity(_dim, dtype=np.float_)
 
             # iterate
-            for k in range(0, _t_dim):
+            for k in range(0, num_iters):
                 # get drift matrix at steady state
                 jac = get_A(modes=Modes[k], params=params, t=_T[k])
 
                 # calculate zs and transpose for ease in next steps
                 Z_T = np.transpose(np.dot(np.identity(_dim, dtype=np.float_) + jac * _dt, np.transpose(W_T)))
-                # Z_T = np.transpose(np.dot(jac, np.transpose(W_T)))
 
                 # perform Gram-Schmidt orthonormalization
                 for i in range(_dim):
@@ -436,7 +436,7 @@ class BaseSystem():
                     W_T[i] = Z_T[i] / np.linalg.norm(Z_T[i])
 
                     # update Lyapunov exponents
-                    lambdas[i] += np.log10(np.linalg.norm(Z_T[i])) / _t_dim
+                    lambdas[i] += np.log10(np.linalg.norm(Z_T[i])) / num_iters
 
         return lambdas
 
@@ -576,7 +576,7 @@ class BaseSystem():
         return N_o, roots
 
     def get_measure(self, solver_params: dict, modes: list, corrs: list, get_ivc=None, get_A=None, t=np.inf):
-        """Method to obtain the measure.
+        """Method to calculate the measure.
         
         Parameters
         ----------
@@ -596,7 +596,7 @@ class BaseSystem():
         Returns
         -------
         measure : float
-            The obtained measure.
+            Calculated measure.
         """
 
         # extract frequently used variables
@@ -629,7 +629,7 @@ class BaseSystem():
                 'sync_p': 'get_synchronization_phase'
             }[_measure_type]
             # calculate measure
-            measure = getattr(solver, _qcm_func)(pos_i=_idx_e[0][0], pos_j=_idx_e[0][1])
+            measure = getattr(solver, _qcm_func)(pos_i=2 * _idx_e[0][0], pos_j=2 * _idx_e[0][1])
 
         return measure
 
@@ -863,9 +863,9 @@ class BaseSystem():
         The implementation measure reads as [2]_,
 
         .. math::
-            {S_{Pearson}}_{ij} = \frac{\Sigma_{t} \langle \delta O_{i} (t) \delta O_{j} (t) \rangle}{\sqrt{\Sigma_{t} \langle \delta O_{i}^{2} (t) \rangle} \sqrt{\Sigma_{t} \langle \delta O_{j}^{2} (t) \rangle}}
+            C_{ij} = \frac{\Sigma_{t} \langle \delta \mathcal{O}_{i} (t) \delta \mathcal{O}_{j} (t) \rangle}{\sqrt{\Sigma_{t} \langle \delta \mathcal{O}_{i}^{2} (t) \rangle} \sqrt{\Sigma_{t} \langle \delta \mathcal{O}_{j}^{2} (t) \rangle}}
 
-        where :math:`\delta O_{i}` and :math:`\delta O_{j}` are the corresponding quadratures of fluctuations.
+        where :math:`\delta \mathcal{O}_{i}` and :math:`\delta \mathcal{O}_{j}` are the corresponding quadratures of quantum fluctuations.
         
         Parameters
         ----------

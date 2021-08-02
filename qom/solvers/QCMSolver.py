@@ -226,7 +226,7 @@ class QCMSolver():
 
         # arguments of the modes
         arg_i = np.angle(self.modes[int(pos_i / 2)])
-        arg_j = np.angle(self.modes[int(pos_i / 2)])
+        arg_j = np.angle(self.modes[int(pos_j / 2)])
 
         # frequently used variables
         cos_i = np.cos(arg_i)

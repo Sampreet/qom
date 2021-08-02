@@ -184,7 +184,7 @@ class MPLPlotter(BasePlotter):
         _palette = self.params['palette']
         _colors = self.axes['Y'].colors
         _styles = self.axes['Y'].styles
-        _dim = len(self.axes['Y'].legends)
+        _dim = len(self.axes['Y'].legend)
 
         # handle dimension for single-value plot
         if _type == 'line' or _type == 'scatter':
@@ -208,9 +208,9 @@ class MPLPlotter(BasePlotter):
         elif 'scatter' in _type:
             self.plots = [_mpl_axes.scatter([], [], c=_colors[i], s=self.axes['Y'].sizes[i], marker=_styles[i]) for i in range(_dim)]
 
-        # legends
+        # legend
         if self.params['legend']['show']:
-            _l = plt.legend(self.axes['Y'].legends, loc=self.params['legend']['location'])            
+            _l = plt.legend(self.axes['Y'].legend, loc=self.params['legend']['location'])  
             plt.setp(_l.texts, fontproperties=self.__get_font_props(self.params['font_dicts']['label']))
 
     def __init_2D(self):

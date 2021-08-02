@@ -87,9 +87,9 @@ class BasePlotter():
             "x_ticks"               (*list*) ticks of the X-axis.
             "x_unit"                (*str*) unit of the X-axis.
             "y_bound"               (*str*) bounds of the Y-axis.
-            "y_colors"              (*str*) color for plots.
+            "y_colors"              (*str*) colors for plots.
             "y_label"               (*str*) label of the Y-axis.
-            "y_legends"             (*list*) legends of the plots.
+            "y_legend"              (*list*) legend of the plots.
             "y_name"                (*str*) display name of the Y-axis.
             "y_scale"               (*str*) scale of the Y-axis.
             "y_sizes"               (*list*) sizes of the Y-axis.
@@ -189,9 +189,7 @@ class BasePlotter():
             'v_scale': params.get('v_scale', 'linear'),
             'x_scale': params.get('x_scale', 'linear'),
             'y_scale': params.get('y_scale', 'linear'),
-            'z_scale': params.get('z_scale', 'linear'),
-            'width': params.get('width', 5.0),
-            'height': params.get('height', 5.0)
+            'z_scale': params.get('z_scale', 'linear')
         }
 
     def __get_axes_params(self, axes: dict, params: dict):
@@ -254,7 +252,7 @@ class BasePlotter():
             _axis['bound'] = params.get(axis.lower() + '_bound', 'none')
             _axis['colors'] = params.get(axis.lower() + '_colors', None)
             _axis['label'] = params.get(axis.lower() + '_label', '')
-            _axis['legends'] = params.get(axis.lower() + '_legend', '')
+            _axis['legend'] = params.get(axis.lower() + '_legend', '')
             _axis['name'] = params.get(axis.lower() + '_name', '')
             _axis['sizes'] = params.get(axis.lower() + '_sizes', None)
             _axis['styles'] = params.get(axis.lower() + '_styles', None)
