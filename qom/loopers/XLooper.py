@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.XLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-08-01'
+__updated__ = '2021-08-20'
 
 # dependencies
 import logging
@@ -31,11 +31,11 @@ class XLooper(BaseLooper):
     .. note:: All the options defined under the "looper" dictionary in ``params`` supersede individual function arguments. Refer :class:`qom.loopers.BaseLooper` for a complete list of supported options.
     """
     
-    def __init__(self, func, params: dict):
+    def __init__(self, func, params: dict, cb_progress=None):
         """Class constructor for XLooper."""
 
         # initialize super class
-        super().__init__(func=func, params=params, code='x_looper', name='1D Looper')
+        super().__init__(func=func, params=params, code='x_looper', name='1D Looper', cb_progress=cb_progress)
 
         # set axes
         self._set_axis(axis='X')

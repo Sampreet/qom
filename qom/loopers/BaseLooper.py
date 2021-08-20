@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-08-01'
+__updated__ = '2021-08-20'
 
 # dependencies
 from decimal import Decimal
@@ -95,7 +95,7 @@ class BaseLooper():
     def results(self, results):
         self.__results = results
 
-    def __init__(self, func, params: dict, code: str, name: str):
+    def __init__(self, func, params: dict, code: str, name: str, cb_progress=None):
         """Class constructor for BaseLooper."""
 
         # validate parameters
@@ -108,6 +108,7 @@ class BaseLooper():
         self.params = params
         self.code = code
         self.name = name
+        self.cb_progress = cb_progress
 
         # set properties
         self.axes = dict()
@@ -156,16 +157,18 @@ class BaseLooper():
             assert 'min' in _axis and 'max' in _axis, 'Key "{}" should contain keys "min" and "max" to define axis range'.format(axis)
 
             # extract dimension
-            _dim = _axis.get('dim', 101)
+            _min = np.float_(_axis['min'])
+            _max = np.float_(_axis['max'])
+            _dim = int(_axis.get('dim', 101))
             _scale = _axis.get('scale', 'linear')
 
             # set values
             if _scale == 'log':
-                _val = np.logspace(_axis['min'], _axis['max'], _dim)
+                _val = np.logspace(_min, _max, _dim)
             elif _scale == 'linear':
-                _val = np.linspace(_axis['min'], _axis['max'], _dim)
+                _val = np.linspace(_min, _max, _dim)
                 # truncate values
-                _step_size = (Decimal(str(_axis['max'])) - Decimal(str(_axis['min']))) / (_dim - 1)
+                _step_size = (Decimal(str(_max)) - Decimal(str(_min))) / (_dim - 1)
                 _decimals = - _step_size.as_tuple().exponent
                 _val = np.around(_val, _decimals)
             # convert to list
@@ -490,6 +493,9 @@ class BaseLooper():
         # display progress
         if int(progress * 1000) % 10 == 0:
             logger.info('Calculating the values: Progress = {progress:3.2f}'.format(progress=progress))
+
+        if self.cb_progress is not None:
+            self.cb_progress(progress)
 
     def wrap(self, file_path: str=None, plot: bool=False, hold: bool=True, width: float=5.0, height: float=5.0):
         """Method to wrap the looper.

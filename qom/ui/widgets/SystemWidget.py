@@ -6,14 +6,15 @@
 __name__    = 'qom.ui.widgets.SystemWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-01-23'
+__updated__ = '2021-08-20'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
 import importlib
-import json
+import inspect
 import logging
 import os
+import re
 
 # qom modules
 from .BaseWidget import BaseWidget
@@ -24,8 +25,6 @@ logger = logging.getLogger(__name__)
 
 class SystemWidget(BaseWidget):
     """Class to create a widget for the systems.
-
-    Inherits :class:`qom.ui.widgets.BaseWidget`.
     
     Parameters
     ----------
@@ -38,9 +37,7 @@ class SystemWidget(BaseWidget):
 
         # initialize super class
         super().__init__(parent)
-        self.curr_system = None
-        self.system_params = None
-        self.solver_params = None
+        self.system = None
         self.param_widgets = list()
 
         # initialize layout
@@ -54,8 +51,7 @@ class SystemWidget(BaseWidget):
         
         # frequently used variables
         width = 640
-        label_height = 48
-        param_height = 32
+        row_height = 32
         padding = 32
 
         # fix size
@@ -64,57 +60,52 @@ class SystemWidget(BaseWidget):
         self.move(0, padding)
 
         # initialize UI elements
-        # name
+        # system name
         self.lbl_name = QtWidgets.QLabel()
-        self.lbl_name.setFixedSize(width, 64)
+        self.lbl_name.setFixedSize(width, 2 * row_height)
         self.lbl_name.setFont(QtGui.QFont('Segoe UI', pointSize=16, italic=True))
-        self.lbl_name.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-        # property label
-        self.lbl_prop = QtWidgets.QLabel('Property')
-        self.lbl_prop.setFixedSize(width, label_height) 
-        self.lbl_prop.setFont(QtGui.QFont('Segoe UI', pointSize=12, italic=True))
-        self.lbl_prop.setVisible(False)
-        # measure label
-        self.lbl_meas = QtWidgets.QLabel('Measure')
-        self.lbl_meas.setFixedSize(width, label_height) 
-        self.lbl_meas.setFont(QtGui.QFont('Segoe UI', pointSize=12, italic=True))
-        self.lbl_meas.setVisible(False)
-        # property combo box
-        self.cmbx_prop = QtWidgets.QComboBox()
-        self.cmbx_prop.setFixedSize(width / 2 - padding, param_height)
-        self.cmbx_prop.addItems(['NA'])
-        self.cmbx_prop.setVisible(False)
+        # function label
+        self.lbl_func = QtWidgets.QLabel('Function:')
+        self.lbl_func.setFixedSize(width, row_height) 
+        self.lbl_func.setFont(QtGui.QFont('Segoe UI', pointSize=12, italic=True))
+        self.lbl_func.setVisible(False)
+        # function combo box
+        self.cmbx_func = QtWidgets.QComboBox()
+        self.cmbx_func.setFixedSize(width * 3 / 4 - padding, row_height)
+        self.cmbx_func.setFont(QtGui.QFont('Segoe UI', pointSize=10, italic=False))
+        self.cmbx_func.currentTextChanged.connect(self.on_cmbx_func_text_changed)
+        self.cmbx_func.setVisible(False)
         # calculate button
         self.btn_calc = QtWidgets.QPushButton('Calculate')
-        self.btn_calc.setFixedSize(width / 2 - padding, param_height)
-        self.btn_calc.clicked.connect(self.calculate_property)
+        self.btn_calc.setFixedSize(width / 4 - padding, row_height)
+        self.btn_calc.setFont(QtGui.QFont('Segoe UI', pointSize=10, italic=False))
+        self.btn_calc.clicked.connect(self.calculate)
         self.btn_calc.setVisible(False)
-        # measure combo box
-        self.cmbx_meas = QtWidgets.QComboBox()
-        self.cmbx_meas.setFixedSize(width / 2 - padding, param_height)
-        self.cmbx_meas.addItems(['NA'])
-        self.cmbx_meas.setVisible(False)
-        # plot check box
-        self.chbx_plot = QtWidgets.QCheckBox('Plot Dynamics')
-        self.chbx_plot.setFixedSize(width / 2 - padding, param_height)
-        self.chbx_plot.setVisible(False)
+        # value label
+        self.lbl_value = QtWidgets.QLabel('Value:')
+        self.lbl_value.setFixedSize(width, row_height) 
+        self.lbl_value.setFont(QtGui.QFont('Segoe UI', pointSize=12, italic=True))
+        self.lbl_value.setVisible(False)
+        # value line edit
+        self.le_value = QtWidgets.QLineEdit('')
+        self.le_value.setFixedSize(width - padding, row_height)
+        self.le_value.setFont(QtGui.QFont('Segoe UI', pointSize=10, italic=False))
+        self.le_value.setVisible(False)
         # parameter label
-        self.lbl_params = QtWidgets.QLabel('Parameters')
-        self.lbl_params.setFixedSize(width, label_height)
+        self.lbl_params = QtWidgets.QLabel('Parameters:')
+        self.lbl_params.setFixedSize(width, row_height)
         self.lbl_params.setFont(QtGui.QFont('Segoe UI', pointSize=12, italic=True))
-        self.lbl_params.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         self.lbl_params.setVisible(False)
 
         # update layout 
         self.layout = QtWidgets.QGridLayout()
-        self.layout.addWidget(self.lbl_name, 0, 0)
-        self.layout.addWidget(self.lbl_prop, 1, 0)
-        self.layout.addWidget(self.cmbx_prop, 2, 0, alignment=QtCore.Qt.AlignRight)
-        self.layout.addWidget(self.btn_calc, 2, 1, alignment=QtCore.Qt.AlignRight)
-        self.layout.addWidget(self.lbl_meas, 3, 0)
-        self.layout.addWidget(self.cmbx_meas, 4, 0, alignment=QtCore.Qt.AlignRight)
-        self.layout.addWidget(self.chbx_plot, 4, 1, alignment=QtCore.Qt.AlignLeft)
-        self.layout.addWidget(self.lbl_params, 5, 0)
+        self.layout.addWidget(self.lbl_name, 0, 0, 2, 4)
+        self.layout.addWidget(self.lbl_func, 2, 0, 1, 4)
+        self.layout.addWidget(self.cmbx_func, 3, 0, 1, 3, alignment=QtCore.Qt.AlignRight)
+        self.layout.addWidget(self.btn_calc, 3, 3, 1, 1, alignment=QtCore.Qt.AlignRight)
+        self.layout.addWidget(self.lbl_value, 4, 0, 1, 4)
+        self.layout.addWidget(self.le_value, 5, 0, 1, 4, alignment=QtCore.Qt.AlignRight)
+        self.layout.addWidget(self.lbl_params, 6, 0, 1, 4)
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout)
@@ -130,59 +121,84 @@ class SystemWidget(BaseWidget):
         self.parent.update_status('Searching for available systems...')
 
         # initialize list
-        systems = list()
+        self.systems = list()
 
         # check for systems directory
         if 'systems' in os.listdir():
             # import all system modules
-            modules = importlib.import_module('systems', '*')
+            module_names = importlib.import_module('systems', '*')
             # add available system classes
-            for module_name in modules.__dict__:
+            for module_name in module_names.__dict__:
                 if module_name[0] != '_':
-                    systems.append(modules.__getattribute__(module_name))
-            
-        self.systems = systems
+                    self.systems.append(getattr(module_names, module_name))
 
         # update status
-        if len(systems) == 0:
+        if len(self.systems) == 0:
             status = 'No systems available'
         else: 
             status = 'Select a system to begin'
         self.parent.update_status(status)
         self.lbl_name.setText(status)
     
-    def calculate_property(self):
-        """Method to calcualte a system property."""
+    def calculate(self):
+        """Method to calcualte a selected function."""
 
-        # disable button
+        # disable calculate button
         self.btn_calc.setDisabled(True)
 
-        # selected property name
-        prop_name = self.cmbx_prop.currentText()
+        # selected function name
+        func_name = self.cmbx_func.currentText()
 
-        # no property selected
-        if prop_name == 'NA':
+        # no function selected
+        if func_name == 'NA':
             # update status
-            self.parent.update_status('Select the system property to calcuate')
+            self.parent.update_status('Select the function to calcuate')
 
-        # system parameters not initialized
-        elif self.system_params is None:
+        else:
             # update status
-            self.parent.update_status('System parameters not initialized')
+            self.parent.update_status('Calculating...')
 
-        # solver parameters not initialized
-        elif self.solver_params is None:
+            # update params
+            params = self.get_params()
+
+            # update label
+            self.le_value.setText(str(self.get_value(params)))
+
             # update status
-            self.parent.update_status('Solver parameters not initialized')
+            self.parent.update_status('Value Calculated')
+            # update progress
+            self.parent.reset_progress()
 
-        # load parameters
-        for widget in self.param_widgets:
-            key = widget.get_key()
-            val = widget.get_val()
-            self.system_params[key] = json.loads(val)
-
-        # enable button
+        # enable calculate button
         self.btn_calc.setDisabled(False)
+    
+    def get_params(self):
+        # initialize dict
+        params = dict()
+        # get parameters
+        for widget in self.param_widgets:
+            key = widget.key
+            val = widget.val
+            params[key] = eval(val) if re.match('\-*\d+\.*e*\-*\d*', val) is not None else val
+        
+        return params
+
+    def get_value(self, params):
+        # selected function name
+        func_name = self.cmbx_func.currentText()
+
+        # initialize system
+        system = self.system(params)
+
+        # extract parameters
+        _, c = system.get_ivc()
+        _len_D = 4 * system.num_modes**2
+        params = c[_len_D:] if len(c) > _len_D else c
+
+        # get value
+        value = getattr(system, 'get_' + func_name)(params)
+
+        return value
 
     def get_list_items(self):
         """Method to obtain the codenames of available systems.
@@ -202,6 +218,26 @@ class SystemWidget(BaseWidget):
 
         return codes
 
+    def on_cmbx_func_text_changed(self, value):
+        """Method to update the UI when combo box selection changes.
+        
+        Parameters
+        ----------
+        value : str
+            New text of the combo box
+        """
+
+        # enable button
+        self.btn_calc.setDisabled(False)
+
+        # update label
+        self.le_value.setText('')
+
+        # update status
+        self.parent.update_status('Ready')
+        # update progress
+        self.parent.reset_progress()
+
     def set_curr_item(self, pos):
         """Method to set the system.
         
@@ -212,57 +248,68 @@ class SystemWidget(BaseWidget):
         """
 
         # frequently used parameters
-        base_height = 64 + 3 * 48 + 2 * 32
+        row_height = 32
+        base_rows = 7
 
         # update parameter
         self.pos = pos
-        self.curr_system = self.systems[pos]
+        self.system = self.systems[pos]
 
         # system name
-        self.lbl_name.setText(self.curr_system({}).name)
-        # available properties
-        properties = [func[13:] for func in dir(self.curr_system) if callable(getattr(self.curr_system, func)) and func[:13] == 'get_property_']
-        # available measures
-        measures = [func[12:] for func in dir(self.curr_system) if callable(getattr(self.curr_system, func)) and func[:12] == 'get_measure_']
+        self.lbl_name.setText(self.system({}).name)
+        # available functions
+        func_names = [func[4:] for func in dir(self.system) if callable(getattr(self.system, func)) and func[:4] == 'get_']
+        # filter functions depending on params only
+        cmbx_items = list()
+        for func_name in func_names:
+            func = getattr(self.system, 'get_' + func_name)
+            func_args = inspect.getfullargspec(func).args[1:]
+            if len(func_args) == 1 and func_args[0] == 'params':
+                cmbx_items.append(func_name)
+        # no functions found
+        if len(cmbx_items) == 0:
+            cmbx_items.append('NA')
         
         # update combo boxes
-        self.cmbx_prop.clear()
-        self.cmbx_prop.addItem('NA')
-        self.cmbx_prop.addItems(properties)
-        self.cmbx_meas.clear()
-        self.cmbx_meas.addItem('NA')
-        self.cmbx_meas.addItems(measures)
+        self.cmbx_func.clear()
+        self.cmbx_func.addItems(cmbx_items)
 
         # clear widgets
         for widget in self.param_widgets:
             self.layout.removeWidget(widget)
 
         # add widgets
-        self.system_params = self.curr_system({}).params
-        widget_col = 12
-        for param in self.system_params:
+        params = self.system({}).params
+        widget_col = 0
+        for param in params:
             # new widget
             widget = ParamWidget(self)
-            widget.set_key(param)
-            widget.set_val(self.system_params[param])
+            widget.key = param
+            widget.val = params[param]
             # update list
             self.param_widgets.append(widget)
-            self.layout.addWidget(widget, int(widget_col / 2), int(widget_col % 2))
+            self.layout.addWidget(widget, int(widget_col / 4) * 2 + base_rows, int(widget_col % 4), 2, 1)
             # update count
             widget_col += 1
 
         # update UI elements
-        self.lbl_prop.setVisible(True)
-        self.lbl_meas.setVisible(True)
-        self.cmbx_prop.setVisible(True)
+        self.lbl_func.setVisible(True)
+        self.cmbx_func.setVisible(True)
         self.btn_calc.setVisible(True)
-        self.cmbx_meas.setVisible(True)
-        self.chbx_plot.setVisible(True)
+        self.lbl_value.setVisible(True)
+        self.le_value.setVisible(True)
         self.lbl_params.setVisible(True)
-        self.setFixedHeight(base_height + int((widget_col - 11) / 2) * 32)
+        param_rows = int(widget_col / 4) * 2 + (2 if widget_col % 4 != 0 else 0)
+        self.setFixedHeight((base_rows + param_rows) * row_height)
 
         # update theme
         self.set_theme()
+    
+    def set_params(self, params):
+        # set parameters
+        for widget in self.param_widgets:
+            if widget.key in params:
+                widget.val = params[widget.key]
 
     def set_theme(self, theme=None):
         """Method to update the theme.
@@ -281,11 +328,7 @@ class SystemWidget(BaseWidget):
 
         if self.theme == 'light':
             # styles
-            self.setStyleSheet(self.get_stylesheet('system_light'))
+            self.setStyleSheet(self.get_stylesheet('widget_light'))
         else:
             # styles
-            self.setStyleSheet(self.get_stylesheet('system_dark'))
-
-        # widgets
-        for widget in self.param_widgets:
-            widget.set_theme(self.theme)
+            self.setStyleSheet(self.get_stylesheet('widget_dark'))

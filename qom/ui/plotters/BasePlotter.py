@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.BasePlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-06'
-__updated__ = '2021-03-22'
+__updated__ = '2021-08-19'
 
 # dependencies
 from typing import Union
@@ -148,7 +148,7 @@ class BasePlotter():
         # frequently used variables
         _type = params.get('type', 'line')
         _axes_params = self.__get_axes_params(axes, params)
-        _palette = params.get('palette', 'RdBu')
+        _palette = params.get('palette', 'RdBu_r')
         _bins = params.get('bins', self.bins)
 
         # se;ect axes
@@ -189,7 +189,9 @@ class BasePlotter():
             'v_scale': params.get('v_scale', 'linear'),
             'x_scale': params.get('x_scale', 'linear'),
             'y_scale': params.get('y_scale', 'linear'),
-            'z_scale': params.get('z_scale', 'linear')
+            'z_scale': params.get('z_scale', 'linear'),
+            'width': params.get('width', 5.0),
+            'height': params.get('height', 5.0)
         }
 
     def __get_axes_params(self, axes: dict, params: dict):

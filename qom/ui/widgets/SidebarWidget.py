@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.SidebarWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-01-22'
+__updated__ = '2021-08-20'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -20,8 +20,6 @@ logger = logging.getLogger(__name__)
 
 class SidebarWidget(BaseWidget):
     """Class to create a custom sidebar.
-
-    Inherits :class:`qom.ui.widgets.BaseWidget`.
     
     Parameters
     ----------
@@ -33,6 +31,8 @@ class SidebarWidget(BaseWidget):
         Position of the sidebar:
             'bottom-left': Bottom-left side.
             'bottom-right': Bottom-right side.
+            'center-left': Center-left side.
+            'center-right': Center-right side.
             'left': Left side.
             'right': Right side.
             'top-left': Top-left side.
@@ -65,9 +65,9 @@ class SidebarWidget(BaseWidget):
         # full sidebar
         sidebar_height = 720 - 2 * 32
         icon_height = 128
-        # top, middle or bottom sidebar
+        # top, center or bottom sidebar
         if self.pos.find('-') != -1:
-            if self.pos.find('middle') != -1:
+            if self.pos.find('center') != -1:
                 sidebar_height = 240 - 16
             else:
                 sidebar_height = 240 - 32
@@ -77,8 +77,8 @@ class SidebarWidget(BaseWidget):
         self.setFixedSize(list_width + icon_width, sidebar_height)
         # top or full sidebar
         _y = 32
-        # middle sidebar
-        if self.pos.find('middle') != -1:
+        # center sidebar
+        if self.pos.find('center') != -1:
             _y = 240 + 8
         # bottom sidebar
         elif self.pos.find('bottom') != -1:
@@ -199,8 +199,8 @@ class SidebarWidget(BaseWidget):
         icon_width = 32
         # top or full sidebar
         _y = 32
-        # middle sidebar
-        if self.pos.find('middle') != -1:
+        # center sidebar
+        if self.pos.find('center') != -1:
             _y = 240 + 8
         # bottom sidebar
         elif self.pos.find('bottom') != -1:

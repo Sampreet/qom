@@ -1,26 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
  
-"""Class to create a widget for the solvers."""
+"""Class to create a widget for the plotters."""
 
-__name__    = 'qom.ui.widgets.SolverWidget'
+__name__    = 'qom.ui.widgets.PlotterWidget'
 __authors__ = ['Sampreet Kalita']
-__created__ = '2021-01-21'
+__created__ = '2021-08-20'
 __updated__ = '2021-08-20'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
-import importlib
 import logging
 
 # qom modules
+from ..plotters import *
 from .BaseWidget import BaseWidget
 
 # module logger
 logger = logging.getLogger(__name__)
 
-class SolverWidget(BaseWidget):
-    """Class to create a widget for the solvers.
+class PlotterWidget(BaseWidget):
+    """Class to create a widget for the plotters.
     
     Parameters
     ----------
@@ -29,23 +29,17 @@ class SolverWidget(BaseWidget):
     """
 
     def __init__(self, parent):
-        """Class constructor for SolverWidget."""
+        """Class constructor for PlotterWidget."""
 
         # initialize super class
         super().__init__(parent)
-        self.solver = None
+        self.plotter = None
 
         # initialize layout
         self.__init_layout()
 
-        # set solvers
-        self.solvers = list()
-        # import all looper modules
-        module_names = importlib.import_module('qom.solvers', '*')
-        # add available system classes
-        for module_name in module_names.__dict__:
-            if module_name[0] != '_':
-                self.solvers.append(getattr(module_names, module_name))
+        # set plotters
+        self.plotters = [MPLPlotter]
 
     def __init_layout(self):
         """Method to initialize layout."""
@@ -58,14 +52,14 @@ class SolverWidget(BaseWidget):
         # fix size
         self.setFixedWidth(width)
         # move under header
-        self.move(640, padding + 4)
+        self.move(640, 480 + 4)
 
         # initialize UI elements
-        # solver label
-        self.lbl_name = QtWidgets.QLabel('Select a solver to begin')
+        # plotter label
+        self.lbl_name = QtWidgets.QLabel('Select a plotter to begin')
         self.lbl_name.setFixedSize(width, row_height)
         self.lbl_name.setFont(QtGui.QFont('Segoe UI', pointSize=12, italic=True))
-        # solver parameters
+        # plotter parameters
         self.te_params = QtWidgets.QTextEdit('')
         self.te_params.setFixedSize(width - 2 * padding, row_height * 5)
         self.te_params.setFont(QtGui.QFont('Segoe UI', pointSize=10, italic=False))
@@ -83,20 +77,16 @@ class SolverWidget(BaseWidget):
         self.set_theme()
 
     def get_list_items(self):
-        """Method to obtain the codes of available solvers.
+        """Method to obtain the names of available plotters.
         
         Returns
         -------
         codes : list
-            Codenames of the solvers.
+            Codenames of the plotters.
         """
 
         # initialize lists
-        codes = list()
-
-        # iterate through available solvers
-        for solver in self.solvers:
-            codes.append(solver.code)
+        codes = ['mpl_plotter']
 
         return codes
     
@@ -107,20 +97,20 @@ class SolverWidget(BaseWidget):
         return params
 
     def set_curr_item(self, pos):
-        """Method to set the current solver.
+        """Method to set the current plotter.
         
         Parameters
         ----------
         pos : int
-            Position of the current solver.
+            Position of the current plotter.
         """
 
         # update parameter
         self.pos = pos
-        self.solver = self.solvers[pos]
+        self.plotter = self.plotters[pos]
 
         # update UI elements
-        self.lbl_name.setText('Solver Parameters:')
+        self.lbl_name.setText('Plotter Parameters:')
     
     def set_params(self, params):
         # set parameters

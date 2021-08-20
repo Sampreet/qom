@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-08-02'
+__updated__ = '2021-08-18'
 
 # dependencies
 from typing import Union
@@ -242,15 +242,16 @@ class BaseSystem():
             Rates of the complex-valued variables defining the system.
         """
 
+        # if only mode ODEs
+        if len(v) == self.num_modes:
+            return self.get_mode_rates(modes=v, params=c, t=t)        
+
         # extract the modes and correlations
         _dim    = [2 * self.num_modes, 2 * self.num_modes]
         modes   = v[:self.num_modes]
         corrs   = np.real(v[self.num_modes:]).reshape(_dim)
         D       = np.array(c[:_dim[0] * _dim[1]]).reshape(_dim)
-        if len(c) >= _dim[0] * _dim[1]:
-            params = c[_dim[0] * _dim[1]:]
-        else: 
-            params = list()
+        params  = c[_dim[0] * _dim[1]:]
 
         # mode rates
         mode_rates  = self.get_mode_rates(modes=modes, params=params, t=t)
@@ -303,10 +304,13 @@ class BaseSystem():
 
         # extract parameters
         _, c = get_ivc()
-        params = c[4 * self.num_modes**2:]
+        if len(c) > 4 * self.num_modes**2:
+            params = c[4 * self.num_modes**2:]
+        else:
+            params = c
 
         # drift matrix
-        A = get_A(modes=modes, params=params, t=np.inf)
+        A = get_A(modes=modes, params=params, t=None)
 
         # initialize lists
         eig_avg = list()
@@ -326,7 +330,7 @@ class BaseSystem():
         solver_params : dict
             Parameters for the solver.
         get_mode_rates : callable
-            Function returning the classical mode amplitudes for a given list of modes, formatted as ``get_mode_rates(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the mode rates with same dimension as ``modes``. If the mode functions are complex-valued, the ``func_type`` parameter should be assigned as "complex".
+            Function returning the rate of the classical mode amplitudes for a given list of modes, formatted as ``get_mode_rates(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the mode rates with same dimension as ``modes``.
         get_ivc : callable
             Function returning the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
         get_A : callable
@@ -357,7 +361,10 @@ class BaseSystem():
         # frequently used variables
         _dim = 2 * self.num_modes
         iv, c = get_ivc()
-        params = c[(_dim)**2:]
+        if len(c) > _dim**2:
+            params = c[_dim**2:]
+        else:
+            params = c
         _cache, _cache_dir, _cache_file = self.__get_cache_options(solver_params=solver_params)
 
         # initialize solver
@@ -440,13 +447,13 @@ class BaseSystem():
 
         return lambdas
 
-    def get_mean_optical_amplitudes(self, get_ivc, get_oss_args, mode: str='cubic'):
+    def get_mean_optical_amplitudes(self, get_ivc, get_oss_args, method: str='cubic'):
         r"""Method to obtain the mean optical amplitudes.
 
         The optical steady state is assumed to be of the form [1]_,
 
         .. math::
-            \alpha_{s} = \frac{\sqrt{\mu} A_{l}}{\frac{\kappa}{2} - \iota \Delta}
+            \alpha_{s} = \frac{A_{l}}{\frac{\kappa}{2} - \iota \Delta}
 
         where :math:`\Delta = \Delta_{l} + C |\alpha_{s}|^{2}`.
 
@@ -460,13 +467,12 @@ class BaseSystem():
                 parameter   value
                 ==========  ====================================================
                 ``A_l``     (*float*) amplitude of the laser.
-                ``Delta``   (*float*) effective detuning if mode is 'basic', else detuning of the laser.
+                ``Delta``   (*float*) effective detuning if method is "basic", else detuning of the laser.
                 ``kappa``   (*float*) optical decay rate.
                 ``C``       (*float*) coefficient of :math:`|\alpha_{s}|^{2}`.
-                ``mu``      (*float*) laser-cavity coupling parameter.
                 ==========  ====================================================
-        mode : str, optional
-            Mode of calculation of intracavity photon number. Currently available options are:
+        method : str, optional
+            Method of calculation of intracavity photon number. Currently available options are:
                 ==========  ====================================================
                 value       meaning
                 ==========  ====================================================
@@ -478,36 +484,40 @@ class BaseSystem():
         -------
         alpha_s : list
             Mean optical amplitudes.
-        N_o : list
-            Mean optical occupancies. If ``mode`` is "cubic", this returns the roots of the cubic equation.
+        roots : list
+            Roots of the cubic equation. If ``method`` is "basic", this is the same as ``N_o``.
         """
         
         # extract parameters
         _, c = get_ivc()
-        params = c[4 * self.num_modes**2:]
-        A_l, Delta, kappa, C, mu = get_oss_args(params)
+        if len(c) > 4 * self.num_modes**2:
+            params = c[4 * self.num_modes**2:]
+        else:
+            params = c
+        A_l, Delta, kappa, C = get_oss_args(params=params)
 
-        # get mean optical amplitudes
-        if mode == 'basic':
-            alpha_s = [np.sqrt(mu) * A_l / (kappa / 2 - 1j * Delta)]
-            N_o = [np.real(np.conjugate(a) * a) for a in alpha_s]
+        # basic method
+        if method == 'basic':
+            alpha_s = [A_l / (kappa / 2 - 1j * Delta)]
+            roots = [np.real(np.conjugate(a) * a) for a in alpha_s]
+        # cubic method
         else:
             # get mean optical occupancies and roots of the cubic equation
-            N_o, roots = self.get_mean_optical_occupancies(get_ivc, get_oss_args)
+            N_o, roots = self.get_mean_optical_occupancies(get_ivc=get_ivc, get_oss_args=get_oss_args)
             alpha_s = list()
             for n_o in N_o:
-                alpha_s.append(np.sqrt(mu) * A_l / (kappa / 2 - 1j * (Delta + C * n_o)))
+                alpha_s.append(A_l / (kappa / 2 - 1j * (Delta + C * n_o)))
 
         # return
         return alpha_s, roots
 
-    def get_mean_optical_occupancies(self, get_ivc, get_oss_args, mode: str='cubic'):
+    def get_mean_optical_occupancies(self, get_ivc, get_oss_args, method: str='cubic'):
         r"""Method to obtain the mean optical occupancies.
 
         The mean optical occupancy can be written as [1]_,
 
         .. math::
-            N_{o} = |\alpha_{s}|^{2} = \frac{\mu \left| A_{l} \right|^{2}}{\frac{\kappa^{2}}{4} + \Delta^{2}}
+            N_{o} = |\alpha_{s}|^{2} = \frac{\left| A_{l} \right|^{2}}{\frac{\kappa^{2}}{4} + \Delta^{2}}
 
         where :math:`\Delta = \Delta_{l} + C N_{o}`.
 
@@ -521,13 +531,12 @@ class BaseSystem():
                 parameter   value
                 ==========  ====================================================
                 ``A_l``     (*float*) amplitude of the laser.
-                ``Delta``   (*float*) effective detuning if mode is 'basic', else detuning of the laser.
+                ``Delta``   (*float*) effective detuning if method is "basic", else detuning of the laser.
                 ``kappa``   (*float*) optical decay rate.
                 ``C``       (*float*) coefficient of :math:`N_{o}`.
-                ``mu``      (*float*) laser-cavity coupling parameter.
                 ==========  ====================================================
-        mode : str, optional
-            Mode of calculation of intracavity photon number. Currently available options are:
+        method : str, optional
+            Method of calculation of intracavity photon number. Currently available options are:
                 ==========  ====================================================
                 value       meaning
                 ==========  ====================================================
@@ -540,27 +549,30 @@ class BaseSystem():
         N_o : list
             Mean optical occupancies.
         roots : list
-            Roots of the cubic equation. If ``mode`` is "basic", this is the same as ``N_o``.
+            Roots of the cubic equation. If ``method`` is "basic", this is the same as ``N_o``.
         """
 
         # extract parameters
         _, c = get_ivc()
-        params = c[4 * self.num_modes**2:]
-        A_l, Delta, kappa, C, mu = get_oss_args(params)
+        if len(c) > 4 * self.num_modes**2:
+            params = c[4 * self.num_modes**2:]
+        else:
+            params = c
+        A_l, Delta, kappa, C = get_oss_args(params=params)
 
-        # basic mode
-        if mode == 'basic':
+        # basic method
+        if method == 'basic':
             # get mean optical amplitudea
-            _, N_o = self.get_mean_optical_amplitude(get_ivc, get_oss_args)
+            _, N_o = self.get_mean_optical_amplitude(get_ivc=get_ivc, get_oss_args=get_oss_args)
             roots = [n_o for n_o in N_o]
 
-        # cubic mode
+        # cubic method
         else:
             # get coefficients
             coeff_0 = 4 * C**2
             coeff_1 = 8 * C * Delta
             coeff_2 = 4 * Delta**2 + kappa**2
-            coeff_3 = - 4 * mu * np.real(np.conjugate(A_l) * A_l)
+            coeff_3 = - 4 * np.real(np.conjugate(A_l) * A_l)
 
             # get roots
             roots = np.roots([coeff_0, coeff_1, coeff_2, coeff_3])
@@ -575,7 +587,7 @@ class BaseSystem():
         # return
         return N_o, roots
 
-    def get_measure(self, solver_params: dict, modes: list, corrs: list, get_ivc=None, get_A=None, t=np.inf):
+    def get_measure(self, solver_params: dict, modes: list, corrs: list, get_ivc=None, get_A=None, t=None):
         """Method to calculate the measure.
         
         Parameters
@@ -610,7 +622,10 @@ class BaseSystem():
         if _measure_type == 'eigen_dm':
             # extract parameters
             _, c = get_ivc()
-            params = c[4 * self.num_modes**2:]
+            if len(c) > 4 * self.num_modes**2:
+                params = c[4 * self.num_modes**2:]
+            else:
+                params = c
             eigs, _ = np.linalg.eig(get_A(modes=modes, params=params, t=t))
             measure = list()
             for idx in solver_params['idx_e']:
@@ -776,18 +791,18 @@ class BaseSystem():
         
         return Modes, Corrs, T
 
-    def get_modes_corrs_stationary(self, get_mode_rates, get_ivc, get_A, func_type: str='complex'):
+    def get_modes_corrs_stationary(self, get_mode_rates, get_ivc, get_A, type_func: str='complex'):
         """Method to obtain the steady states of the classical mode amplitudes and quantum correlations from the Heisenberg and Lyapunov equations.
 
         Parameters
         ----------
         get_mode_rates : callable
-            Function returning the classical mode amplitudes for a given list of modes, formatted as ``get_mode_rates(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the mode rates with same dimension as ``modes``. If the mode functions are complex-valued, the ``func_type`` parameter should be assigned as "complex".
+            Function returning the rates of the classical mode amplitudes for a given list of modes, formatted as ``get_mode_rates(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the mode rates with same dimension as ``modes``. If the mode functions are complex-valued, the ``type_func`` parameter should be assigned as "complex".
         get_ivc : callable
             Function returning the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
         get_A : callable
             Function returning the drift matrix, formatted as ``get_A(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the drift matrix ``A``.
-        func_type : str, optional
+        type_func : str, optional
             Return data-type of ``get_mode_rates``. Currently available options are:
                 ==========  ====================================================
                 value       meaning
@@ -812,17 +827,16 @@ class BaseSystem():
         # handle null constants
         if c is None:
             c = list()
-
         # get parameters
-        if len(c) >= _dim**2:
+        if len(c) > _dim**2:
             params = c[_dim**2:]
-        else: 
-            params = list()
+        else:
+            params = c
 
         # if modes are to be calculated
         if get_mode_rates is not None:
             # complex-valued function
-            if func_type == 'real':
+            if type_func == 'real':
                 # real-valued function
                 get_mode_rates_real = get_mode_rates
                 # real-valued initial values
@@ -838,22 +852,27 @@ class BaseSystem():
                     iv_real.append(np.imag(mode))
         
             # solve for modes
-            roots_real = so.fsolve(get_mode_rates_real, iv_real, (params, np.inf, ))
+            roots_real = so.fsolve(get_mode_rates_real, iv_real, (params, None, ))
             modes = [roots_real[2 * i] + 1j * roots_real[2 * i + 1] for i in range(int(len(roots_real) / 2))] 
         # modes not required
         else:
             modes = None
 
-        # get matrices
-        _A = get_A(modes=modes, params=params, t=np.inf)
-        _D = np.array(c[:_dim**2]).reshape((_dim, _dim))
+        # if drift matrix is given
+        if get_A is not None:
+            # get matrices
+            _A = get_A(modes=modes, params=params, t=None)
+            _D = np.array(c[:_dim**2]).reshape((_dim, _dim))
 
-        # convert to numpy arrays
-        _A = np.array(_A) if type(_A) is list else _A
-        _D = np.array(_D) if type(_D) is list else _D
+            # convert to numpy arrays
+            _A = np.array(_A) if type(_A) is list else _A
+            _D = np.array(_D) if type(_D) is list else _D
 
-        # solve for correlations
-        corrs = sl.solve_lyapunov(_A, - _D)
+            # solve for correlations
+            corrs = sl.solve_lyapunov(_A, - _D)
+        # correlations not required
+        else: 
+            corrs = None
         
         return modes, corrs
 
@@ -933,8 +952,11 @@ class BaseSystem():
 
         # extract parameters
         _, c = get_ivc()
-        params = c[4 * self.num_modes**2:]
-
+        if len(c) > 4 * self.num_modes**2:
+            params = c[4 * self.num_modes**2:]
+        else:
+            params = c
+            
         # display initialization
         if _show_progress:
             logger.info('------------------Obtaining Counts-------------------\n')
@@ -963,7 +985,66 @@ class BaseSystem():
 
         return Counts, T[_range_min:_range_max]
 
-    def plot_measures(self, plotter_params: dict, T: list, M: list, hold: bool=True, width: float=5.0, height: float=5.0):
+    def get_rhc_count_stationary(self, get_mode_rates, get_ivc, get_A=None, get_coeffs=None, type_func: str='complex'):
+        """Function to obtain the number of positive real roots of the drift matrix from the stationary state using the Routh-Hurwitz criterion.
+
+        Parameters
+        ----------
+        get_mode_rates : callable
+            Function returning the rates of the classical mode amplitudes for a given list of modes, formatted as ``get_mode_rates(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the mode rates with same dimension as ``modes``. If the mode functions are complex-valued, the ``type_func`` parameter should be assigned as "complex".
+        get_ivc : callable
+            Function returning the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
+        get_A : callable, optional
+            Function returning the drift matrix, formatted as ``get_A(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the drift matrix ``A``. If this parameter is not provided, ``get_coeffs`` should not be ``None``.
+        get_coeffs : callable, optional
+            Function returning the coefficients :math:`\{ a_{i} \}` of :math:`\lambda` in the characteristic equation (:math:`\sum_{i=0}^{n} a_{i} \lambda^{n - i} = 0`) of the drift matrix, formatted as ``get_coeffs(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the coefficients with dimension twice that of ``modes``.
+        type_func : str, optional
+            Return data-type of ``get_mode_rates``. Currently available options are:
+                ==========  ====================================================
+                value       meaning
+                ==========  ====================================================
+                "real"      real-valued rates.
+                "complex"   complex-valued rates (fallback).
+                ==========  ====================================================
+        
+        Returns
+        -------
+        count : int
+            Number of positive real roots of the drift matrix.
+        idxs : list
+            Indices of the RHC sequence.
+        """
+
+        # validate parameters
+        assert get_A is not None or get_coeffs is not None, 'Either of the functions ``get_A`` or ``get_corrs`` should be non-none'
+
+        # get modes
+        modes, _ = self.get_modes_corrs_stationary(get_mode_rates=get_mode_rates, get_ivc=get_ivc, get_A=get_A, type_func=type_func)
+
+        # extract parameters
+        _, c = get_ivc()
+        if len(c) > 4 * self.num_modes**2:
+            params = c[4 * self.num_modes**2:]
+        else:
+            params = c
+
+        # if drift matrix is given
+        if get_A is not None:
+            # initialize solver
+            solver = RHCSolver(A=get_A(modes=modes, params=params, t=None))
+        # use coefficients
+        else:
+            # initialize solver
+            solver = RHCSolver(coeffs=get_coeffs(modes=modes, params=params, t=None))
+            
+        # get indices with sign changes
+        idxs = solver.get_indices()
+        # get number of sign changes
+        count = len(idxs)
+
+        return count, idxs
+
+    def plot_measures(self, plotter_params: dict, T: list, M: list, X: list=None, hold: bool=True, width: float=5.0, height: float=5.0):
         """Method to plot the measures.
         
         Parameters

@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.FooterWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-01-22'
+__updated__ = '2021-08-20'
 
 # dependencies
 from PyQt5 import QtCore, QtWidgets
@@ -20,8 +20,6 @@ logger = logging.getLogger(__name__)
 
 class FooterWidget(BaseWidget):
     """Class to create a custom footer.
-
-    Inherits :class:`qom.ui.widgets.BaseWidget`.
     
     Parameters
     ----------

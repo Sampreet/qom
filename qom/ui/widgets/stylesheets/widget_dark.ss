@@ -40,10 +40,10 @@ QCheckBox::indicator:checked:pressed {
 QComboBox {
     background-color: #2C2C2C;
     border: 0px solid #2C2C2C;
-    padding: 0px 8px;
     font-size: 10pt;
     color: #EEEEEE;
     margin: 0px;
+    padding: 0px 8px;
 }
 
 QComboBox:hover {
@@ -64,6 +64,20 @@ QComboBox QAbstractItemView {
     margin: 0px;
 }
 
+QLineEdit {
+    background-color: #2C2C2C;
+    border: 0px solid #2C2C2C;
+    selection-background-color: #212121;
+    selection-color: #EEEEEE;
+    color: #EEEEEE;
+    margin: 0px;
+    padding: 0px 8px;
+}
+
+QLineEdit:hover {
+    background-color: #373737;
+}
+
 QPushButton {
     background-color: #2C2C2C;
     border: 0px solid #2C2C2C;
@@ -73,5 +87,19 @@ QPushButton {
 }
 
 QPushButton:hover {
+    background-color: #373737;
+}
+
+QTextEdit {
+    background-color: #2C2C2C;
+    border: 0px solid #2C2C2C;
+    selection-background-color: #212121;
+    selection-color: #EEEEEE;
+    color: #EEEEEE;
+    margin: 0px;
+    padding: 0px 8px;
+}
+
+QTextEdit:hover {
     background-color: #373737;
 }

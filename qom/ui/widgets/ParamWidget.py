@@ -6,10 +6,10 @@
 __name__    = 'qom.ui.widgets.ParamWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-01-23'
+__updated__ = '2021-08-20'
 
 # dependencies
-from PyQt5 import QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
 import logging
 
 # qom modules
@@ -22,8 +22,6 @@ logger = logging.getLogger(__name__)
 
 class ParamWidget(BaseWidget):
     """Class to create a widget for each parameter.
-
-    Inherits :class:`qom.ui.widgets.BaseWidget`.
     
     Parameters
     ----------
@@ -32,6 +30,26 @@ class ParamWidget(BaseWidget):
     wide : bool, optional
         Option for a wide value-placeholder.
     """
+
+    @property
+    def key(self):
+        """str: Name of the key."""
+
+        return self.lbl_key.text()
+
+    @key.setter
+    def key(self, key):
+        self.lbl_key.setText(str(key))
+
+    @property
+    def val(self):
+        """str or list: Text or option for value."""
+
+        return self.le_val.text()
+
+    @val.setter
+    def val(self, val):
+        self.le_val.setText(str(val))
 
     def __init__(self, parent, wide=False):
         """Class constructor for ParamWidget."""
@@ -49,94 +67,27 @@ class ParamWidget(BaseWidget):
         """Method to initialize layout."""
         
         # frequently used variables
-        width = 640 if self.wide else 320
-        key_width = 300 if self.wide else 180
+        width = 160
+        row_height = 32
+        padding = 32
 
         # fix size
-        self.setFixedSize(width, 32)
+        self.setFixedSize(width, 2 * row_height)
 
         # initialize UI elements
-        # key
-        self.key = QtWidgets.QLabel()
-        self.key.setFixedSize(key_width, 32)
+        # key label
+        self.lbl_key = QtWidgets.QLabel()
+        self.lbl_key.setFixedSize(width, row_height)
+        self.lbl_key.setFont(QtGui.QFont('Segoe UI', pointSize=9, italic=False))
         # value
-        self.val = QtWidgets.QLineEdit()
-        self.val.setFixedSize(width - key_width, 32)
+        self.le_val = QtWidgets.QLineEdit()
+        self.le_val.setFixedSize(width - padding, row_height)
+        self.le_val.setFont(QtGui.QFont('Segoe UI', pointSize=9, italic=False))
 
         # update layout 
-        layout = QtWidgets.QHBoxLayout()
-        layout.addWidget(self.key)
-        layout.addWidget(self.val)
+        layout = QtWidgets.QGridLayout()
+        layout.addWidget(self.lbl_key, 0, 0, 1, 1, alignment=QtCore.Qt.AlignLeft)
+        layout.addWidget(self.le_val, 1, 0, 1, 1, alignment=QtCore.Qt.AlignRight)
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
-
-        # set theme
-        self.theme = 'dark'
-        self.set_theme()
-
-    def get_key(self):
-        """Method to get the name of the key.
-        
-        Returns
-        -------
-        key : str
-            Name of the key.
-        """
-
-        return self.key.text()
-
-    def get_val(self):
-        """Method to get text or options for the value.
-        
-        Returns
-        -------
-        val : str or list
-            Text or options to set.
-        """
-
-        return self.val.text()
-
-    def set_key(self, key):
-        """Method to set the name of the key.
-        
-        Parameters
-        ----------
-        key : str
-            Name of the key.
-        """
-
-        self.key.setText(str(key))
-
-    def set_theme(self, theme=None):
-        """Method to update the theme.
-        
-        Parameters
-        ----------
-        theme : str, optional
-            Display theme:
-                'dark': Dark mode.
-                'light': Light mode.
-        """
-
-        # update theme
-        if theme is not None:
-            self.theme = theme
-
-        if self.theme == 'light':
-            # styles
-            self.setStyleSheet(self.get_stylesheet('param_light'))
-        else:
-            # styles
-            self.setStyleSheet(self.get_stylesheet('param_dark'))
-
-    def set_val(self, val):
-        """Method to set text or options for the value.
-        
-        Parameters
-        ----------
-        val : str or list
-            Text or options to set.
-        """
-
-        self.val.setText(str(val))

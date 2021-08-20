@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.HLESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-08-01'
+__updated__ = '2021-08-18'
 
 # dependencies
 from decimal import Decimal
@@ -180,7 +180,6 @@ class HLESolver():
         """
 
         # extract frequently used variables
-        method = self.params['method']
         show_progress = self.params.get('show_progress', False)
         single_func = func_ode_corrs is None
 
@@ -277,7 +276,10 @@ class HLESolver():
             num_modes = self.__get_num_modes(dim=len(self.results['V'][0]))
 
         # update correlations
-        self.Corrs = [np.real(np.reshape(vs[num_modes:], (2 * num_modes, 2 * num_modes))).tolist() for vs in self.results['V']]
+        if len(self.results['V'][0]) > num_modes:
+            self.Corrs = [np.real(np.reshape(vs[num_modes:], (2 * num_modes, 2 * num_modes))).tolist() for vs in self.results['V']]
+        else:
+            self.Corrs = None
             
         return self.Corrs
     
@@ -343,6 +345,7 @@ class HLESolver():
         """
 
         # supersede solver parameters
+        method = self.params.get('method', method)
         cache = self.params.get('cache', cache)
         cache_dir = self.params.get('cache_dir', cache_dir)
         cache_file = self.params.get('cache_file', cache_file)

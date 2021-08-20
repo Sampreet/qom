@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2021-07-30'
+__updated__ = '2021-08-19'
 
 # dependencies
 from matplotlib.colors import LinearSegmentedColormap, Normalize
@@ -646,22 +646,18 @@ class MPLPlotter(BasePlotter):
         # draw colorbar
         self.cbar.draw_all()
 
-    def show(self, hold: bool=False, width: float=5.0, height: float=5.0):
+    def show(self, hold: bool=False):
         """Method to display the figure.
 
         Parameters
         ----------
         hold : bool, optional
             Option to hold the plot.
-        width : float
-            Width of the figure.
-        height : float 
-            Height of the figure.
         """
 
-        # supersede plotter parameterswidth
-        width = self.params.get('width', width)
-        height = self.params.get('height', height)
+        # extract frequently used variables
+        width = self.params['width']
+        height = self.params['height']
         
         # resize plot
         self.__resize_plot(width, height)

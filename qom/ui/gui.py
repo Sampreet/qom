@@ -6,16 +6,15 @@
 __name__    = 'qom.ui.gui'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-19'
-__updated__ = '2021-01-22'
+__updated__ = '2021-08-20'
 
 # dependencies
-from PyQt5 import QtCore, QtGui, QtWidgets
-import pkgutil
+from PyQt5 import QtCore, QtWidgets
 import sys
 
 # qom modules
 from .log import init_log
-from .widgets import FooterWidget, HeaderWidget, SidebarWidget, SolverWidget, SystemWidget
+from .widgets import *
 
 # TODO: Add option to resize window.
 # TODO: Integrate layouts.
@@ -60,7 +59,12 @@ class GUI(QtWidgets.QFrame):
         # system
         self.system = SystemWidget(self)
         self.sidebar_system = SidebarWidget(self, self.system, 'left', 'Systems')
-        # sidebars
+        # plotter
+        self.plotter = PlotterWidget(self)
+        self.sidebar_plotter = SidebarWidget(self, self.plotter, 'bottom-right', 'Plotters')
+        # looper
+        self.looper = LooperWidget(self, self.solver, self.system, self.plotter)
+        self.sidebar_looper = SidebarWidget(self, self.looper, 'center-right', 'Loopers')
 
     def set_theme(self, theme):
         """Method to update the application theme.
@@ -89,6 +93,12 @@ class GUI(QtWidgets.QFrame):
         # system
         self.system.set_theme(theme)
         self.sidebar_system.set_theme(theme)
+        # plotter
+        self.plotter.set_theme(theme)
+        self.sidebar_plotter.set_theme(theme)
+        # looper
+        self.looper.set_theme(theme)
+        self.sidebar_looper.set_theme(theme)
 
     def update_status(self, status):
         """Method to update status.
@@ -100,6 +110,11 @@ class GUI(QtWidgets.QFrame):
         """
 
         self.footer.update_status(status)
+
+    def reset_progress(self):
+        """Method to reset the progress."""
+
+        self.footer.reset_progress()
 
     def update_progress(self, progress):
         """Method to update progress.

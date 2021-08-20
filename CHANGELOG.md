@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.7.8 - 2021/08/20 - 00 - Templated GUI
+* Added progress callback and minor fixes to `qom.loopers` modules.
+* Minor fixes to `qom.solvers.HLESolver` module.
+* Updated `qom.solvers` subpackage:
+    * Added RHC calculator and fixed optical methods in `BaseSystem` module.
+    * Added `SOMASystem` module for single optomechanical array systems.
+* Minor fixes to `qom.ui.plotters` modules and `qom.ui.axes.MultiAxis` module.
+* Updated `qom.ui.gui` module and templated `qom.ui.widgets` modules.
+* Renamed `qom.utils.wrappers` to `qom.utils.looper`.
+* Updated `README` and `setup`.
+
 ## v0.7.8 - 2021/08/02 - 01 - Minor Fixes
 * Updated `docs` configuration and source static files.
 * Fixed indexing issue in `qom.solvers.QCMSolver` module.

@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.XYZLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-28'
-__updated__ = '2021-08-01'
+__updated__ = '2021-08-20'
 
 # dependencies
 from typing import Union
@@ -33,11 +33,11 @@ class XYZLooper(BaseLooper):
     .. note:: All the options defined under the "looper" dictionary in ``params`` supersede individual function arguments. Refer :class:`qom.loopers.BaseLooper` for a complete list of supported options.
     """
 
-    def __init__(self, func, params: dict):
+    def __init__(self, func, params: dict, cb_progress=None):
         """Class constructor for XYZLooper."""
 
         # initialize super class
-        super().__init__(func=func, params=params, code='xyz_looper', name='3D Looper')
+        super().__init__(func=func, params=params, code='xyz_looper', name='3D Looper', cb_progress=cb_progress)
 
         # set axes
         self._set_axis(axis='X')

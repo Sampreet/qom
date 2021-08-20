@@ -1,6 +1,6 @@
 # The Quantum Optomechanics Toolbox
 
-[![Version](https://img.shields.io/badge/version-0.7.8-red?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/version-0.7.9-red?style=for-the-badge)](#)
 [![Code Size](https://img.shields.io/github/repo-size/sampreet/qom?style=for-the-badge)](#)
 [![Last Commit](https://img.shields.io/github/last-commit/sampreet/qom?style=for-the-badge)](#)
 
