@@ -1,6 +1,12 @@
 # Changelog
 
-## v0.7.8 - 2021/08/20 - 00 - Templated GUI
+## v0.7.9 - 2021/08/23 - 00 - Minor Fixes
+* Updated `docs` with `qom.systems.SOMASystem`.
+* Update update callback functions for `qom.loopers` modules.
+* Minor fixes to `qom.ui.widgets` subpackage and `qom.ui.gui` module.
+* Minor fixes to `qom.utils.looper` module.
+
+## v0.7.9 - 2021/08/20 - 00 - Templated GUI
 * Added progress callback and minor fixes to `qom.loopers` modules.
 * Minor fixes to `qom.solvers.HLESolver` module.
 * Updated `qom.solvers` subpackage:

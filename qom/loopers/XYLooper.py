@@ -28,16 +28,17 @@ class XYLooper(BaseLooper):
         Function to loop, formatted as ``func(system_params, val, logger, results)``, where ``system_params`` is a dictionary of the parameters for the system, ``val`` is the current value of the looping parameter, ``logger`` is an instance of the module logger and ``results`` is a list of tuples each containing ``val`` and the value calculated within the function.
     params : dict
         Parameters for the looper and optionally, the system and the plotter. The "looper" key is a dictionary containing the keys "X" and "Y", each with the keys "var" and "val" for the name of the parameter to loop and its corresponding values, along with additional options (refer notes).
-
+    cb_update : callable, optional
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is an integer and ``reset`` is a boolean.
 
     .. note:: All the options defined under the "looper" dictionary in ``params`` supersede individual function arguments. Refer :class:`qom.loopers.BaseLooper` for a complete list of supported options.
     """
 
-    def __init__(self, func, params: dict, cb_progress=None):
+    def __init__(self, func, params: dict, cb_update=None):
         """Class constructor for XYLooper."""
 
         # initialize super class
-        super().__init__(func=func, params=params, code='xy_looper', name='2D Looper', cb_progress=cb_progress)
+        super().__init__(func=func, params=params, code='xy_looper', name='2D Looper', cb_update=cb_update)
 
         # set axes
         self._set_axis(axis='X')
@@ -45,6 +46,10 @@ class XYLooper(BaseLooper):
 
         # display initialization
         logger.info('--------------------Looper Initialized-----------------\t\n')
+
+        # update callback
+        if self.cb_update is not None:
+            self.cb_update(status='Looper Initialized', progress=None)
 
     def loop(self, grad: bool=False, grad_position='all', grad_mono_idx: int=0, mode: str='serial'):
         """Method to calculate the output of a given function for each X-axis and Y-axis point.
@@ -140,5 +145,9 @@ class XYLooper(BaseLooper):
 
         # display completion
         logger.info('--------------------Results Obtained-------------------\t\n')
+
+        # update callback
+        if self.cb_update is not None:
+            self.cb_update(status='Results Obtained', progress=None, reset=True)
 
         return self.results

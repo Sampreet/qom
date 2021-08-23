@@ -6,10 +6,7 @@
 __name__    = 'qom.utils.looper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-05-25'
-__updated__ = '2021-08-20'
-
-# dependencies
-import numpy as np
+__updated__ = '2021-08-23'
 
 # qom modules
 from ..ui import init_log

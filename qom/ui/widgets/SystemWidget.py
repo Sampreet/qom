@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.SystemWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-08-20'
+__updated__ = '2021-08-23'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -28,7 +28,7 @@ class SystemWidget(BaseWidget):
     
     Parameters
     ----------
-    parent : QtWidget.*
+    parent : :class:`qom.ui.GUI`
         Parent class for the widget.
     """
 
@@ -72,19 +72,16 @@ class SystemWidget(BaseWidget):
         # function combo box
         self.cmbx_func = QtWidgets.QComboBox()
         self.cmbx_func.setFixedSize(width * 3 / 4 - padding, row_height)
-        self.cmbx_func.setFont(QtGui.QFont('Segoe UI', pointSize=10, italic=False))
-        self.cmbx_func.currentTextChanged.connect(self.on_cmbx_func_text_changed)
+        self.cmbx_func.currentTextChanged.connect(self.set_curr_func)
         self.cmbx_func.setVisible(False)
         # calculate button
         self.btn_calc = QtWidgets.QPushButton('Calculate')
         self.btn_calc.setFixedSize(width / 4 - padding, row_height)
-        self.btn_calc.setFont(QtGui.QFont('Segoe UI', pointSize=10, italic=False))
         self.btn_calc.clicked.connect(self.calculate)
         self.btn_calc.setVisible(False)
         # value label
         self.lbl_value = QtWidgets.QLabel('Value:')
-        self.lbl_value.setFixedSize(width, row_height) 
-        self.lbl_value.setFont(QtGui.QFont('Segoe UI', pointSize=12, italic=True))
+        self.lbl_value.setFixedSize(width, row_height)
         self.lbl_value.setVisible(False)
         # value line edit
         self.le_value = QtWidgets.QLineEdit('')
@@ -94,7 +91,6 @@ class SystemWidget(BaseWidget):
         # parameter label
         self.lbl_params = QtWidgets.QLabel('Parameters:')
         self.lbl_params.setFixedSize(width, row_height)
-        self.lbl_params.setFont(QtGui.QFont('Segoe UI', pointSize=12, italic=True))
         self.lbl_params.setVisible(False)
 
         # update layout 
@@ -115,10 +111,10 @@ class SystemWidget(BaseWidget):
         self.set_theme()
 
     def __set_systems(self):
-        """Method to obtain the system."""
+        """Method to set the system."""
 
         # update status
-        self.parent.update_status('Searching for available systems...')
+        self.parent.update(status='Searching for available systems...')
 
         # initialize list
         self.systems = list()
@@ -137,8 +133,8 @@ class SystemWidget(BaseWidget):
             status = 'No systems available'
         else: 
             status = 'Select a system to begin'
-        self.parent.update_status(status)
         self.lbl_name.setText(status)
+        self.parent.update(status=status)
     
     def calculate(self):
         """Method to calcualte a selected function."""
@@ -146,36 +142,37 @@ class SystemWidget(BaseWidget):
         # disable calculate button
         self.btn_calc.setDisabled(True)
 
-        # selected function name
-        func_name = self.cmbx_func.currentText()
-
-        # no function selected
-        if func_name == 'NA':
+        # handle no function found
+        if self.cmbx_func.currentText() == 'NA':
             # update status
-            self.parent.update_status('Select the function to calcuate')
+            self.parent.update(status='No function found')
+            return
 
         else:
             # update status
-            self.parent.update_status('Calculating...')
-
-            # update params
-            params = self.get_params()
+            self.parent.update(status='Calculating...')
 
             # update label
-            self.le_value.setText(str(self.get_value(params)))
+            self.le_value.setText(str(self.get_value(self.get_params())))
 
-            # update status
-            self.parent.update_status('Value Calculated')
-            # update progress
-            self.parent.reset_progress()
+            # update footer
+            self.parent.update(status='Value Calculated', progress=None, reset=True)
 
-        # enable calculate button
-        self.btn_calc.setDisabled(False)
+            # enable calculate button
+            self.btn_calc.setDisabled(False)
     
     def get_params(self):
+        """Method to obtain the parameters for the system.
+        
+        Returns
+        -------
+        params: dict
+            Parameters for the system.
+        """
+
         # initialize dict
         params = dict()
-        # get parameters
+        # evaluate parameters
         for widget in self.param_widgets:
             key = widget.key
             val = widget.val
@@ -184,6 +181,14 @@ class SystemWidget(BaseWidget):
         return params
 
     def get_value(self, params):
+        """Method to obtain the calculated value.
+        
+        Parameters
+        ----------
+        params : dict
+            Parameters of the system.
+        """
+
         # selected function name
         func_name = self.cmbx_func.currentText()
 
@@ -218,13 +223,13 @@ class SystemWidget(BaseWidget):
 
         return codes
 
-    def on_cmbx_func_text_changed(self, value):
-        """Method to update the UI when combo box selection changes.
+    def set_curr_func(self, value):
+        """Method to update the widget when combo box selection changes.
         
         Parameters
         ----------
         value : str
-            New text of the combo box
+            New text of the combo box.
         """
 
         # enable button
@@ -233,10 +238,8 @@ class SystemWidget(BaseWidget):
         # update label
         self.le_value.setText('')
 
-        # update status
-        self.parent.update_status('Ready')
-        # update progress
-        self.parent.reset_progress()
+        # update footer
+        self.parent.update(status='Ready', progress=None, reset=True)
 
     def set_curr_item(self, pos):
         """Method to set the system.
@@ -306,6 +309,14 @@ class SystemWidget(BaseWidget):
         self.set_theme()
     
     def set_params(self, params):
+        """Method to set the parameters for the system.
+        
+        Parameters
+        ----------
+        params: dict
+            Parameters for the system.
+        """
+
         # set parameters
         for widget in self.param_widgets:
             if widget.key in params:
@@ -317,9 +328,13 @@ class SystemWidget(BaseWidget):
         Parameters
         ----------
         theme : str, optional
-            Display theme:
-                'dark': Dark mode.
-                'light': Light mode.
+            Display theme. Available options are:
+                ==========  ==============
+                value       meaning
+                ==========  ==============  
+                "dark"      dark mode.
+                "light"     light mode.
+                ==========  ==============
         """
 
         # update theme

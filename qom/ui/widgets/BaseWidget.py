@@ -21,7 +21,7 @@ class BaseWidget(QtWidgets.QWidget):
     
     Parameters
     ----------
-    parent : QtWidget.*
+    parent : :class:`qom.ui.GUI`
         Parent class for the widget.
     """
 

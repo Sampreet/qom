@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.ParamWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-08-20'
+__updated__ = '2021-08-23'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -25,7 +25,7 @@ class ParamWidget(BaseWidget):
     
     Parameters
     ----------
-    parent : QtWidget.*
+    parent : :class:`qom.ui.widgets.*`
         Parent class for the widget.
     wide : bool, optional
         Option for a wide value-placeholder.

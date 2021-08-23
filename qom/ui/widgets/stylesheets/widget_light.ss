@@ -1,13 +1,13 @@
 QWidget {
     background-color: #FAFAFA;
     border: 0px solid #FAFAFA;
+    font-family: 'Segoe UI';
     color: #616161;
-    margin: 0px 32px;
 }
 
 QCheckBox {
     font-size: 10pt;
-    color: #616161;
+    margin: 0px 32px;
     spacing: 8px;
 }
 
@@ -40,10 +40,9 @@ QCheckBox::indicator:checked:pressed {
 QComboBox {
     background-color: #EEEEEE;
     border: 0px solid #EEEEEE;
-    padding: 0px 8px;
     font-size: 10pt;
-    color: #616161;
     margin: 0px;
+    padding: 0px 8px;
 }
 
 QComboBox:hover {
@@ -53,7 +52,6 @@ QComboBox:hover {
 QComboBox::drop-down {
     background-color: #E2E2E2;
     border: 0px solid #E2E2E2;
-    color: #616161;
 }
 
 QComboBox QAbstractItemView {
@@ -64,12 +62,16 @@ QComboBox QAbstractItemView {
     margin: 0px;
 }
 
+QLabel {
+    margin: 0px 32px;
+}
+
 QLineEdit {
     background-color: #EEEEEE;
     border: 0px solid #EEEEEE;
     selection-background-color: #FAFAFA;
     selection-color: #616161;
-    color: #616161;
+    font-size: 10pt;
     margin: 0px;
     padding: 0px 8px;
 }
@@ -82,7 +84,6 @@ QPushButton {
     background-color: #EEEEEE;
     border: 0px solid #EEEEEE;
     font-size: 10pt;
-    color: #616161;
     margin: 0px;
 }
 
@@ -95,7 +96,7 @@ QTextEdit {
     border: 0px solid #EEEEEE;
     selection-background-color: #FAFAFA;
     selection-color: #616161;
-    color: #616161;
+    font-size: 10pt;
     margin: 0px;
     padding: 0px 8px;
 }

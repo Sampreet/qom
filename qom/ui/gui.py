@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.gui'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-19'
-__updated__ = '2021-08-20'
+__updated__ = '2021-08-23'
 
 # dependencies
 from PyQt5 import QtCore, QtWidgets
@@ -25,9 +25,13 @@ class GUI(QtWidgets.QFrame):
     Parameters
     ----------
     theme : str, optional
-        Display theme:
-            'dark': Dark mode.
-            'light': Light mode.
+        Display theme. Available options are:
+            ==========  ==============
+            value       meaning
+            ==========  ==============  
+            "dark"      dark mode.
+            "light"     light mode.
+            ==========  ==============
     """
 
     def __init__(self, theme='dark'):
@@ -50,21 +54,21 @@ class GUI(QtWidgets.QFrame):
         """Method to initialize the application widgets."""
 
         # header
-        self.header = HeaderWidget(self)
+        self.header = HeaderWidget(parent=self)
         # footer
-        self.footer = FooterWidget(self)
+        self.footer = FooterWidget(parent=self)
         # solver
-        self.solver = SolverWidget(self)
-        self.sidebar_solver = SidebarWidget(self, self.solver, 'top-right', 'Solvers')
+        self.solver = SolverWidget(parent=self)
+        self.sidebar_solver = SidebarWidget(parent=self, widget=self.solver, pos='top-right', name='Solvers')
         # system
         self.system = SystemWidget(self)
-        self.sidebar_system = SidebarWidget(self, self.system, 'left', 'Systems')
+        self.sidebar_system = SidebarWidget(parent=self, widget=self.system, pos='left', name='Systems')
         # plotter
         self.plotter = PlotterWidget(self)
-        self.sidebar_plotter = SidebarWidget(self, self.plotter, 'bottom-right', 'Plotters')
+        self.sidebar_plotter = SidebarWidget(parent=self, widget=self.plotter, pos='bottom-right', name='Plotters')
         # looper
-        self.looper = LooperWidget(self, self.solver, self.system, self.plotter)
-        self.sidebar_looper = SidebarWidget(self, self.looper, 'center-right', 'Loopers')
+        self.looper = LooperWidget(parent=self, solver_widget=self.solver, system_widget=self.system, plotter_widget=self.plotter)
+        self.sidebar_looper = SidebarWidget(parent=self, widget=self.looper, pos='center-right', name='Loopers')
 
     def set_theme(self, theme):
         """Method to update the application theme.
@@ -72,9 +76,13 @@ class GUI(QtWidgets.QFrame):
         Parameters
         ----------
         theme : str
-            Display theme:
-                'dark': Dark mode.
-                'light': Light mode.
+            Display theme. Available options are:
+                ==========  ==============
+                value       meaning
+                ==========  ==============  
+                "dark"      dark mode.
+                "light"     light mode.
+                ==========  ==============
         """
         
         # frame
@@ -100,32 +108,21 @@ class GUI(QtWidgets.QFrame):
         self.looper.set_theme(theme)
         self.sidebar_looper.set_theme(theme)
 
-    def update_status(self, status):
+    def update(self, status=None, progress=None, reset=False):
         """Method to update status.
         
         Parameters
         ----------
-        status : str
+        status : str, optional
             Status message.
-        """
-
-        self.footer.update_status(status)
-
-    def reset_progress(self):
-        """Method to reset the progress."""
-
-        self.footer.reset_progress()
-
-    def update_progress(self, progress):
-        """Method to update progress.
-        
-        Parameters
-        ----------
-        progress : int or float
+        progress : int or float, optional
             Progress percentage.
+        reset : boolean, optional
+            Option to reset progress.
         """
 
-        self.footer.update_progress(progress)
+        # update footer
+        self.footer.update(status=status, progress=progress, reset=reset)
 
 def run(theme='dark'):
     """Function to run the PyQt application.
@@ -133,9 +130,13 @@ def run(theme='dark'):
     Parameters
     ----------
     theme : str, optional
-        Display theme:
-            'dark': Dark mode.
-            'light': Light mode.
+        Display theme. Available options are:
+            ==========  ==============
+            value       meaning
+            ==========  ==============  
+            "dark"      dark mode.
+            "light"     light mode.
+            ==========  ==============
     """
 
     # initialize logging

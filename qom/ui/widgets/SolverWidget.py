@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.SolverWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-08-20'
+__updated__ = '2021-08-23'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -24,7 +24,7 @@ class SolverWidget(BaseWidget):
     
     Parameters
     ----------
-    parent : QtWidget.*
+    parent : :class:`qom.ui.GUI`
         Parent class for the widget.
     """
 
@@ -68,7 +68,6 @@ class SolverWidget(BaseWidget):
         # solver parameters
         self.te_params = QtWidgets.QTextEdit('')
         self.te_params.setFixedSize(width - 2 * padding, row_height * 5)
-        self.te_params.setFont(QtGui.QFont('Segoe UI', pointSize=10, italic=False))
 
         # update layout 
         self.layout = QtWidgets.QGridLayout()
@@ -101,7 +100,15 @@ class SolverWidget(BaseWidget):
         return codes
     
     def get_params(self):
-        # get parameters
+        """Method to obtain the parameters for the solver.
+        
+        Returns
+        -------
+        params: dict
+            Parameters for the solver.
+        """
+
+        # evaluate parameters
         params = eval(self.te_params.toPlainText()) if self.te_params.toPlainText() != '' else {}
         
         return params
@@ -123,6 +130,14 @@ class SolverWidget(BaseWidget):
         self.lbl_name.setText('Solver Parameters:')
     
     def set_params(self, params):
+        """Method to set the parameters for the solver.
+        
+        Parameters
+        ----------
+        params: dict
+            Parameters for the solver.
+        """
+
         # set parameters
         self.te_params.setText(str(params))
 
@@ -132,9 +147,13 @@ class SolverWidget(BaseWidget):
         Parameters
         ----------
         theme : str, optional
-            Display theme:
-                'dark': Dark mode.
-                'light': Light mode.
+            Display theme. Available options are:
+                ==========  ==============
+                value       meaning
+                ==========  ==============  
+                "dark"      dark mode.
+                "light"     light mode.
+                ==========  ==============
         """
 
         # update theme

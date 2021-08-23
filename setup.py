@@ -13,7 +13,7 @@ setup(
     long_description_content_type='text/markdown',
     keywords=['quantum', 'optomechanics', 'toolbox', 'python3'],
     url='https://github.com/sampreet/qom',
-    download_url='https://github.com/Sampreet/qom/archive/refs/tags/v0.7.5.tar.gz',
+    download_url='https://github.com/Sampreet/qom/archive/refs/tags/v0.7.9.tar.gz',
     packages=find_packages(),
     classifiers=[
         'Programming Language :: Python :: 3',

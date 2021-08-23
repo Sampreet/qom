@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.SidebarWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-08-20'
+__updated__ = '2021-08-23'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -23,23 +23,29 @@ class SidebarWidget(BaseWidget):
     
     Parameters
     ----------
-    parent : QtWidget.*
+    parent : :class:`qom.ui.GUI`
         Parent class for the sidebar.
-    widget : QtWidget.*
+    widget : :class:`qom.ui.widgets.*`
         Widget connected to the sidebar list.
     pos : str, optional
         Position of the sidebar:
-            'bottom-left': Bottom-left side.
-            'bottom-right': Bottom-right side.
-            'center-left': Center-left side.
-            'center-right': Center-right side.
-            'left': Left side.
-            'right': Right side.
-            'top-left': Top-left side.
-            'top-right': Top-right side.
+            ==============  ==================
+            value           meaning
+            ==============  ==================
+            "bottom-left"   bottom-left side.
+            "bottom-right"  bottom-right side.
+            "center-left"   center-left side.
+            "center-right"  center-right side.
+            "left"          left side.
+            "right"         right side.
+            "top-left"      top-left side.
+            "top-right"     top-right side.
+            ==============  ==================
+    name : str, optional
+        Name of the list.
     """
 
-    def __init__(self, parent, widget, pos='left', name='List'):
+    def __init__(self, parent, widget, pos='left', name='Sidebar List'):
         """Class constructor for SidebarWidget."""
 
         # initialize super class
@@ -159,9 +165,13 @@ class SidebarWidget(BaseWidget):
         Parameters
         ----------
         theme : str, optional
-            Display theme:
-                'dark': Dark mode.
-                'light': Light mode.
+            Display theme. Available options are:
+                ==========  ==============
+                value       meaning
+                ==========  ==============  
+                "dark"      dark mode.
+                "light"     light mode.
+                ==========  ==============
         """
 
         # update theme
@@ -188,9 +198,6 @@ class SidebarWidget(BaseWidget):
                 self.btn_arrow.setIcon(self.get_icon('right_arrow_light'))
             # styles
             self.setStyleSheet(self.get_stylesheet('sidebar_dark'))
-
-        # update theme
-        self.theme = theme
 
     def toggle_list(self):
 
@@ -229,19 +236,59 @@ class SidebarWidget(BaseWidget):
         self.set_theme(self.theme)
 
 class RotatedLabel(QtWidgets.QLabel):
+    """Class to paint a label rotated by 90 degrees.
+    
+    Parameters
+    ----------
+    text : str, optional
+        Text to paint.
+    pos : str, optional
+        Position of the sidebar:
+            ==============  ==================
+            value           meaning
+            ==============  ==================
+            "bottom-left"   bottom-left side.
+            "bottom-right"  bottom-right side.
+            "center-left"   center-left side.
+            "center-right"  center-right side.
+            "left"          left side.
+            "right"         right side.
+            "top-left"      top-left side.
+            "top-right"     top-right side.
+            ==============  ==================
+
+    """
 
     def __init__(self, text='List', pos='left'):
+        """Class constructor for RotatedLabel."""
+
+        # initialize super class
         super().__init__()
+
+        # update attributes
         self.text = text
         self.pos = pos
 
     def paintEvent(self, event):
+        """Method to paint the rotated label.
+        
+        event : :class:`QGui.QPaintEvent`
+            Paint event.
+        """
+
+        # initialize painter
         _painter = QtGui.QPainter(self)
+
+        # if sidebar is on the left side
         if self.pos.find('left') != -1:
+            # rotate counter-clockwise
             _painter.translate(self.width() / 2 - 4, 16)
             _painter.rotate(90)
         else:
+            # rotate clockwise
             _painter.translate(self.width() / 2 + 4, self.height() - 16)
             _painter.rotate(-90)
+        
+        # draw text
         _painter.drawText(0, 0, self.text)
         _painter.end()

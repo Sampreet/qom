@@ -9,4 +9,5 @@ qom.systems package
    qom.systems.DODMSystem
    qom.systems.DOSMSystem
    qom.systems.SODMSystem
+   qom.systems.SOMASystem
    qom.systems.SOSMSystem

@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-08-20'
+__updated__ = '2021-08-23'
 
 # dependencies
 from decimal import Decimal
@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 # TODO: Fix `get_multiprocessed_results`.
 # TODO: Handle multi-valued points for gradients in `get_X_results`.
 # TODO: Handle monotonic modes in `get_index`.
-# TODO: Handle exceptions in `plot_results`.
 # TODO: Support gradients in `wrap`.
 
 class BaseLooper():
@@ -45,6 +44,8 @@ class BaseLooper():
         Codename for the interfaced looper.
     name : str
         Full name of the interfaced looper.
+    cb_update : callable, optional
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is an integer and ``reset`` is a boolean.
 
     Notes
     -----
@@ -95,7 +96,7 @@ class BaseLooper():
     def results(self, results):
         self.__results = results
 
-    def __init__(self, func, params: dict, code: str, name: str, cb_progress=None):
+    def __init__(self, func, params: dict, code: str, name: str, cb_update=None):
         """Class constructor for BaseLooper."""
 
         # validate parameters
@@ -108,7 +109,7 @@ class BaseLooper():
         self.params = params
         self.code = code
         self.name = name
-        self.cb_progress = cb_progress
+        self.cb_update = cb_update
 
         # set properties
         self.axes = dict()
@@ -406,7 +407,6 @@ class BaseLooper():
         thres : dict
             Threshold values.
         """
-        
 
         # mode selector
         _selector = {
@@ -494,8 +494,9 @@ class BaseLooper():
         if int(progress * 1000) % 10 == 0:
             logger.info('Calculating the values: Progress = {progress:3.2f}'.format(progress=progress))
 
-        if self.cb_progress is not None:
-            self.cb_progress(progress)
+        # update callback
+        if self.cb_update is not None:
+            self.cb_update(status='Calculating the values...', progress=progress)
 
     def wrap(self, file_path: str=None, plot: bool=False, hold: bool=True, width: float=5.0, height: float=5.0):
         """Method to wrap the looper.
@@ -552,6 +553,11 @@ class BaseLooper():
                 
                 # display completion
                 logger.info('------------------Results Loaded---------------------\t\n')
+
+                # update callback
+                if self.cb_update is not None:
+                    self.cb_update(status='Results Loaded', progress=None, reset=True)
+                
             # loop and save results
             else:
                 self.loop()
@@ -569,6 +575,10 @@ class BaseLooper():
                 
                 # display completion
                 logger.info('------------------Results Saved----------------------\t\n')
+
+                # update callback
+                if self.cb_update is not None:
+                    self.cb_update(status='Results Saved', progress=None, reset=True)
         
         # loop
         else:

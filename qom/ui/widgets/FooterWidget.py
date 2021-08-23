@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.FooterWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-08-20'
+__updated__ = '2021-08-23'
 
 # dependencies
 from PyQt5 import QtCore, QtWidgets
@@ -23,7 +23,7 @@ class FooterWidget(BaseWidget):
     
     Parameters
     ----------
-    parent : QtWidget.*
+    parent : :class:`qom.ui.GUI`
         Parent class for the sidebar.
     """
 
@@ -82,21 +82,19 @@ class FooterWidget(BaseWidget):
         self.theme = 'dark'
         self.set_theme()
 
-    def reset_progress(self):
-        """Method to reset progress."""
-
-        self.progress.setValue(0)
-        self.progress.setTextVisible(False)
-
     def set_theme(self, theme=None):
         """Method to update the theme.
         
         Parameters
         ----------
         theme : str, optional
-            Display theme:
-                'dark': Dark mode.
-                'light': Light mode.
+            Display theme. Available options are:
+                ==========  ==============
+                value       meaning
+                ==========  ==============  
+                "dark"      dark mode.
+                "light"     light mode.
+                ==========  ==============
         """
 
         # update theme
@@ -110,25 +108,29 @@ class FooterWidget(BaseWidget):
             # styles
             self.setStyleSheet(self.get_stylesheet('footer_dark'))
 
-    def update_progress(self, progress):
-        """Method to update progress.
-        
-        Parameters
-        ----------
-        progress : int or float
-            Progress percentage.
-        """
-
-        self.progress.setValue(int(progress))
-        self.progress.setTextVisible(True)
-
-    def update_status(self, status):
+    def update(self, status=None, progress=None, reset=False):
         """Method to update status.
         
         Parameters
         ----------
-        status : str
+        status : str, optional
             Status message.
+        progress : int or float, optional
+            Progress percentage.
+        reset : boolean, optional
+            Option to reset progress.
         """
 
-        self.status.setText(str(status))
+        # update status
+        if status is not None:
+            self.status.setText(str(status))
+
+        # update progress
+        if progress is not None:
+            self.progress.setValue(int(progress))
+            self.progress.setTextVisible(True)
+
+        # reset progress
+        if reset:
+            self.progress.setValue(0)
+            self.progress.setTextVisible(False)

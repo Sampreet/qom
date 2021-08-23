@@ -24,7 +24,7 @@ Backed by numerical libraries like NumPy and SciPy, and featuring the highly cus
 ### Up Next in v0.8!
 
 - [ ] Support for Delay Differential Equations
-- [ ] GUI module to run templated scripts
+- [x] GUI module to run templated functions
 - [x] Support for Lyapunov exponents
 - [x] Multithreaded looping
 - [x] Project website

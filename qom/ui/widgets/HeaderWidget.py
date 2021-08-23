@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.HeaderWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-08-20'
+__updated__ = '2021-08-23'
 
 # dependencies
 from PyQt5 import QtCore, QtWidgets
@@ -23,7 +23,7 @@ class HeaderWidget(BaseWidget):
     
     Parameters
     ----------
-    parent : QtWidget.*
+    parent : :class:`qom.ui.GUI`
         Parent class for the header.
     """
 
@@ -147,9 +147,13 @@ class HeaderWidget(BaseWidget):
         Parameters
         ----------
         theme : str, optional
-            Display theme:
-                'dark': Dark mode.
-                'light': Light mode.
+            Display theme. Available options are:
+                ==========  ==============
+                value       meaning
+                ==========  ==============  
+                "dark"      dark mode.
+                "light"     light mode.
+                ==========  ==============
         """
 
         # update theme
