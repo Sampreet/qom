@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.SOMASystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-08-15'
-__updated__ = '2021-08-18'
+__updated__ = '2021-08-24'
 
 # dependencies
 from decimal import Decimal
@@ -34,6 +34,7 @@ class SOMASystem(BaseSystem):
         key                 value
         ==================  ====================================================
         "t_div"             (*int*) Number of divisions in the time axis.
+        "t_mode"            (*str*) Type of modes, "optical" (default) or "mechanical" for which the dynamics are calculated.
         ==================  ====================================================
     """
 
@@ -43,7 +44,55 @@ class SOMASystem(BaseSystem):
         # initialize super class
         super().__init__(params, 'soma_system', 'Array of single-optomechanical System', num_modes=4)
 
-    def get_nlse_dynamics(self, solver_params, get_ivc, func_op_d, func_op_n, func_ode_betas=None, get_betas=None):
+    def get_mode_amplitude_dynamics(self, solver_params, plot=False, plotter_params=dict()):
+        """Method to obtain the dynamics of the optical modes by solving the semi-classical equations of motion.
+
+        Requires ``get_mode_rates`` and ``get_ivc`` function for the 
+
+        Parameters
+        ----------
+        solver_params : dict
+            Parameters for the solver containing the keys "t_min", "t_max" and "t_dim" for the integration timescale.
+        
+        Returns
+        -------
+        amps : list
+            Required mode amplitudes at every point of time.
+        """
+
+        # extract frequently used variables
+        _N = int(self.num_modes / 2)
+        _t_mode = solver_params.get('t_mode', 'optical')
+
+        def get_ivc():
+            """Function to get the initial values of the modes and the constant parameters of the system."""
+            # get initial values
+            iv, c = self.get_ivc()
+            # truncate modes
+            iv_modes = iv[:self.num_modes]
+            # extract constant parameters
+            if c is not None and len(c) > 4 * self.num_modes**2:
+                c_modes = c[4 * self.num_modes**2:]
+            else:
+                c_modes = c if c is not None else list()
+
+            return iv_modes, c_modes
+
+        # get modes and times
+        Modes, _, T = self.get_modes_corrs_dynamics(solver_params=solver_params, func_ode=self.func_ode, get_ivc=get_ivc)
+
+        # extract required modes
+        amps = [[np.linalg.norm(modes[2 * j + (1 if _t_mode == 'mechanical' else 0)]) for j in range(int(len(modes) / 2))] for modes in Modes]
+
+        # get positions
+        X = np.linspace(0, _N - 1, _N).tolist()
+
+        if plot:
+            self.plot_dynamics(plotter_params=plotter_params, V=amps, T=T, X=X)
+
+        return amps, T, X
+
+    def get_nlse_dynamics(self, solver_params, get_ivc, get_op_d, get_op_n, get_beta_rates=None, get_betas=None):
         """Method to obtain the solutions of the Nonlinear Schrodinger Equation (NLSE) using the Split-step Fourier Method.
 
         Parameters
@@ -52,12 +101,12 @@ class SOMASystem(BaseSystem):
             Parameters for the solver containing the keys "t_min", "t_max" and "t_dim" for the integration timescale.
         get_ivc : callable
             Function returning the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
-        func_op_d : callable
-            Function returning the dispersion operator ``D``, formatted as ``get_d(params, ps, x_ss)``, where ``params`` are the constant parameters of the system, ``ps`` is the frequency spectrum and ``x_ss`` is the step size of the X-axis values. Returns ``op_D``.
-        func_op_n : callable
+        get_op_d : callable
+            Function returning the dispersion operator ``D``, formatted as ``get_op_d(params, ps, x_ss)``, where ``params`` are the constant parameters of the system, ``ps`` is the frequency spectrum and ``x_ss`` is the step size of the X-axis values. Returns ``op_D``.
+        get_op_n : callable
             Function returning the nonlinear operator ``N``, formatted as ``get_op_n(params, betas)``, where ``params`` are the constant parameters of the system and ``betas`` are the classical mechanical amplitudes. Returns ``op_N``.
-        func_ode_betas : callable, optional
-            Function returning the rates of the classical mechanical mode amplitudes for a given list of modes, formatted as ``func_ode_betas(betas, c, t)``, where ``betas`` are the mechanical modes amplitudes at time ``t`` and ``c`` is a list of the optical mode amplitudes and the constant parameters of the system. Returns the mechanical mode rates with same dimension as ``betas``.
+        get_beta_rates : callable, optional
+            Function returning the rates of the classical mechanical mode amplitudes for a given list of modes, formatted as ``get_beta_rates(betas, c, t)``, where ``betas`` are the mechanical modes amplitudes at time ``t`` and ``c`` is a list of the optical mode amplitudes and the constant parameters of the system. Returns the mechanical mode rates with same dimension as ``betas``.
         get_betas : callable, optional
             Function returning the classical mechanical mode amplitudes for a given list of modes, formatted as ``get_betas(betas, parms, t)``, where ``betas`` are the mechanical modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the mechanical modes with same dimension as ``betas``.
 
@@ -74,17 +123,18 @@ class SOMASystem(BaseSystem):
         # validate parameters
         for key in ['t_min', 't_max', 't_dim']:
             assert key in solver_params, 'Parameter ``params`` should contain key "{}" for looper parameters'.format(key)
-        assert func_ode_betas is not None or get_betas is not None, 'Either of the functions ``func_ode_betas`` or ``get_betas`` should be non-none'
+        assert get_beta_rates is not None or get_betas is not None, 'Either of the functions ``get_beta_rates`` or ``get_betas`` should be non-none'
                 
 
         # extract frequently used variables
+        num_s = int(self.num_modes / 2)
         t_min = np.float_(solver_params['t_min'])
         t_max = np.float_(solver_params['t_max'])
         t_dim = int(solver_params['t_dim'])
         t_div = int(solver_params.get('t_div', 100))
-        x_min = np.float_(solver_params.get('x_min', -1))
-        x_max = np.float_(solver_params.get('x_max', 1))
-        x_dim = int(solver_params.get('x_dim', int(self.num_modes / 2)))
+        x_min = np.float_(solver_params.get('x_min', - (num_s - 1) / 2))
+        x_max = np.float_(solver_params.get('x_max', (num_s - 1) / 2))
+        x_dim = int(solver_params.get('x_dim', num_s))
 
         # calculate times
         ts = np.linspace(t_min, t_max, t_dim)
@@ -137,9 +187,9 @@ class SOMASystem(BaseSystem):
             _t_ss = t_ss / t_div
 
             # dispersion operator
-            op_D = func_op_d(params, ps, x_ss)
+            op_D = get_op_d(params, ps, x_ss)
             # nonlinear operator trapezoidal approximation
-            op_N = func_op_n(params, betas)
+            op_N = get_op_n(params, betas)
             
             # D dt / 2
             alpha_ps = sf.fftshift(sf.fft(alphas))
@@ -154,9 +204,9 @@ class SOMASystem(BaseSystem):
             temp = np.exp(op_D * _t_ss / 2) * alpha_ps
             alphas = sf.ifft(sf.fftshift(temp)).tolist()
 
-            if func_ode_betas is not None:
+            if get_beta_rates is not None:
                 # solver for betas
-                solver = ODESolver({}, func_ode_betas, betas, alphas + params, method='zvode')
+                solver = ODESolver({}, get_beta_rates, betas, alphas + params, method='zvode')
                 t_s = T[int(i / t_div)] + (i % t_div) * _t_ss
                 betas = solver.solve(T=[t_s, t_s + _t_ss])[-1]
             else:

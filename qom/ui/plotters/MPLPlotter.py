@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2021-08-19'
+__updated__ = '2021-08-24'
 
 # dependencies
 from matplotlib.colors import LinearSegmentedColormap, Normalize
@@ -450,22 +450,6 @@ class MPLPlotter(BasePlotter):
         _X, _Y = np.meshgrid(self.axes['X'].val, self.axes['Y'].val)
         _Z = np.array(vs) if type(vs) is list else vs
         _mini, _maxi = min(_Z.ravel()), max(_Z.ravel())
-        _mini, _maxi, _prec = super().get_limits(_mini, _maxi)
-
-        # surface plot
-        if 'surface'in _type:
-            _cmap = self.plots.get_cmap()
-            self.plots.remove()
-            self.plots = _mpl_axes.plot_surface(_X, _Y, _Z, rstride=1, cstride=1, cmap=_cmap, antialiased=False)
-
-            # projections
-            if _type == 'surface_cz':
-                _offset = _maxi + 0.2 * (_maxi - _mini)
-                _proj_z = _mpl_axes.contour(_X, _Y, _Z, zdir='z', levels=self.bins, offset=_offset, cmap=_cmap)
-
-            # update colorbar
-            if self.cbar is not None:
-                self.cbar.update_normal(self.plots)
 
         # update ticks and tick labels
         _ticks = self.axes['V'].ticks
@@ -477,6 +461,22 @@ class MPLPlotter(BasePlotter):
         _maxi = max(_ticks)
         _mpl_axes.set_zticks(_ticks)
         _mpl_axes.set_zticklabels(_tick_labels)
+        _mini, _maxi, _prec = super().get_limits(_mini, _maxi)
+
+        # surface plot
+        if 'surface'in _type:
+            _cmap = self.plots.get_cmap()
+            self.plots.remove()
+            self.plots = _mpl_axes.plot_surface(_X, _Y, _Z, rstride=1, cstride=1, cmap=_cmap, antialiased=False)
+
+            # projections
+            if _type == 'surface_cz':
+                _offset = _maxi  + 0.2 * (_maxi - _mini)
+                _proj_z = _mpl_axes.contour(_X, _Y, _Z, zdir='z', levels=self.bins, offset=_offset, cmap=_cmap, vmin=_mini, vmax=_maxi)
+
+            # update colorbar
+            if self.cbar is not None:
+                self.cbar.update_normal(self.plots)
 
         # update limits
         self.plots.set_clim(vmin=_mini, vmax=_maxi)

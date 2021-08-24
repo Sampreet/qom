@@ -1,12 +1,13 @@
 # The Quantum Optomechanics Toolbox
 
 [![Version](https://img.shields.io/badge/version-0.7.9-red?style=for-the-badge)](#)
-[![Code Size](https://img.shields.io/github/repo-size/sampreet/qom?style=for-the-badge)](#)
+[![Milestone](https://img.shields.io/github/milestones/progress/sampreet/qom/1?style=for-the-badge)](https://github.com/Sampreet/qom/milestones)
 [![Last Commit](https://img.shields.io/github/last-commit/sampreet/qom?style=for-the-badge)](#)
 
 [![Open Issues](https://img.shields.io/github/issues-raw/sampreet/qom?style=flat-square)](https://github.com/Sampreet/qom/issues?q=is%3Aopen+is%3Aissue)
 [![Closed Issues](https://img.shields.io/github/issues-closed-raw/sampreet/qom?style=flat-square)](https://github.com/Sampreet/qom/issues?q=is%3Aissue+is%3Aclosed)
-[![Milestone](https://img.shields.io/github/milestones/progress/sampreet/qom/1?style=flat-square)](https://github.com/Sampreet/qom/milestones)
+[![Lines of Code](https://img.shields.io/tokei/lines/github/sampreet/qom?style=flat-square)](#)
+[![Code Size](https://img.shields.io/github/repo-size/sampreet/qom?style=flat-square)](#)
 
 > A library of modules for computational quantum optomechanics!
 
@@ -23,8 +24,7 @@ Backed by numerical libraries like NumPy and SciPy, and featuring the highly cus
 
 ### Up Next in v0.8!
 
-- [ ] Support for Delay Differential Equations
-- [x] GUI module to run templated functions
+- [ ] GUI module to run loopers and solvers
 - [x] Support for Lyapunov exponents
 - [x] Multithreaded looping
 - [x] Project website

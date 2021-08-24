@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.ODESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-08-01'
+__updated__ = '2021-08-24'
 
 # dependencies
 import copy
@@ -61,8 +61,11 @@ class ODESolver():
         ==================  ====================================================
         key                 value
         ==================  ====================================================
-        "method"            (*str*) method used to solve the ODEs. Currently available methods are "BDF", "DOP853", "dop853", "dopri5", "LSODA", "lsoda", "Radau", "RK23", "RK45" (fallback), "vode" and "zvode". 
+        "atol"              (*float*) absolute tolerance of the integrator.
+        "method"            (*str*) method used to solve the ODEs. Currently available methods are "BDF", "DOP853", "dop853", "dopri5", "LSODA", "lsoda", "Radau", "RK23", "RK45" (fallback), "vode" and "zvode". x
+        "rtol"              (*float*) relative tolerance of the integrator.
         "show_progress"     (*bool*) option to display the progress of the integration.
+        "stiff"             (*bool*) option to select whether the integration is a stiff problem (default) or a non-stiff one.
         ==================  ====================================================
 
     .. note:: All the options defined in ``params`` supersede individual function arguments.
@@ -114,9 +117,6 @@ class ODESolver():
         if self.params['method'] in self.old_methods:
             # get integrator
             self.integrator = si.ode(self.func)
-
-            # set integrator
-            self.integrator.set_integrator(self.params['method'])
         self.T = None
 
     def solve(self, T: list, func_c=None):
@@ -137,6 +137,9 @@ class ODESolver():
 
         # extract frequently used variables
         method = self.params['method']
+        atol = self.params.get('atol', 1e-12)
+        rtol = self.params.get('rtol', 1e-6)
+        stiff = self.params.get('stiff', True)
         show_progress = self.params.get('show_progress', False)
 
         # update times
@@ -144,7 +147,9 @@ class ODESolver():
         _dim = len(T)
 
         # update params
-        if method in self.old_methods:                
+        if method in self.old_methods:            
+            # set integrator
+            self.integrator.set_integrator(self.params['method'], atol=atol, rtol=rtol, method='bdf' if stiff else 'adams')    
             # set initial values and constants
             self.integrator.set_initial_value(self.v, self.T[0])
 
@@ -164,10 +169,13 @@ class ODESolver():
                 logger.info('Integrating (scipy.integrate.{method}): Progress = {progress:3.2f}'.format(method=method if method in self.new_methods else 'ode', progress=progress))
 
             # update constants
-            self.c = func_c(i) if func_c is not None else self.c
+            if func_c is not None:
+                self.c = func_c(i)
+                if method in self.old_methods:
+                    self.integrator.set_f_params(self.c)
 
             # step
-            _v = self.step(t_e=self.T[i], t_s=self.T[i - 1])
+            _v = self.step(t_e=self.T[i], t_s=self.T[i - 1], atol=atol, rtol=rtol)
 
             # update log
             logger.debug('t = {}\tv = {}'.format(self.T[i], _v))
@@ -177,7 +185,7 @@ class ODESolver():
 
         return vs
 
-    def step(self, t_e: float, t_s: float=0):
+    def step(self, t_e: float, t_s: float=0, atol=1e-12, rtol=1e-6):
         """Method to perform one step of the integration.
 
         Parameters
@@ -198,12 +206,11 @@ class ODESolver():
 
         # old API method
         if method in self.old_methods:
-            self.integrator.set_f_params(self.c)
             v = self.integrator.integrate(t_e).tolist()
         # new API methods
         else:
             # solve
-            _sols = si.solve_ivp(self.func, (t_s, t_e), self.v, method=method, rtol=1e-9, atol=1e-13, args=(self.c, ) if self.c is not None else None)
+            _sols = si.solve_ivp(self.func, (t_s, t_e), self.v, method=method, atol=atol, rtol=rtol, args=(self.c, ) if self.c is not None else None)
             # extract final values
             v = [y[-1] for y in _sols.y]
             

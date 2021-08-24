@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.7.9 - 2021/08/24 - 00 - Updated ODESolver
+* Added tolerance and stiffness in `qom.solvers.ODESolver` module.
+* Minor fixes to `qom.systems.Basesystem` and `qom.systems.SOMASystem` modules.
+* Minor fixes to surface plots in `qom.ui.plotters.MPLPlotter` module.
+* Updated `README`.
+
 ## v0.7.9 - 2021/08/23 - 00 - Minor Fixes
 * Updated `docs` with `qom.systems.SOMASystem`.
 * Update update callback functions for `qom.loopers` modules.

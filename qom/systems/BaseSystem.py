@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-08-18'
+__updated__ = '2021-08-24'
 
 # dependencies
 from typing import Union
@@ -1044,8 +1044,8 @@ class BaseSystem():
 
         return count, idxs
 
-    def plot_measures(self, plotter_params: dict, T: list, M: list, X: list=None, hold: bool=True, width: float=5.0, height: float=5.0):
-        """Method to plot the measures.
+    def plot_dynamics(self, plotter_params: dict, V: list, T: list, X: list=None, hold: bool=True, width: float=5.0, height: float=5.0):
+        """Method to plot the dynamics.
         
         Parameters
         ----------
@@ -1053,8 +1053,10 @@ class BaseSystem():
             Parameters for the plotter. Refer :class:`qom.ui.plotters.MPLPlotter` for curently available options.
         T : list
             Times at which values are calculated.
-        M : list
-            Measures calculated at all times.
+        V : list
+            Values calculated at all times.
+        X : list, optional
+            X-axis values.
         hold : bool, optional
             Option to hold the plot.
         width : float, optional
@@ -1076,17 +1078,20 @@ class BaseSystem():
         plotter_params['width'] = plotter_params.get('width', width)
         plotter_params['height'] = plotter_params.get('height', height)
 
-        # display initialization
-        logger.info('------------------Initializing Plotter---------------\n')
-
-        # initialize plot
-        plotter = MPLPlotter(axes={'X': T}, params=plotter_params)
+        # set plotter axes 
+        axes = {
+            'X': X,
+            'Y': T
+        } if X is not None else {'X': T}
+        
+        # initialize plotter
+        plotter = MPLPlotter(axes=axes, params=plotter_params)
+        
+        # update plotter
+        plotter.update(xs=X if X is not None else T, ys=T if X is not None else None, vs=V)
+        plotter.show(hold)
 
         # display completion
         logger.info('------------------Results Plotted--------------------\n')
-        
-        # update plotter
-        plotter.update(xs=T, vs=M)
-        plotter.show(hold)
 
         return plotter
