@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.gui'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-19'
-__updated__ = '2021-08-23'
+__updated__ = '2021-08-26'
 
 # dependencies
 from PyQt5 import QtCore, QtWidgets
@@ -57,18 +57,18 @@ class GUI(QtWidgets.QFrame):
         self.header = HeaderWidget(parent=self)
         # footer
         self.footer = FooterWidget(parent=self)
-        # solver
-        self.solver = SolverWidget(parent=self)
-        self.sidebar_solver = SidebarWidget(parent=self, widget=self.solver, pos='top-right', name='Solvers')
         # system
-        self.system = SystemWidget(self)
-        self.sidebar_system = SidebarWidget(parent=self, widget=self.system, pos='left', name='Systems')
+        self.system_widget = SystemWidget(self)
+        self.sidebar_system = SidebarWidget(parent=self, widget=self.system_widget, pos='left', name='Systems')
         # plotter
-        self.plotter = PlotterWidget(self)
-        self.sidebar_plotter = SidebarWidget(parent=self, widget=self.plotter, pos='bottom-right', name='Plotters')
+        self.plotter_widget = PlotterWidget(self)
+        self.sidebar_plotter = SidebarWidget(parent=self, widget=self.plotter_widget, pos='bottom-right', name='Plotters')
+        # solver
+        self.solver_widget = SolverWidget(parent=self, system_widget=self.system_widget, plotter_widget=self.plotter_widget)
+        self.sidebar_solver = SidebarWidget(parent=self, widget=self.solver_widget, pos='top-right', name='Solvers')
         # looper
-        self.looper = LooperWidget(parent=self, solver_widget=self.solver, system_widget=self.system, plotter_widget=self.plotter)
-        self.sidebar_looper = SidebarWidget(parent=self, widget=self.looper, pos='center-right', name='Loopers')
+        self.looper_widget = LooperWidget(parent=self, solver_widget=self.solver_widget, system_widget=self.system_widget, plotter_widget=self.plotter_widget)
+        self.sidebar_looper = SidebarWidget(parent=self, widget=self.looper_widget, pos='center-right', name='Loopers')
 
     def set_theme(self, theme):
         """Method to update the application theme.
@@ -96,16 +96,16 @@ class GUI(QtWidgets.QFrame):
         # footer
         self.footer.set_theme(theme)
         # solver
-        self.solver.set_theme(theme)
+        self.solver_widget.set_theme(theme)
         self.sidebar_solver.set_theme(theme)
         # system
-        self.system.set_theme(theme)
+        self.system_widget.set_theme(theme)
         self.sidebar_system.set_theme(theme)
         # plotter
-        self.plotter.set_theme(theme)
+        self.plotter_widget.set_theme(theme)
         self.sidebar_plotter.set_theme(theme)
         # looper
-        self.looper.set_theme(theme)
+        self.looper_widget.set_theme(theme)
         self.sidebar_looper.set_theme(theme)
 
     def update(self, status=None, progress=None, reset=False):

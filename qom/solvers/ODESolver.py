@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.ODESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-08-24'
+__updated__ = '2021-08-26'
 
 # dependencies
 import copy
@@ -54,6 +54,8 @@ class ODESolver():
             "vode"      real-valued implicit Adams/BDF methods.
             "zvode"     complex-valued implicit Adams/BDF methods (fallback).
             ==========  ====================================================
+    cb_update : callable, optional
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is an integer and ``reset`` is a boolean.
 
     Notes
     -----
@@ -97,7 +99,7 @@ class ODESolver():
     def T(self, T):
         self.__T = T
 
-    def __init__(self, params: dict, func, iv: list, c: list=None, method: str='RK45'):
+    def __init__(self, params: dict, func, iv: list, c: list=None, method: str='RK45', cb_update=None):
         """Class constructor for ODESolver."""
 
         # supersede solver parameters
@@ -112,6 +114,7 @@ class ODESolver():
         self.func = func
         self.v = copy.deepcopy(iv)
         self.c = copy.deepcopy(c)
+        self.cb_update = cb_update
 
         # set properties
         if self.params['method'] in self.old_methods:
@@ -167,6 +170,8 @@ class ODESolver():
             # display progress
             if show_progress and int(progress * 1000) % 10 == 0:
                 logger.info('Integrating (scipy.integrate.{method}): Progress = {progress:3.2f}'.format(method=method if method in self.new_methods else 'ode', progress=progress))
+                if self.cb_update is not None:
+                    self.cb_update(status='Integrating (scipy.integrate.{method})...'.format(method=method if method in self.new_methods else 'ode'), progress=progress)
 
             # update constants
             if func_c is not None:

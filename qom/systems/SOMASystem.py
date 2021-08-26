@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.SOMASystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-08-15'
-__updated__ = '2021-08-24'
+__updated__ = '2021-08-26'
 
 # dependencies
 from decimal import Decimal
@@ -28,6 +28,8 @@ class SOMASystem(BaseSystem):
     ----------
     params : dict
         Parameters for the system.
+    cb_update : callable, optional
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is an integer and ``reset`` is a boolean.
 
     .. note:: All the options defined in ``params`` supersede individual function arguments. Refer :class:`qom.systems.BaseSystem` for a complete list of supported options. Additionally, the following keys are supported:
         ==================  ====================================================
@@ -38,11 +40,11 @@ class SOMASystem(BaseSystem):
         ==================  ====================================================
     """
 
-    def __init__(self, params):
+    def __init__(self, params, cb_update=None):
         """Class constructor for SOMASystem."""
 
         # initialize super class
-        super().__init__(params, 'soma_system', 'Array of single-optomechanical System', num_modes=4)
+        super().__init__(params=params, code='soma_system', name='Array of single-optomechanical System', num_modes=4, cb_update=cb_update)
 
     def get_mode_amplitude_dynamics(self, solver_params, plot=False, plotter_params=dict()):
         """Method to obtain the dynamics of the optical modes by solving the semi-classical equations of motion.

@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.8.0 - 2021/08/26 - 00 - Version Upgrade
+* Minor fixes to attributes and callback updaters in `qom.loopers` modules.
+* Added attributes and callback updaters to `qom.solvers.HLESolver` and `qom.solvers.ODESover` modules.
+* Added callback updaters and minor fixes to `qom.systems` modules.
+* Added attributes and fixed plot updaters in `qom.ui.plotters.MPLPlotter` module.
+* Revamped layout and functions `qom.ui.widgets` subpackage and updated `qom.ui.gui` module.
+* Minor fixes to `qom.ui.looper` module.
+* Updated `README` and `setup`.
+
 ## v0.7.9 - 2021/08/24 - 00 - Updated ODESolver
 * Added tolerance and stiffness in `qom.solvers.ODESolver` module.
 * Minor fixes to `qom.systems.Basesystem` and `qom.systems.SOMASystem` modules.

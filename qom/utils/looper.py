@@ -6,13 +6,13 @@
 __name__    = 'qom.utils.looper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-05-25'
-__updated__ = '2021-08-23'
+__updated__ = '2021-08-26'
 
 # qom modules
 from ..ui import init_log
 from ..loopers import XLooper, XYLooper, XYZLooper
 
-default_looper_func_names_dict = {
+default_looper_func_names = {
     'averaged_eigenvalues': 'aes',
     'lyapunov_exponents': 'les', 
     'measure_averages': 'mes',

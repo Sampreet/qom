@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.HLESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-08-18'
+__updated__ = '2021-08-26'
 
 # dependencies
 from decimal import Decimal
@@ -38,6 +38,8 @@ class HLESolver():
             "t_max"     (*float*) maximum time at which integration stops.
             "t_dim"     (*int*) number of values from "t_max" to "t_min", both inclusive.
             ==========  ====================================================
+    cb_update : callable, optional
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is an integer and ``reset`` is a boolean.
 
     Notes
     -----
@@ -60,6 +62,19 @@ class HLESolver():
     # attributes
     code = 'hle_solver'
     name = 'Heisenberg-Langevin Equations Solver'
+    ui_params = {
+        'method': ODESolver.new_methods + ODESolver.old_methods,
+        't_min': 0.0,
+        't_max': 100.0,
+        't_dim': 1001,
+        'cache_dir': 'data',
+        'cache_file': 'V',
+        'atol': 1e-12,
+        'rtol': 1e-6
+    }
+    ui_defaults = {
+        'method': 'zvode'
+    }
 
     @property
     def Corrs(self):
@@ -101,7 +116,7 @@ class HLESolver():
     def T(self, T):
         self.__T = T
 
-    def __init__(self, params: dict):
+    def __init__(self, params: dict, cb_update=None):
         """Class constructor for HLESolver."""
 
         # validate parameters
@@ -110,6 +125,7 @@ class HLESolver():
 
         # set attributes
         self.params = params
+        self.cb_update = cb_update
 
         # set properties
         self.Corrs = None
@@ -184,7 +200,7 @@ class HLESolver():
         single_func = func_ode_corrs is None
 
         # solve ODE
-        ode_solver = ODESolver(params=self.params, func=func_ode, iv=iv, c=c, method=method)
+        ode_solver = ODESolver(params=self.params, func=func_ode, iv=iv, c=c, method=method, cb_update=self.cb_update)
         vs = ode_solver.solve(self.T)
             
         # handle single function 
@@ -195,6 +211,8 @@ class HLESolver():
             # display completion and initialization
             if show_progress:
                 logger.info('-------------------Modes Obtained---------------------\n')
+                if self.cb_update is not None:
+                    self.cb_update(status='Modes Obtained', progress=None, reset=True)
 
             # update initial values and constants
             iv_corrs = [np.real(ele) for ele in iv[num_modes:]]
@@ -223,7 +241,7 @@ class HLESolver():
                 return c_corrs
 
             # solve ODE
-            ode_solver = ODESolver(params=self.params, func=func_ode_corrs, iv=iv_corrs, c=c_corrs, method=method)
+            ode_solver = ODESolver(params=self.params, func=func_ode_corrs, iv=iv_corrs, c=c_corrs, method=method, cb_update=self.cb_update)
             self.Corrs = ode_solver.solve(func_c=func_c)
                 
             # update results
@@ -238,6 +256,8 @@ class HLESolver():
             # display completion
             if show_progress:
                 logger.info('-------------------Correlations Obtained--------------\n')
+                if self.cb_update is not None:
+                    self.cb_update(status='Correlations Obtained', progress=None, reset=True)
         else:
             # update results
             self.results = {
@@ -248,6 +268,8 @@ class HLESolver():
             # display completion
             if show_progress:
                 logger.info('-------------------Results Obtained-------------------\n')
+                if self.cb_update is not None:
+                    self.cb_update(status='Results Obtained', progress=None, reset=True)
 
     def get_Corrs(self, num_modes=None):
         """Method to obtain the quantum correlations.
@@ -375,6 +397,8 @@ class HLESolver():
             # display loaded
             if show_progress:
                 logger.info('-------------------Results Loaded---------------------\n')
+                if self.cb_update is not None:
+                    self.cb_update(status='Results Loaded', progress=None, reset=True)
         else:
             # solve
             self.__set_results(func_ode=func_ode, iv=iv, c=c, func_ode_corrs=func_ode_corrs, num_modes=num_modes, method=method)
@@ -393,5 +417,7 @@ class HLESolver():
                 # display saved
                 if show_progress:
                     logger.info('-------------------Results Saved----------------------\n')
+                    if self.cb_update is not None:
+                        self.cb_update(status='Results Saved', progress=None, reset=True)
 
         return self.results

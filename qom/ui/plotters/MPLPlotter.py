@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2021-08-24'
+__updated__ = '2021-08-26'
 
 # dependencies
 from matplotlib.colors import LinearSegmentedColormap, Normalize
@@ -44,6 +44,8 @@ class MPLPlotter(BasePlotter):
     """
 
     # attributes
+    code = 'mpl_plotter'
+    name = 'Matplotlib Plotter'
     cbar_positions = {
         'left': lambda gs: gs[:, 0], 
         'top': lambda gs: gs[0, :], 
@@ -55,6 +57,16 @@ class MPLPlotter(BasePlotter):
         'top': lambda gs: gs[1:, :], 
         'right': lambda gs: gs[:, :-1], 
         'bottom': lambda gs: gs[:-1, :]
+    }
+    ui_params = {
+        'palette': BasePlotter.default_palettes,
+        'v_label': '$v$',
+        'x_label': '$x$',
+        'y_label': '$y$'
+    }
+    ui_defaults = {
+        'type': 'pcolormesh',
+        'palette': 'RdBu_r'
     }
 
     @property
@@ -480,7 +492,7 @@ class MPLPlotter(BasePlotter):
 
         # update limits
         self.plots.set_clim(vmin=_mini, vmax=_maxi)
-        _mpl_axes.set_zlim(_mini, _maxi)
+        _mpl_axes.set_zlim3d(_mini, _maxi)
 
         # color bar
         if self.params['cbar']['show']:
@@ -501,6 +513,7 @@ class MPLPlotter(BasePlotter):
         """
 
         # frequently used variables
+        _type = self.params['type']
         _font_dicts = self.params['font_dicts']
         _font_props = self.__get_font_props(_font_dicts['tick'])
 
@@ -508,7 +521,8 @@ class MPLPlotter(BasePlotter):
         getattr(ax, 'set_' + ax_name + 'label')(ax_data.label, labelpad=12, fontdict=_font_dicts['label'])
 
         # ticks
-        getattr(ax, 'set_' + ax_name + 'lim')(min(ax_data.ticks), max(ax_data.ticks))
+        suffix = '3d' if _type in self.types_3D else ''
+        getattr(ax.axes, 'set_' + ax_name + 'lim' + suffix)(min(ax_data.ticks), max(ax_data.ticks))
         getattr(ax, 'set_' + ax_name + 'ticks')(ax_data.ticks)
         ax.tick_params(axis=ax_name, which='major', pad=12)
 
@@ -702,11 +716,14 @@ class MPLPlotter(BasePlotter):
         # extract frequently used variables
         _type = self.params['type']
 
-        # single-line plot
-        if _type == 'line' or _type == 'scatter':
-            self.__update_1D([xs], [vs], head)
-        # multi-line plot
-        if _type == 'lines' or _type == 'scatters':
+        # handle mismatched shapes
+        if type(vs[0]) is not list:
+            vs = [vs]
+        if len(np.shape(xs)) == 1:
+            xs = [xs] * len(vs)
+
+        # 1D plots
+        if _type in self.types_1D:
             self.__update_1D(xs, vs, head)
         
         # 2D plots

@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-08-23'
+__updated__ = '2021-08-26'
 
 # dependencies
 from decimal import Decimal
@@ -232,7 +232,7 @@ class BaseLooper():
                 # update progress
                 if show_progress :
                     self.update_progress(pos=i, dim=x_dim)
-                # udpate a deep copy
+                # update a deep copy
                 system_params = copy.deepcopy(self.params['system'])
                 if x_idx is not None:
                     system_params[x_var][x_idx] = x_val[i]
@@ -332,7 +332,7 @@ class BaseLooper():
 
         # start all threads
         for i in range(len(val)):            
-            # udpate a deep copy
+            # update a deep copy
             _system_params = copy.deepcopy(self.params['system'])
             if idx is not None:
                 _system_params[var][idx] = val[i]
@@ -365,7 +365,7 @@ class BaseLooper():
 
         # start all threads
         for i in range(len(val)):
-            # udpate a deep copy
+            # update a deep copy
             _system_params = copy.deepcopy(self.params['system'])
             if idx is not None:
                 _system_params[var][idx] = val[i]
@@ -493,10 +493,8 @@ class BaseLooper():
         # display progress
         if int(progress * 1000) % 10 == 0:
             logger.info('Calculating the values: Progress = {progress:3.2f}'.format(progress=progress))
-
-        # update callback
-        if self.cb_update is not None:
-            self.cb_update(status='Calculating the values...', progress=progress)
+            if self.cb_update is not None:
+                self.cb_update(status='Calculating the values...', progress=progress)
 
     def wrap(self, file_path: str=None, plot: bool=False, hold: bool=True, width: float=5.0, height: float=5.0):
         """Method to wrap the looper.
@@ -553,8 +551,6 @@ class BaseLooper():
                 
                 # display completion
                 logger.info('------------------Results Loaded---------------------\t\n')
-
-                # update callback
                 if self.cb_update is not None:
                     self.cb_update(status='Results Loaded', progress=None, reset=True)
                 
@@ -575,8 +571,6 @@ class BaseLooper():
                 
                 # display completion
                 logger.info('------------------Results Saved----------------------\t\n')
-
-                # update callback
                 if self.cb_update is not None:
                     self.cb_update(status='Results Saved', progress=None, reset=True)
         

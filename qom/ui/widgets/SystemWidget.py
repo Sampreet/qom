@@ -6,19 +6,19 @@
 __name__    = 'qom.ui.widgets.SystemWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-08-23'
+__updated__ = '2021-08-26'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
 import importlib
 import inspect
 import logging
+import numpy as np
 import os
 import re
 
 # qom modules
-from .BaseWidget import BaseWidget
-from .ParamWidget import ParamWidget
+from . import BaseWidget, ParamWidget
 
 # module logger
 logger = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ class SystemWidget(BaseWidget):
 
         # initialize UI elements
         # system name
-        self.lbl_name = QtWidgets.QLabel()
+        self.lbl_name = QtWidgets.QLabel('Select a system to begin')
         self.lbl_name.setFixedSize(width, 2 * row_height)
         self.lbl_name.setFont(QtGui.QFont('Segoe UI', pointSize=16, italic=True))
         # function label
@@ -82,6 +82,7 @@ class SystemWidget(BaseWidget):
         # value label
         self.lbl_value = QtWidgets.QLabel('Value:')
         self.lbl_value.setFixedSize(width, row_height)
+        self.lbl_value.setFont(QtGui.QFont('Segoe UI', pointSize=12, italic=True))
         self.lbl_value.setVisible(False)
         # value line edit
         self.le_value = QtWidgets.QLineEdit('')
@@ -91,6 +92,7 @@ class SystemWidget(BaseWidget):
         # parameter label
         self.lbl_params = QtWidgets.QLabel('Parameters:')
         self.lbl_params.setFixedSize(width, row_height)
+        self.lbl_params.setFont(QtGui.QFont('Segoe UI', pointSize=12, italic=True))
         self.lbl_params.setVisible(False)
 
         # update layout 
@@ -152,7 +154,7 @@ class SystemWidget(BaseWidget):
             # update status
             self.parent.update(status='Calculating...')
 
-            # update label
+            # update value
             self.le_value.setText(str(self.get_value(self.get_params())))
 
             # update footer
@@ -251,18 +253,17 @@ class SystemWidget(BaseWidget):
         """
 
         # frequently used parameters
+        width = 640
         row_height = 32
-        base_rows = 7
+        pre_count = 7
 
         # update parameter
         self.pos = pos
         self.system = self.systems[pos]
 
-        # system name
-        self.lbl_name.setText(self.system({}).name)
-        # available functions
+        # search for available functions
         func_names = [func[4:] for func in dir(self.system) if callable(getattr(self.system, func)) and func[:4] == 'get_']
-        # filter functions depending on params only
+        # filter functions with system parameters
         cmbx_items = list()
         for func_name in func_names:
             func = getattr(self.system, 'get_' + func_name)
@@ -272,38 +273,41 @@ class SystemWidget(BaseWidget):
         # no functions found
         if len(cmbx_items) == 0:
             cmbx_items.append('NA')
-        
-        # update combo boxes
-        self.cmbx_func.clear()
-        self.cmbx_func.addItems(cmbx_items)
 
         # clear widgets
         for widget in self.param_widgets:
             self.layout.removeWidget(widget)
+            widget.deleteLater()
+            
+        # reset list
+        self.param_widgets = list()
 
         # add widgets
         params = self.system({}).params
         widget_col = 0
         for param in params:
             # new widget
-            widget = ParamWidget(self)
+            widget = ParamWidget(parent=self, width=width / 4)
             widget.key = param
             widget.val = params[param]
             # update list
             self.param_widgets.append(widget)
-            self.layout.addWidget(widget, int(widget_col / 4) * 2 + base_rows, int(widget_col % 4), 2, 1)
+            self.layout.addWidget(widget, int(widget_col / 4) * 2 + pre_count, int(widget_col % 4), 2, 1)
             # update count
             widget_col += 1
 
         # update UI elements
+        self.lbl_name.setText(self.system({}).name)
         self.lbl_func.setVisible(True)
+        self.cmbx_func.clear()
+        self.cmbx_func.addItems(cmbx_items)
         self.cmbx_func.setVisible(True)
         self.btn_calc.setVisible(True)
         self.lbl_value.setVisible(True)
         self.le_value.setVisible(True)
         self.lbl_params.setVisible(True)
         param_rows = int(widget_col / 4) * 2 + (2 if widget_col % 4 != 0 else 0)
-        self.setFixedHeight((base_rows + param_rows) * row_height)
+        self.setFixedHeight((pre_count + param_rows) * row_height)
 
         # update theme
         self.set_theme()

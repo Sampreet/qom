@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.DOSMSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-08-02'
+__updated__ = '2021-08-26'
 
 # dependencies
 import logging
@@ -28,8 +28,8 @@ class DOSMSystem(BaseSystem):
     .. note:: All the options defined in ``params`` supersede individual function arguments. Refer :class:`qom.systems.BaseSystem` for a complete list of supported options.
     """
 
-    def __init__(self, params):
+    def __init__(self, params, cb_update=None):
         """Class constructor for DOSMSystem."""
 
         # initialize super class
-        super().__init__(params, 'dosm_system', 'Double-optical Single-mechanical System', num_modes=3)
+        super().__init__(params=params, code='dosm_system', name='Double-optical Single-mechanical System', num_modes=3, cb_update=cb_update)

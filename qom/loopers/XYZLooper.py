@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.XYZLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-28'
-__updated__ = '2021-08-23'
+__updated__ = '2021-08-26'
 
 # dependencies
 from typing import Union
@@ -34,11 +34,15 @@ class XYZLooper(BaseLooper):
     .. note:: All the options defined under the "looper" dictionary in ``params`` supersede individual function arguments. Refer :class:`qom.loopers.BaseLooper` for a complete list of supported options.
     """
 
+    # attributes
+    code = 'xyz_looper'
+    name = '3D Looper'
+    
     def __init__(self, func, params: dict, cb_update=None):
         """Class constructor for XYZLooper."""
 
         # initialize super class
-        super().__init__(func=func, params=params, code='xyz_looper', name='3D Looper', cb_update=cb_update)
+        super().__init__(func=func, params=params, code=self.code, name=self.name, cb_update=cb_update)
 
         # set axes
         self._set_axis(axis='X')
@@ -47,8 +51,6 @@ class XYZLooper(BaseLooper):
 
         # display initialization
         logger.info('-------------------Looper Initialized-----------------\t\n')
-
-        # update callback
         if self.cb_update is not None:
             self.cb_update(status='Looper Initialized', progress=None)
 
@@ -176,8 +178,6 @@ class XYZLooper(BaseLooper):
 
         # display completion
         logger.info('-------------------Results Obtained-------------------\t\n')
-
-        # update callback
         if self.cb_update is not None:
             self.cb_update(status='Results Obtained', progress=None, reset=True)
 

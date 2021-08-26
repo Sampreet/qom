@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.SODMSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-08-02'
+__updated__ = '2021-08-26'
 
 # dependencies
 import logging
@@ -24,12 +24,14 @@ class SODMSystem(BaseSystem):
     ----------
     params : dict
         Parameters for the system.
+    cb_update : callable, optional
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is an integer and ``reset`` is a boolean.
 
     .. note:: All the options defined in ``params`` supersede individual function arguments. Refer :class:`qom.systems.BaseSystem` for a complete list of supported options.
     """
 
-    def __init__(self, params):
+    def __init__(self, params, cb_update=None):
         """Class constructor for SODMSystem."""
 
         # initialize super class
-        super().__init__(params, 'sodm_system', 'Single-optical Double-mechanical System', num_modes=3)
+        super().__init__(params=params, code='sodm_system', name='Single-optical Double-mechanical System', num_modes=3, cb_update=cb_update)

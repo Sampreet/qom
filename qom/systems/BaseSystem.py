@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-08-24'
+__updated__ = '2021-08-26'
 
 # dependencies
 from typing import Union
@@ -41,6 +41,8 @@ class BaseSystem():
         Full name of the interfaced system.
     num_modes : int
         Number of modes of the interfaced system.
+    cb_update : callable, optional
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is an integer and ``reset`` is a boolean.
 
     References
     ----------
@@ -85,7 +87,7 @@ class BaseSystem():
     types_qcm = ['discord_G', 'entan_ln', 'sync_c', 'sync_p']
     types_plots = getattr(MPLPlotter, 'types_1D') + getattr(MPLPlotter, 'types_2D') + getattr(MPLPlotter, 'types_3D')
 
-    def __init__(self, params: dict, code: str, name: str, num_modes: int):
+    def __init__(self, params: dict, code: str, name: str, num_modes: int, cb_update=None):
         """Class constructor for BaseSystem."""
 
         # set attributes
@@ -93,6 +95,7 @@ class BaseSystem():
         self.code = code
         self.name = name
         self.num_modes = num_modes
+        self.cb_update = cb_update
 
     def __get_cache_options(self, solver_params):
         """Method to return updated options to cache dynamics.
@@ -121,7 +124,7 @@ class BaseSystem():
         cache_file = solver_params.get('cache_file', 'V')
 
         # if cache opted
-        if cache:
+        if cache and cache_dir != '' and cache_file != '':
             # update directory
             if cache_dir == 'data':
                 cache_dir += '\\' + self.code + '\\' + str(t_min) + '_' + str(t_max) + '_' + str(t_dim)
@@ -713,16 +716,18 @@ class BaseSystem():
         _range_min = solver_params.get('range_min', 0)
         _range_max = solver_params.get('range_max', len(T))
         _measure_type = solver_params['measure_type']
-        _module_names = {
+        _module_name = {
             'corr_ele': __name__,
             'eigen_dm': __name__,
             'mode_amp': __name__,
             'qcm': 'qom.solvers.QCMSolver'
-        }
+        }.get(_measure_type, 'qom.solvers.QCMSolver')
 
         # display initialization
         if _show_progress:
             logger.info('------------------Obtaining Measures-----------------\n')
+            if self.cb_update is not None:
+                self.cb_update(status='Obtaining Measures...', progress=None, reset=True)
 
         # initialize list
         M = list()
@@ -733,7 +738,9 @@ class BaseSystem():
             progress = float(i - _range_min)/float(_range_max - _range_min - 1) * 100
             # display progress
             if _show_progress and int(progress * 1000) % 10 == 0:
-                logger.info('Computing ({module_name}): Progress = {progress:3.2f}'.format(module_name=_module_names.get(_measure_type, _module_names['qcm']), progress=progress))
+                logger.info('Computing ({module_name}): Progress = {progress:3.2f}'.format(module_name=_module_name, progress=progress))
+                if self.cb_update is not None:
+                    self.cb_update(status='Computing ({module_name})...'.format(module_name=_module_name), progress=progress)
 
             # update list
             M.append(self.get_measure(solver_params=solver_params, modes=Modes[i], corrs=Corrs[i], get_ivc=get_ivc, get_A=get_A, t=T[i]))
@@ -741,6 +748,8 @@ class BaseSystem():
         # display completion
         if _show_progress:
             logger.info('------------------Measures Obtained------------------\n')
+            if self.cb_update is not None:
+                self.cb_update(status='Measures Obtained', progress=None, reset=True)
 
         return M, T[_range_min:_range_max]
 
@@ -772,6 +781,12 @@ class BaseSystem():
         _method = solver_params.get('method', 'RK45')
         _cache, _cache_dir, _cache_file = self.__get_cache_options(solver_params=solver_params)
 
+        # update solver params
+        solver_params['method'] = _method
+        solver_params['cache'] = _cache
+        solver_params['cache_dir'] = _cache_dir
+        solver_params['cache_file'] = _cache_file
+
         # get initial values and constants
         iv, c = get_ivc()
         # handle null constants
@@ -779,10 +794,10 @@ class BaseSystem():
             c = list()
 
         # initialize solver
-        solver = HLESolver(params=solver_params)
+        solver = HLESolver(params=solver_params, cb_update=self.cb_update)
         
         # solve and set results
-        solver.solve(func_ode=func_ode, iv=iv, c=c, func_ode_corrs=func_ode_corrs, num_modes=self.num_modes, method=_method, cache=_cache, cache_dir=_cache_dir, cache_file=_cache_file)
+        solver.solve(func_ode=func_ode, iv=iv, c=c, func_ode_corrs=func_ode_corrs, num_modes=self.num_modes)
 
         # get modes, correlations and times
         Modes = solver.get_Modes(num_modes=self.num_modes)
@@ -960,6 +975,8 @@ class BaseSystem():
         # display initialization
         if _show_progress:
             logger.info('------------------Obtaining Counts-------------------\n')
+            if self.cb_update is not None:
+                self.cb_update(status='Obtaining Counts...', progress=None, reset=True)
 
         # initialize counter
         Counts = list()
@@ -970,9 +987,12 @@ class BaseSystem():
             # display progress
             if _show_progress and int(progress * 1000) % 10 == 0:
                 logger.info('Computing ({module_name}): Progress = {progress:3.2f}'.format(module_name=__name__, progress=progress))
+                if self.cb_update is not None:
+                    self.cb_update(status='Computing ({module_name})...'.format(module_name=__name__), progress=progress)
+                
             # drift matrix
-
             A = get_A(Modes[i], params, i * _t_ss)
+
             # indices of the RHC sequence
             solver = RHCSolver(A)
             _idxs = solver.get_indices()
@@ -982,6 +1002,8 @@ class BaseSystem():
         # display completion
         if _show_progress:
             logger.info('------------------Counts Obtained--------------------\n')
+            if self.cb_update is not None:
+                self.cb_update(status='Counst Obtained', progress=None, reset=True)
 
         return Counts, T[_range_min:_range_max]
 
@@ -1090,8 +1112,5 @@ class BaseSystem():
         # update plotter
         plotter.update(xs=X if X is not None else T, ys=T if X is not None else None, vs=V)
         plotter.show(hold)
-
-        # display completion
-        logger.info('------------------Results Plotted--------------------\n')
 
         return plotter
