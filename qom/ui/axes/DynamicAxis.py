@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.axes.DynamicAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-17'
-__updated__ = '2021-08-02'
+__updated__ = '2021-08-27'
 
 # dependencies
 import logging
@@ -40,9 +40,6 @@ class DynamicAxis(BaseAxis):
 
         # set unit
         self.unit = params.get('unit', '')
-
-        # set bound
-        self.bound = params.get('bound', 'none')
 
         # set label
         if params.get('label', '') == '':

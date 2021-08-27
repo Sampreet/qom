@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.PlotterWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-08-20'
-__updated__ = '2021-08-26'
+__updated__ = '2021-08-27'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -75,21 +75,21 @@ class PlotterWidget(BaseWidget):
         self.cmbx_type.setFixedSize(width / 2 - 1.5 * padding, row_height)
         self.cmbx_type.setDisabled(True)
         self.layout.addWidget(self.cmbx_type, 1, 0, 1, 2, alignment=QtCore.Qt.AlignRight)
-        # initialize legend check box
-        self.chbx_legend = QtWidgets.QCheckBox('Legend')
-        self.chbx_legend.setFixedSize(width / 4, row_height)
-        self.chbx_legend.setDisabled(True)
-        self.layout.addWidget(self.chbx_legend, 1, 2, 1, 1, alignment=QtCore.Qt.AlignLeft)
         # initialize colorbar check box
         self.chbx_cbar = QtWidgets.QCheckBox('Colorbar')
         self.chbx_cbar.setFixedSize(width / 4, row_height)
         self.chbx_cbar.setDisabled(True)
-        self.layout.addWidget(self.chbx_cbar, 1, 3, 1, 1, alignment=QtCore.Qt.AlignLeft)
+        self.layout.addWidget(self.chbx_cbar, 1, 2, 1, 1, alignment=QtCore.Qt.AlignLeft)
+        # initialize legend check box
+        self.chbx_legend = QtWidgets.QCheckBox('Legend')
+        self.chbx_legend.setFixedSize(width / 4, row_height)
+        self.chbx_legend.setDisabled(True)
+        self.layout.addWidget(self.chbx_legend, 1, 3, 1, 1, alignment=QtCore.Qt.AlignLeft)
         # plotter parameters
-        self.te_params = QtWidgets.QTextEdit('{}')
+        self.te_params = QtWidgets.QTextEdit('')
         self.te_params.setFixedSize(width / 2 - 1.5 * padding, row_height * 4)
-        self.chbx_cbar.setDisabled(True)
-        self.layout.addWidget(self.te_params, 2, 2, 3, 4, alignment=QtCore.Qt.AlignRight)
+        self.layout.addWidget(self.te_params, 2, 2, 4, 2, alignment=QtCore.Qt.AlignRight)
+        self.te_params.setDisabled(True)
 
         # update main layout
         self.move(width, offset + 4)
@@ -133,10 +133,10 @@ class PlotterWidget(BaseWidget):
 
         # get type combo box
         params['type'] = self.cmbx_type.currentText()
-        # get legend check box
-        params['show_legend'] = self.chbx_legend.isChecked()
         # get colorbar check box
         params['show_cbar'] = self.chbx_cbar.isChecked()
+        # get legend check box
+        params['show_legend'] = self.chbx_legend.isChecked()
         # evaluate parameter widgets
         for widget in self.param_widgets:
             params[widget.key] = widget.val
@@ -162,9 +162,7 @@ class PlotterWidget(BaseWidget):
 
         # frequently used parameters
         width = 640
-        row_height = 32
         padding = 32
-        base_rows = 2
             
         # update plotter
         self.plotter = self.plotters[pos]
@@ -191,21 +189,18 @@ class PlotterWidget(BaseWidget):
                     widget.val = self.plotter.ui_defaults[param]
             else: 
                 widget.val = self.plotter.ui_params[param]
-            self.layout.addWidget(widget, int(widget_col / 2) * 2 + base_rows, int(widget_col % 2), 1, 1, alignment=QtCore.Qt.AlignRight)
+            self.layout.addWidget(widget, 2 + int(widget_col / 2) * 2, int(widget_col % 2), 2, 1, alignment=QtCore.Qt.AlignRight)
             # update widget list
             self.param_widgets.append(widget)
             # update count
             widget_col += 1
 
         # update widget
-        self.lbl_name.setText('(' + str(self.plotter.name) + ')')
+        self.lbl_name.setText(str(self.plotter.name))
         self.cmbx_type.clear()
         self.cmbx_type.addItems(self.plotter.types_1D + self.plotter.types_2D + self.plotter.types_3D)
         if 'type' in self.plotter.ui_defaults:
             self.cmbx_type.setCurrentText(self.plotter.ui_defaults['type'])
-
-        # update main looper
-        self.setFixedHeight((base_rows + widget_col) * row_height)
     
     def set_params(self, params):
         """Method to set the parameters for the plotter.
@@ -218,12 +213,12 @@ class PlotterWidget(BaseWidget):
         
         # set type combo box
         self.cmbx_type.setCurrentText(params.get('type', self.plotter.ui_defaults['type']))
+        # set colorbar check box
+        self.chbx_cbar.setChecked(params.get('show_cbar', True))
         # set legend check box
         self.chbx_legend.setChecked(params.get('show_legend', False))
-        # set colorbar check box
-        self.chbx_cbar.setChecked(params.get('show_cbar', False))
         # set parameter widgets
-        used_keys = ['type', 'show_legend', 'show_cbar']
+        used_keys = ['type', 'show_cbar', 'show_legend']
         for widget in self.param_widgets:
             if widget.key in params:
                 widget.val = params[widget.key]

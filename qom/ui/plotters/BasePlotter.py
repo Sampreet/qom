@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.BasePlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-06'
-__updated__ = '2021-08-19'
+__updated__ = '2021-08-27'
 
 # dependencies
 from typing import Union
@@ -110,7 +110,7 @@ class BasePlotter():
 
     Notes
     -----
-    Values for the keys with font paramters are currently backed by :class:`matplotlib`. Currently supported values of "\*_bounds" are "both", "lower", "none" (default) and "upper". Currently supported values of "\*_scale" are "linear" (default) and "log". Currently supported values of "type" are:
+    Values for the keys with font paramters are currently backed by :class:`matplotlib`. Currently supported values of "\*_bound" are "both", "lower", "none" (default) and "upper". Currently supported values of "\*_scale" are "linear" (default) and "log". Currently supported values of "type" are:
         ==============  ====================================================
         value           meaning
         ==============  ====================================================

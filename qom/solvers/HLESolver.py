@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.HLESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-08-26'
+__updated__ = '2021-08-27'
 
 # dependencies
 from decimal import Decimal
@@ -66,11 +66,7 @@ class HLESolver():
         'method': ODESolver.new_methods + ODESolver.old_methods,
         't_min': 0.0,
         't_max': 100.0,
-        't_dim': 1001,
-        'cache_dir': 'data',
-        'cache_file': 'V',
-        'atol': 1e-12,
-        'rtol': 1e-6
+        't_dim': 1001
     }
     ui_defaults = {
         'method': 'zvode'

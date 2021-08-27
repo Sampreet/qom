@@ -6,9 +6,10 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-08-26'
+__updated__ = '2021-08-28'
 
 # dependencies
+from operator import is_
 from typing import Union
 import copy
 import logging
@@ -27,7 +28,7 @@ logger = logging.getLogger(__name__)
 # TODO: Add `check_limit_cycle`.
 
 class BaseSystem():
-    """Class to interface QOM systems.
+    r"""Class to interface QOM systems.
 
     Initializes `params` property.
 
@@ -80,12 +81,47 @@ class BaseSystem():
         ==================  ====================================================
 
     .. note:: All the options defined in ``params`` supersede individual function arguments.
+
+    Some functions require one or more of the following predefined functions to work properly:
+        ======================  ================================================
+        function                purpose
+        ======================  ================================================
+        func_ode                Function returning the rate equations of the classical mode amplitudes and quantum correlations, formatted as ``func_ode(t, v, c)``, where ``t`` is the time at which the integration is performed, ``v`` is a list of the amplitudes and fluctuations and ``c`` is a list of constant parameters. The output should match the dimension of ``v``. If ``func_ode_corrs`` parameter is given, this function is treated as the function for the modes only.
+        func_ode_corrs          Function returning rate equations of the quantum correlations. It follows the same formatting as ``func_ode``.
+        get_A                   Function returning the drift matrix, formatted as ``get_A(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the drift matrix ``A``.
+        get_ivc                 Function returning the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
+        get_mode_rates          Function returning the rate of the classical mode amplitudes for a given list of modes, formatted as ``get_mode_rates(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the mode rates with same dimension as ``modes``.
+        get_oss_args            Function to obtain the required parameters to calculate the optical steady state, formatted as ``get_oss_args(params)``, where ``params`` are the constant parameters of the system. 
+        ======================  ================================================
+
+    The ``get_oss_args`` function should return the following values in order:
+        ==========  ====================================================
+        parameter   value
+        ==========  ====================================================
+        ``A_l``     (*float*) amplitude of the laser.
+        ``Delta``   (*float*) effective detuning if method is "basic", else detuning of the laser.
+        ``kappa``   (*float*) optical decay rate.
+        ``C``       (*float*) coefficient of :math:`|\alpha_{s}|^{2}`.
+        ==========  ====================================================
     """
 
     # attributes
     types_measures = ['corr_ele', 'eigen_dm', 'mode_amp']
     types_qcm = ['discord_G', 'entan_ln', 'sync_c', 'sync_p']
     types_plots = getattr(MPLPlotter, 'types_1D') + getattr(MPLPlotter, 'types_2D') + getattr(MPLPlotter, 'types_3D')
+    required_funcs = {
+        'get_averaged_eigenvalues': ['get_A', 'get_ivc', 'get_mode_rates'],
+        'get_lyapunov_exponents': ['get_A', 'get_ivc', 'get_mode_rates'],
+        'get_mean_optical_amplitudes': ['get_ivc', 'get_oss_args'],
+        'get_mean_optical_occupancies': ['get_ivc', 'get_oss_args'],
+        'get_measure_average': ['get_ivc', 'get_mode_rates'],
+        'get_measure_dynamics': ['get_ivc', 'get_mode_rates'],
+        'get_modes_corrs_dynamics': ['get_ivc', 'get_mode_rates'],
+        'get_modes_corrs_stationary': ['get_ivc', 'get_mode_rates'],
+        'get_pearson_correlation_coefficient': ['get_A', 'get_ivc', 'get_mode_rates'],
+        'get_rhc_count_dynamics': ['get_A', 'get_ivc', 'get_mode_rates'],
+        'get_rhc_count_stationary': ['get_ivc', 'get_mode_rates'],
+    }
 
     def __init__(self, params: dict, code: str, name: str, num_modes: int, cb_update=None):
         """Class constructor for BaseSystem."""
@@ -119,7 +155,7 @@ class BaseSystem():
         t_min = np.float_(solver_params.get('t_min', 0.0))
         t_max = np.float_(solver_params.get('t_max', 1000.0))
         t_dim = int(solver_params.get('t_dim', 10001))
-        cache = solver_params.get('cache', False)
+        cache = solver_params.get('cache', True)
         cache_dir = solver_params.get('cache_dir', 'data')
         cache_file = solver_params.get('cache_file', 'V')
 
@@ -181,6 +217,52 @@ class BaseSystem():
             return values_real
     
         return func_real
+
+    def __get_measure(self, solver_params: dict, modes: list, corrs: list):
+        """Method to calculate the measure.
+        
+        Parameters
+        ----------
+        solver_params : dict
+            Parameters for the solver.
+        corrs : list
+            Matrix of quantum correlations.
+        modes : list
+            Values of classical mode amplitudes.
+        
+        Returns
+        -------
+        measure : float
+            Calculated measure.
+        """
+
+        # validate required functions
+        assert self.validate_required_funcs(func_name='get_measure', mode='verbose') is True, 'Missing required predefined functions'
+
+        # extract frequently used variables
+        _measure_type = solver_params['measure_type']
+        _idx_e = solver_params['idx_e']
+
+        # correlation matrix elements
+        if _measure_type == 'corr_ele':
+            measure = [corrs[idx[0]][idx[1]]  for idx in _idx_e]
+        # mode amplidutes
+        elif _measure_type == 'mode_amp':
+            measure = [modes[idx] for idx in _idx_e]
+        # quantum correlation measure
+        else:
+            solver = QCMSolver(modes=modes, corrs=corrs)
+            # get function
+            _qcm_func = {
+                'discord_G': 'get_discord_Gaussian',
+                'entan_ln': 'get_entanglement_logarithmic_negativity',
+                'sync_c': 'get_synchronization_complete',
+                'sync_p': 'get_synchronization_phase'
+            }[_measure_type]
+            # calculate measure
+            measure = getattr(solver, _qcm_func)(pos_i=2 * _idx_e[0][0], pos_j=2 * _idx_e[0][1])
+
+        return measure
 
     def __validate_params_measure(self, solver_params: dict, count: int=None):
         """Method to validate parameters for 1D list indices.
@@ -275,21 +357,15 @@ class BaseSystem():
 
         return rates
 
-    def get_averaged_eigenvalues(self, solver_params: dict, func_ode, get_ivc, get_A, func_ode_corrs=None):
+    def get_averaged_eigenvalues(self, solver_params: dict):
         """Function to obtain the averaged eigenvalues of the drift matrix.
+
+        Requires already defined callables ``func_ode``, ``get_A`` inside the system class.
 
         Parameters
         ----------
         solver_params : dict
-            Parameters for the solver.
-        func_ode : callable
-            Function returning the rate equations of the classical mode amplitudes and quantum correlations, formatted as ``func_ode(t, v, c)``, where ``t`` is the time at which the integration is performed, ``v`` is a list of the amplitudes and fluctuations and ``c`` is a list of constant parameters. The output should match the dimension of ``v``. If ``func_ode_corrs`` parameter is given, this function is treated as the function for the modes only.
-        get_ivc : callable
-            Function returning the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
-        get_A : callable
-            Function returning the drift matrix, formatted as ``get_A(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the drift matrix ``A``.
-        func_ode_corrs : callable, optional
-            Function returning rate equations of the quantum correlations. It follows the same formatting as ``func_ode``.
+            Parameters for the solver.            
         
         Returns
         -------
@@ -297,23 +373,26 @@ class BaseSystem():
             Averaged eigenvalues of the drift matrix.
         """
 
+        # validate required functions
+        assert self.validate_required_funcs(func_name='get_averaged_eigenvalues', mode='verbose') is True, 'Missing required predefined functions'
+
         # update a deep copy of parameters
         _solver_params = copy.deepcopy(solver_params)
         _solver_params['measure_type'] = 'mode_amp'
         _solver_params['idx_e'] = [i for i in range(self.num_modes)]
 
         # get averaged modes
-        modes = self.get_measure_average(solver_params=_solver_params, func_ode=func_ode, get_ivc=get_ivc, func_ode_corrs=func_ode_corrs)
+        modes = self.get_measure_average(solver_params=_solver_params)
 
         # extract parameters
-        _, c = get_ivc()
+        _, c = self.get_ivc()
         if len(c) > 4 * self.num_modes**2:
             params = c[4 * self.num_modes**2:]
         else:
             params = c
 
         # drift matrix
-        A = get_A(modes=modes, params=params, t=None)
+        A = self.get_A(modes=modes, params=params, t=None)
 
         # initialize lists
         eig_avg = list()
@@ -325,19 +404,13 @@ class BaseSystem():
 
         return eig_avg
 
-    def get_lyapunov_exponents(self, solver_params, get_mode_rates, get_ivc, get_A, method_le: str='svd', num_iters: int=10000):
+    def get_lyapunov_exponents(self, solver_params, method_le: str='svd', num_iters: int=10000):
         """Method to obtain the Lyapunov exponents.
 
         Parameters
         ----------
         solver_params : dict
             Parameters for the solver.
-        get_mode_rates : callable
-            Function returning the rate of the classical mode amplitudes for a given list of modes, formatted as ``get_mode_rates(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the mode rates with same dimension as ``modes``.
-        get_ivc : callable
-            Function returning the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
-        get_A : callable
-            Function returning the drift matrix, formatted as ``get_A(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the drift matrix ``A``.
         method_le : int, optional
             Method used to calculate the unit vectors and eigenvalues. Currently available options are
                 ==========  ====================================================
@@ -355,6 +428,9 @@ class BaseSystem():
             Lyapunov exponents.
         """
 
+        # validate required functions
+        assert self.validate_required_funcs(func_name='get_lyapunov_exponents', mode='verbose') is True, 'Missing required predefined functions'
+
         # supersede solver parameterss
         method_le = solver_params.get('method_le', method_le)
         num_iters = int(solver_params.get('num_iters', num_iters))
@@ -363,7 +439,7 @@ class BaseSystem():
 
         # frequently used variables
         _dim = 2 * self.num_modes
-        iv, c = get_ivc()
+        iv, c = self.get_ivc()
         if len(c) > _dim**2:
             params = c[_dim**2:]
         else:
@@ -392,9 +468,9 @@ class BaseSystem():
                 W = np.reshape(v[_dim:], (_dim, _dim))
 
                 # obtain quadrature rates
-                quad_rates = self.__get_func_real(func=get_mode_rates)(v_real=quads, c=params, t=t)
+                quad_rates = self.__get_func_real(func=self.get_mode_rates)(v_real=quads, c=params, t=t)
                 # obtain deviation rates
-                W_rate = np.dot(get_A(modes=modes, params=params, t=t), W).flatten().tolist()
+                W_rate = np.dot(self.get_A(modes=modes, params=params, t=t), W).flatten().tolist()
 
                 return quad_rates + W_rate
 
@@ -418,7 +494,7 @@ class BaseSystem():
         else:
             # ODE function
             def func_ode(t, modes, c=None):
-                return get_mode_rates(modes=modes, params=params, t=t)
+                return self.get_mode_rates(modes=modes, params=params, t=t)
 
             # initialize solver
             solver = ODESolver(params=solver_params, func=func_ode, iv=Modes[-1])
@@ -432,7 +508,7 @@ class BaseSystem():
             # iterate
             for k in range(0, num_iters):
                 # get drift matrix at steady state
-                jac = get_A(modes=Modes[k], params=params, t=_T[k])
+                jac = self.get_A(modes=Modes[k], params=params, t=_T[k])
 
                 # calculate zs and transpose for ease in next steps
                 Z_T = np.transpose(np.dot(np.identity(_dim, dtype=np.float_) + jac * _dt, np.transpose(W_T)))
@@ -450,7 +526,7 @@ class BaseSystem():
 
         return lambdas
 
-    def get_mean_optical_amplitudes(self, get_ivc, get_oss_args, method: str='cubic'):
+    def get_mean_optical_amplitudes(self, method: str='cubic'):
         r"""Method to obtain the mean optical amplitudes.
 
         The optical steady state is assumed to be of the form [1]_,
@@ -462,18 +538,6 @@ class BaseSystem():
 
         Parameters
         ----------
-        get_ivc : callable
-            Function returning the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
-        get_oss_args: callable
-            Function to obtain the required parameters to calculate the optical steady state, formatted as ``get_oss_args(params)``, where ``params`` are the constant parameters of the system. Returns the following values in order:
-                ==========  ====================================================
-                parameter   value
-                ==========  ====================================================
-                ``A_l``     (*float*) amplitude of the laser.
-                ``Delta``   (*float*) effective detuning if method is "basic", else detuning of the laser.
-                ``kappa``   (*float*) optical decay rate.
-                ``C``       (*float*) coefficient of :math:`|\alpha_{s}|^{2}`.
-                ==========  ====================================================
         method : str, optional
             Method of calculation of intracavity photon number. Currently available options are:
                 ==========  ====================================================
@@ -490,14 +554,17 @@ class BaseSystem():
         roots : list
             Roots of the cubic equation. If ``method`` is "basic", this is the same as ``N_o``.
         """
+
+        # validate required functions
+        assert self.validate_required_funcs(func_name='get_mean_optical_amplitudes', mode='verbose') is True, 'Missing required predefined functions'
         
         # extract parameters
-        _, c = get_ivc()
+        _, c = self.get_ivc()
         if len(c) > 4 * self.num_modes**2:
             params = c[4 * self.num_modes**2:]
         else:
             params = c
-        A_l, Delta, kappa, C = get_oss_args(params=params)
+        A_l, Delta, kappa, C = self.get_oss_args(params=params)
 
         # basic method
         if method == 'basic':
@@ -506,7 +573,7 @@ class BaseSystem():
         # cubic method
         else:
             # get mean optical occupancies and roots of the cubic equation
-            N_o, roots = self.get_mean_optical_occupancies(get_ivc=get_ivc, get_oss_args=get_oss_args)
+            N_o, roots = self.get_mean_optical_occupancies()
             alpha_s = list()
             for n_o in N_o:
                 alpha_s.append(A_l / (kappa / 2 - 1j * (Delta + C * n_o)))
@@ -514,7 +581,7 @@ class BaseSystem():
         # return
         return alpha_s, roots
 
-    def get_mean_optical_occupancies(self, get_ivc, get_oss_args, method: str='cubic'):
+    def get_mean_optical_occupancies(self, method: str='cubic'):
         r"""Method to obtain the mean optical occupancies.
 
         The mean optical occupancy can be written as [1]_,
@@ -526,18 +593,6 @@ class BaseSystem():
 
         Parameters
         ----------
-        get_ivc : callable
-            Function returning the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
-        get_oss_args: callable
-            Function to obtain the required parameters to calculate the optical steady state, formatted as ``get_oss_args(params)``, where ``params`` are the constant parameters of the system. Returns the following values in order:
-                ==========  ====================================================
-                parameter   value
-                ==========  ====================================================
-                ``A_l``     (*float*) amplitude of the laser.
-                ``Delta``   (*float*) effective detuning if method is "basic", else detuning of the laser.
-                ``kappa``   (*float*) optical decay rate.
-                ``C``       (*float*) coefficient of :math:`N_{o}`.
-                ==========  ====================================================
         method : str, optional
             Method of calculation of intracavity photon number. Currently available options are:
                 ==========  ====================================================
@@ -555,18 +610,21 @@ class BaseSystem():
             Roots of the cubic equation. If ``method`` is "basic", this is the same as ``N_o``.
         """
 
+        # validate required functions
+        assert self.validate_required_funcs(func_name='get_mean_optical_occupancies', mode='verbose') is True, 'Missing required predefined functions'
+
         # extract parameters
-        _, c = get_ivc()
+        _, c = self.get_ivc()
         if len(c) > 4 * self.num_modes**2:
             params = c[4 * self.num_modes**2:]
         else:
             params = c
-        A_l, Delta, kappa, C = get_oss_args(params=params)
+        A_l, Delta, kappa, C = self.get_oss_args(params=params)
 
         # basic method
         if method == 'basic':
             # get mean optical amplitudea
-            _, N_o = self.get_mean_optical_amplitude(get_ivc=get_ivc, get_oss_args=get_oss_args)
+            _, N_o = self.get_mean_optical_amplitude()
             roots = [n_o for n_o in N_o]
 
         # cubic method
@@ -590,82 +648,13 @@ class BaseSystem():
         # return
         return N_o, roots
 
-    def get_measure(self, solver_params: dict, modes: list, corrs: list, get_ivc=None, get_A=None, t=None):
-        """Method to calculate the measure.
-        
-        Parameters
-        ----------
-        solver_params : dict
-            Parameters for the solver.
-        corrs : list
-            Matrix of quantum correlations.
-        modes : list
-            Values of classical mode amplitudes.
-        get_ivc : callable, optional
-            Function returning the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
-        get_A : callable, optional
-            Function returning the drift matrix, formatted as ``get_A(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the drift matrix ``A``.
-        t : float, optional
-            Time at which the measure is obtained.
-        
-        Returns
-        -------
-        measure : float
-            Calculated measure.
-        """
-
-        # extract frequently used variables
-        _measure_type = solver_params['measure_type']
-        _idx_e = solver_params['idx_e']
-
-        # correlation matrix elements
-        if _measure_type == 'corr_ele':
-            measure = [corrs[idx[0]][idx[1]]  for idx in _idx_e]
-        # eigenvalues of drift matrix
-        if _measure_type == 'eigen_dm':
-            # extract parameters
-            _, c = get_ivc()
-            if len(c) > 4 * self.num_modes**2:
-                params = c[4 * self.num_modes**2:]
-            else:
-                params = c
-            eigs, _ = np.linalg.eig(get_A(modes=modes, params=params, t=t))
-            measure = list()
-            for idx in solver_params['idx_e']:
-                measure.append(eigs[idx])
-        # mode amplidutes
-        elif _measure_type == 'mode_amp':
-            measure = [modes[idx] for idx in _idx_e]
-        # quantum correlation measure
-        else:
-            solver = QCMSolver(modes=modes, corrs=corrs)
-            # get function
-            _qcm_func = {
-                'discord_G': 'get_discord_Gaussian',
-                'entan_ln': 'get_entanglement_logarithmic_negativity',
-                'sync_c': 'get_synchronization_complete',
-                'sync_p': 'get_synchronization_phase'
-            }[_measure_type]
-            # calculate measure
-            measure = getattr(solver, _qcm_func)(pos_i=2 * _idx_e[0][0], pos_j=2 * _idx_e[0][1])
-
-        return measure
-
-    def get_measure_average(self, solver_params: dict, func_ode, get_ivc, get_A=None, func_ode_corrs=None):
+    def get_measure_average(self, solver_params: dict):
         """Method to obtain the average value of a measure.
         
         Parameters
         ----------
         solver_params : dict
             Parameters for the solver.
-        func_ode : callable
-            Function returning the rate equations of the classical mode amplitudes and quantum correlations, formatted as ``func_ode(t, v, c)``, where ``t`` is the time at which the integration is performed, ``v`` is a list of the amplitudes and fluctuations and ``c`` is a list of constant parameters. The output should match the dimension of ``v``. If ``func_ode_corrs`` parameter is given, this function is treated as the function for the modes only.
-        get_ivc : callable
-            Function returning the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
-        get_A : callable, optional
-            Function returning the drift matrix, formatted as ``get_A(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the drift matrix ``A``.
-        func_ode_corrs : callable, optional
-            Function returning the rate equations of the quantum correlations. It follows the same formatting as ``func_ode``.
         
         Returns
         -------
@@ -673,30 +662,24 @@ class BaseSystem():
             Average value of the measures.
         """
 
+        # validate required functions
+        assert self.validate_required_funcs(func_name='get_measure_average', mode='verbose') is True, 'Missing required predefined functions'
+
         # get measures at all times
-        M, _ = self.get_measure_dynamics(solver_params=solver_params, func_ode=func_ode, get_ivc=get_ivc, get_A=get_A, func_ode_corrs=func_ode_corrs)
+        M, _ = self.get_measure_dynamics(solver_params=solver_params)
 
         # calculate average over first axis
         M_avg = np.mean(M, 0)
 
         return M_avg
     
-    def get_measure_dynamics(self, solver_params: dict, func_ode, get_ivc, get_A=None, func_ode_corrs=None):
+    def get_measure_dynamics(self, solver_params: dict):
         """Method to obtain the dynamics of a measure.
 
         Parameters
         ----------
         solver_params : dict
             Parameters for the solver.
-        func_ode : callable
-            Function returning the rate equations of the classical mode amplitudes and quantum correlations, formatted as ``func_ode(t, v, c)``, where ``t`` is the time at which the integration is performed, ``v`` is a list of the amplitudes and fluctuations and ``c`` is a list of constant parameters. The output should match the dimension of ``v``. If ``func_ode_corrs`` parameter is given, this function is treated as the function for the modes only.
-        get_ivc : callable
-            Function returning the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
-        get_A : callable, optional
-            Function returning the drift matrix, formatted as ``get_A(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the drift matrix ``A``.
-        func_ode_corrs : callable, optional
-            Function returning rate equations of the quantum correlations. It follows the same formatting as ``func_ode``.
-
         Returns
         -------
         M : list
@@ -705,11 +688,14 @@ class BaseSystem():
             Times at which the measures are calculated.
         """
 
+        # validate required functions
+        assert self.validate_required_funcs(func_name='get_measure_dynamics', mode='verbose') is True, 'Missing required predefined functions'
+
         # validate parameters
         self.__validate_params_measure(solver_params=solver_params)
 
         # get mode and correlation dynamics
-        Modes, Corrs, T = self.get_modes_corrs_dynamics(solver_params=solver_params, func_ode=func_ode, get_ivc=get_ivc, func_ode_corrs=func_ode_corrs)
+        Modes, Corrs, T = self.get_modes_corrs_dynamics(solver_params=solver_params)
 
         # extract frequently used variables
         _show_progress = solver_params.get('show_progress', False)
@@ -722,6 +708,9 @@ class BaseSystem():
             'mode_amp': __name__,
             'qcm': 'qom.solvers.QCMSolver'
         }.get(_measure_type, 'qom.solvers.QCMSolver')
+
+        # validate required function
+        assert getattr(self, 'get_A', None) is not None if _measure_type == 'eigen_dm' else False, 'Missing required predefined function ``get_A``'
 
         # display initialization
         if _show_progress:
@@ -742,8 +731,24 @@ class BaseSystem():
                 if self.cb_update is not None:
                     self.cb_update(status='Computing ({module_name})...'.format(module_name=_module_name), progress=progress)
 
+            # eigenvalues of drift matrix
+            if _measure_type == 'eigen_dm':
+                # extract parameters
+                _, c = self.get_ivc()
+                if len(c) > 4 * self.num_modes**2:
+                    params = c[4 * self.num_modes**2:]
+                else:
+                    params = c
+                eigs, _ = np.linalg.eig(self.get_A(modes=Modes[i], params=params, t=T[i]))
+                measure = list()
+                for idx in solver_params['idx_e']:
+                    measure.append(eigs[idx])
+            # elif correlation matrix element or mode amplitude
+            else:
+                measure = self.__get_measure(solver_params=solver_params, modes=Modes[i], corrs=Corrs[i])
+
             # update list
-            M.append(self.get_measure(solver_params=solver_params, modes=Modes[i], corrs=Corrs[i], get_ivc=get_ivc, get_A=get_A, t=T[i]))
+            M.append(measure)
 
         # display completion
         if _show_progress:
@@ -753,19 +758,13 @@ class BaseSystem():
 
         return M, T[_range_min:_range_max]
 
-    def get_modes_corrs_dynamics(self, solver_params: dict, func_ode, get_ivc, func_ode_corrs=None):
+    def get_modes_corrs_dynamics(self, solver_params: dict):
         """Method to obtain the dynamics of the classical mode amplitudes and quantum correlations from the Heisenberg and Lyapunov equations.
 
         Parameters
         ----------
         solver_params : dict
             Parameters for the solver.
-        func_ode : callable
-            Function returning the rate equations of the classical mode amplitudes and quantum correlations, formatted as ``func_ode(t, v, c)``, where ``t`` is the time at which the integration is performed, ``v`` is a list of the amplitudes and fluctuations and ``c`` is a list of constant parameters. The output should match the dimension of ``v``. If ``func_ode_corrs`` parameter is given, this function is treated as the function for the modes only.
-        get_ivc : callable
-            Function returning the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
-        func_ode_corrs : callable, optional
-            Function returning rate equations of the quantum correlations. It follows the same formatting as ``func_ode``.
 
         Returns
         -------
@@ -776,6 +775,9 @@ class BaseSystem():
         T : list
             Times at which values are calculated.
         """
+
+        # validate required functions
+        assert self.validate_required_funcs(func_name='get_modes_corrs_dynamics', mode='verbose') is True, 'Missing required predefined functions'
 
         # extract frequently used variables
         _method = solver_params.get('method', 'RK45')
@@ -788,7 +790,7 @@ class BaseSystem():
         solver_params['cache_file'] = _cache_file
 
         # get initial values and constants
-        iv, c = get_ivc()
+        iv, c = self.get_ivc()
         # handle null constants
         if c is None:
             c = list()
@@ -797,7 +799,7 @@ class BaseSystem():
         solver = HLESolver(params=solver_params, cb_update=self.cb_update)
         
         # solve and set results
-        solver.solve(func_ode=func_ode, iv=iv, c=c, func_ode_corrs=func_ode_corrs, num_modes=self.num_modes)
+        solver.solve(func_ode=self.func_ode, iv=iv, c=c, func_ode_corrs=self.func_ode_corrs if getattr(self, 'func_ode_corrs', None) is not None else None, num_modes=self.num_modes)
 
         # get modes, correlations and times
         Modes = solver.get_Modes(num_modes=self.num_modes)
@@ -806,17 +808,11 @@ class BaseSystem():
         
         return Modes, Corrs, T
 
-    def get_modes_corrs_stationary(self, get_mode_rates, get_ivc, get_A, type_func: str='complex'):
+    def get_modes_corrs_stationary(self, type_func: str='complex'):
         """Method to obtain the steady states of the classical mode amplitudes and quantum correlations from the Heisenberg and Lyapunov equations.
 
         Parameters
         ----------
-        get_mode_rates : callable
-            Function returning the rates of the classical mode amplitudes for a given list of modes, formatted as ``get_mode_rates(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the mode rates with same dimension as ``modes``. If the mode functions are complex-valued, the ``type_func`` parameter should be assigned as "complex".
-        get_ivc : callable
-            Function returning the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
-        get_A : callable
-            Function returning the drift matrix, formatted as ``get_A(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the drift matrix ``A``.
         type_func : str, optional
             Return data-type of ``get_mode_rates``. Currently available options are:
                 ==========  ====================================================
@@ -834,11 +830,14 @@ class BaseSystem():
             All the correlations calculated at steady-state.
         """
 
+        # validate required functions
+        assert self.validate_required_funcs(func_name='get_modes_corrs_stationary', mode='verbose') is True, 'Missing required predefined functions'
+
         # extract the modes and correlations
         _dim = 2 * self.num_modes
 
         # get initial values and constants
-        iv, c = get_ivc()
+        iv, c = self.get_ivc()
         # handle null constants
         if c is None:
             c = list()
@@ -849,16 +848,16 @@ class BaseSystem():
             params = c
 
         # if modes are to be calculated
-        if get_mode_rates is not None:
+        if self.get_mode_rates is not None:
             # complex-valued function
             if type_func == 'real':
                 # real-valued function
-                get_mode_rates_real = get_mode_rates
+                get_mode_rates_real = self.get_mode_rates
                 # real-valued initial values
                 iv_real = iv
             else:
                 # get real-valued function
-                get_mode_rates_real = self.__get_func_real(func=get_mode_rates)
+                get_mode_rates_real = self.__get_func_real(func=self.get_mode_rates)
 
                 # real-valued initial values
                 iv_real = list()
@@ -874,9 +873,9 @@ class BaseSystem():
             modes = None
 
         # if drift matrix is given
-        if get_A is not None:
+        if getattr(self, 'get_A', None) is not None:
             # get matrices
-            _A = get_A(modes=modes, params=params, t=None)
+            _A = self.get_A(modes=modes, params=params, t=None)
             _D = np.array(c[:_dim**2]).reshape((_dim, _dim))
 
             # convert to numpy arrays
@@ -891,7 +890,7 @@ class BaseSystem():
         
         return modes, corrs
 
-    def get_pearson_correlation_coefficient(self, solver_params: dict, func_ode, get_ivc, func_ode_corrs=None):
+    def get_pearson_correlation_coefficient(self, solver_params: dict):
         r"""Method to obtain the Pearson correlation coefficient.
 
         The implementation measure reads as [2]_,
@@ -905,12 +904,6 @@ class BaseSystem():
         ----------
         solver_params : dict
             Parameters for the solver.
-        func_ode : callable
-            Function returning the rate equations of the classical mode amplitudes and quantum correlations, formatted as ``func_ode(t, v, c)``, where ``t`` is the time at which the integration is performed, ``v`` is a list of the amplitudes and fluctuations and ``c`` is a list of constant parameters. The output should match the dimension of ``v``. If ``func_ode_corrs`` parameter is given, this function is treated as the function for the modes only.
-        get_ivc : callable
-            Function returning the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
-        func_ode_corrs : callable, optional
-            Function returning the rate equations of the quantum correlations. It follows the same formatting as ``func_ode``.
         
         Returns
         -------
@@ -918,11 +911,14 @@ class BaseSystem():
             Pearson synchronization measure.
         """
 
+        # validate required functions
+        assert self.validate_required_funcs(func_name='get_pearson_correlation_coefficient', mode='verbose') is True, 'Missing required predefined functions'
+
         # validate parameters
         self.__validate_params_measure(solver_params=solver_params, count=3)
 
         # get measures at all times
-        M, T = self.get_measure_dynamics(solver_params=solver_params, func_ode=func_ode, get_ivc=get_ivc, func_ode_corrs=func_ode_corrs)
+        M, T = self.get_measure_dynamics(solver_params=solver_params)
 
         # get mean values
         mean_ii = np.mean([m[0] for m in M])
@@ -934,21 +930,13 @@ class BaseSystem():
 
         return S_Pearson
 
-    def get_rhc_count_dynamics(self, solver_params: dict, func_ode, get_ivc, get_A, func_ode_corrs=None):
+    def get_rhc_count_dynamics(self, solver_params: dict):
         """Function to obtain the number of positive real roots of the drift matrix using the Routh-Hurwitz criterion.
 
         Parameters
         ----------
         solver_params : dict
             Parameters for the solver.
-        func_ode : callable
-            Function returning the rate equations of the classical mode amplitudes and quantum correlations, formatted as ``func_ode(t, v, c)``, where ``t`` is the time at which the integration is performed, ``v`` is a list of the amplitudes and fluctuations and ``c`` is a list of constant parameters. The output should match the dimension of ``v``. If ``func_ode_corrs`` parameter is given, this function is treated as the function for the modes only.
-        get_ivc : callable
-            Function returning the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
-        get_A : callable
-            Function returning the drift matrix, formatted as ``get_A(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the drift matrix ``A``.
-        func_ode_corrs : callable, optional
-            Function returning rate equations of the quantum correlations. It follows the same formatting as ``func_ode``.
         
         Returns
         -------
@@ -956,8 +944,11 @@ class BaseSystem():
             Number of positive real roots of the drift matrix.
         """
 
+        # validate required functions
+        assert self.validate_required_funcs(func_name='get_rhc_count_dynamics', mode='verbose') is True, 'Missing required predefined functions'
+
         # get modes
-        Modes, _, T = self.get_modes_corrs_dynamics(solver_params=solver_params, func_ode=func_ode, get_ivc=get_ivc, func_ode_corrs=func_ode_corrs)
+        Modes, _, T = self.get_modes_corrs_dynamics(solver_params=solver_params)
 
         # extract frequently used variables
         _show_progress = solver_params.get('show_progress', False)
@@ -966,7 +957,7 @@ class BaseSystem():
         _t_ss = solver_params.get('t_max', T[-1] - T[0]) / solver_params.get('t_dim', len(T))
 
         # extract parameters
-        _, c = get_ivc()
+        _, c = self.get_ivc()
         if len(c) > 4 * self.num_modes**2:
             params = c[4 * self.num_modes**2:]
         else:
@@ -991,7 +982,7 @@ class BaseSystem():
                     self.cb_update(status='Computing ({module_name})...'.format(module_name=__name__), progress=progress)
                 
             # drift matrix
-            A = get_A(Modes[i], params, i * _t_ss)
+            A = self.get_A(Modes[i], params, i * _t_ss)
 
             # indices of the RHC sequence
             solver = RHCSolver(A)
@@ -1007,19 +998,11 @@ class BaseSystem():
 
         return Counts, T[_range_min:_range_max]
 
-    def get_rhc_count_stationary(self, get_mode_rates, get_ivc, get_A=None, get_coeffs=None, type_func: str='complex'):
+    def get_rhc_count_stationary(self, type_func: str='complex'):
         """Function to obtain the number of positive real roots of the drift matrix from the stationary state using the Routh-Hurwitz criterion.
 
         Parameters
         ----------
-        get_mode_rates : callable
-            Function returning the rates of the classical mode amplitudes for a given list of modes, formatted as ``get_mode_rates(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the mode rates with same dimension as ``modes``. If the mode functions are complex-valued, the ``type_func`` parameter should be assigned as "complex".
-        get_ivc : callable
-            Function returning the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
-        get_A : callable, optional
-            Function returning the drift matrix, formatted as ``get_A(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the drift matrix ``A``. If this parameter is not provided, ``get_coeffs`` should not be ``None``.
-        get_coeffs : callable, optional
-            Function returning the coefficients :math:`\{ a_{i} \}` of :math:`\lambda` in the characteristic equation (:math:`\sum_{i=0}^{n} a_{i} \lambda^{n - i} = 0`) of the drift matrix, formatted as ``get_coeffs(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the coefficients with dimension twice that of ``modes``.
         type_func : str, optional
             Return data-type of ``get_mode_rates``. Currently available options are:
                 ==========  ====================================================
@@ -1037,27 +1020,30 @@ class BaseSystem():
             Indices of the RHC sequence.
         """
 
-        # validate parameters
-        assert get_A is not None or get_coeffs is not None, 'Either of the functions ``get_A`` or ``get_corrs`` should be non-none'
+        # validate required functions
+        assert self.validate_required_funcs(func_name='get_rhc_count_stationary', mode='verbose') is True, 'Missing required predefined functions'
+
+        # validate optional functions
+        assert getattr(self, 'get_A', None) is not None or getattr(self, 'get_coeffs', None) is not None, 'Either of the functions ``get_A`` or ``get_corrs`` should be non-none'
 
         # get modes
-        modes, _ = self.get_modes_corrs_stationary(get_mode_rates=get_mode_rates, get_ivc=get_ivc, get_A=get_A, type_func=type_func)
+        modes, _ = self.get_modes_corrs_stationary(type_func=type_func)
 
         # extract parameters
-        _, c = get_ivc()
+        _, c = self.get_ivc()
         if len(c) > 4 * self.num_modes**2:
             params = c[4 * self.num_modes**2:]
         else:
             params = c
 
         # if drift matrix is given
-        if get_A is not None:
+        if self.get_A is not None:
             # initialize solver
-            solver = RHCSolver(A=get_A(modes=modes, params=params, t=None))
+            solver = RHCSolver(A=self.get_A(modes=modes, params=params, t=None))
         # use coefficients
         else:
             # initialize solver
-            solver = RHCSolver(coeffs=get_coeffs(modes=modes, params=params, t=None))
+            solver = RHCSolver(coeffs=self.get_coeffs(modes=modes, params=params, t=None))
             
         # get indices with sign changes
         idxs = solver.get_indices()
@@ -1114,3 +1100,40 @@ class BaseSystem():
         plotter.show(hold)
 
         return plotter
+
+    def validate_required_funcs(self, func_name, mode='silent'):
+        """Method to validate the arguments of available functions.
+        
+        Parameters
+        ----------
+        func_name : str
+            Name of the getter function.
+        mode : str
+            Mode of return of the validation check. Available options are:
+            ==============  ================================================
+            value           meaning
+            ==============  ================================================
+            "verbose"       Provides a detailed log of missing functions
+            "silent"        No log provided are raised (fallback).
+            ==============  ================================================
+
+        Returns
+        -------
+        is_go : bool
+            Verdict whether all requirements are met.
+        """
+
+        # initialize variables
+        is_go = True
+
+        # search for all required functions
+        for required_func in self.required_funcs.get(func_name, {}):
+            if getattr(self, required_func, None) is None:
+                # update log
+                if mode == 'verbose':
+                    logger.warning('Missing required function {required_func}\n'.format(required_func=required_func))
+                # flag
+                is_go = False
+                break
+
+        return is_go

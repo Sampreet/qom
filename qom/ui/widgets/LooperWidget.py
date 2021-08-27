@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.LooperWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-08-19'
-__updated__ = '2021-08-26'
+__updated__ = '2021-08-28'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -63,7 +63,7 @@ class LooperWidget(BaseWidget):
         row_height = 32
         padding = 32
         base_rows = 4
-        param_rows = 3
+        axes_rows = 3
 
         # initialize grid layout 
         self.layout = QtWidgets.QGridLayout()
@@ -137,10 +137,13 @@ class LooperWidget(BaseWidget):
         self.layout.addWidget(self.lbl_dim, 3, 3, 1, 1, alignment=QtCore.Qt.AlignLeft)
 
         # initialize most useful parameters
-        for row in range(param_rows):
+        axes_prefix = ['x_', 'y_', 'z_']
+        keys = ['var', 'min', 'max', 'dim']
+        for row in range(axes_rows):
             for col in range(4):
                 # initialize each widget
                 widget = QtWidgets.QLineEdit('')
+                widget.setPlaceholderText(str(axes_prefix[row]) + str(keys[col]))
                 widget.setFixedSize(width / 4 - 1.25 * padding, row_height)
                 widget.setDisabled(True)
                 # update widget list
@@ -150,7 +153,7 @@ class LooperWidget(BaseWidget):
         # update main layout
         self.move(width, offset + 4)
         self.setFixedWidth(width)
-        self.setFixedHeight((base_rows + param_rows) * row_height)
+        self.setFixedHeight((base_rows + axes_rows) * row_height)
         self.setLayout(self.layout)
         
         # set theme
@@ -234,7 +237,7 @@ class LooperWidget(BaseWidget):
         self.btn_loop.setEnabled(True)
 
         # set cache path
-        cache_dir = 'data/' + self.system_widget.system({}).code if self.system_widget.system is not None else 'data'
+        cache_dir = 'data/' + self.system_widget.system.code if self.system_widget.system is not None else 'data'
         self.le_path.setText(cache_dir + '/'+ (value if value != 'NA' else 'V'))
 
         # update parameters
@@ -308,7 +311,7 @@ class LooperWidget(BaseWidget):
         cmbx_items = ['NA'] if self.system_widget.cmbx_func.count() == 0 or self.system_widget.cmbx_func.currentText() == 'NA' else [self.system_widget.cmbx_func.itemText(i) for i in range(self.system_widget.cmbx_func.count())]
 
         # update widget
-        self.lbl_name.setText('(' + str(pos + 1) + 'D Looper)')
+        self.lbl_name.setText(str(pos + 1) + 'D Looper')
         self.cmbx_func.clear()
         self.cmbx_func.addItems(cmbx_items)
 

@@ -6,10 +6,10 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2021-08-26'
+__updated__ = '2021-08-28'
 
 # dependencies
-from matplotlib.colors import LinearSegmentedColormap, Normalize
+from matplotlib.colors import BoundaryNorm, LinearSegmentedColormap, Normalize
 from matplotlib.font_manager import FontProperties 
 from matplotlib.lines import Line2D
 from typing import Union
@@ -613,6 +613,11 @@ class MPLPlotter(BasePlotter):
         _cbar_position = self.params['cbar']['position']
         _orientation = 'vertical' if _cbar_position == 'right' or _cbar_position == 'left' else 'horizontal'
         _font_dicts = self.params['font_dicts']
+        _ticks = self.params['cbar']['ticks']
+        _norm = Normalize(vmin=mini, vmax=maxi)
+        if _ticks is None:
+            print('heya')
+            _ticks = np.around(np.linspace(mini, maxi, self.bins), decimals=prec)
         _cmap = LinearSegmentedColormap.from_list(self.params['palette'], self.params['colors'])
 
         # clear if existed
@@ -623,16 +628,15 @@ class MPLPlotter(BasePlotter):
         else:
             _cax = plt.gcf().add_subplot(self.cbar_positions[_cbar_position](self.mpl_spec))
 
-
         # set scalar mappable 
         if 'contour' in self.params['type']:
-            _sm = plt.cm.ScalarMappable(cmap=_cmap, norm=Normalize(vmin=mini, vmax=maxi))
+            _sm = plt.cm.ScalarMappable(cmap=_cmap, norm=_norm)
             _sm.set_array([])
         else:
             _sm = self.plots
 
         # initialize colorbar
-        self.cbar = plt.colorbar(_sm, cax=_cax, ax=plt.gca(), orientation=_orientation)
+        self.cbar = plt.colorbar(_sm, cax=_cax, ax=plt.gca(), orientation=_orientation, norm=_norm)
 
         # title
         self.cbar.ax.set_title(self.params['cbar']['title'], fontproperties=self.__get_font_props(_font_dicts['label']), pad=12)
@@ -640,11 +644,6 @@ class MPLPlotter(BasePlotter):
         # labels
         self.cbar.ax.set_xlabel(self.params['cbar']['x_label'], labelpad=_font_dicts['tick']['size'] + 12, fontproperties=self.__get_font_props(_font_dicts['label']))
         self.cbar.ax.set_ylabel(self.params['cbar']['y_label'], labelpad=_font_dicts['tick']['size'] + 12, fontproperties=self.__get_font_props(_font_dicts['label']))
-
-        # ticks
-        _ticks = self.params['cbar']['ticks']
-        if _ticks is None:
-            _ticks = np.around(np.linspace(mini, maxi, self.bins), decimals=prec)
         self.cbar.set_ticks(_ticks)
 
         # tick labels

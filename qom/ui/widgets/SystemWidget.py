@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.SystemWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-08-26'
+__updated__ = '2021-08-28'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -194,16 +194,16 @@ class SystemWidget(BaseWidget):
         # selected function name
         func_name = self.cmbx_func.currentText()
 
-        # initialize system
-        system = self.system(params)
+        # update system parameters
+        self.system.params = params
 
         # extract parameters
-        _, c = system.get_ivc()
-        _len_D = 4 * system.num_modes**2
+        _, c = self.system.get_ivc()
+        _len_D = 4 * self.system.num_modes**2
         params = c[_len_D:] if len(c) > _len_D else c
 
         # get value
-        value = getattr(system, 'get_' + func_name)(params)
+        value = getattr(self.system, 'get_' + func_name)(params)
 
         return value
 
@@ -259,7 +259,7 @@ class SystemWidget(BaseWidget):
 
         # update parameter
         self.pos = pos
-        self.system = self.systems[pos]
+        self.system = self.systems[pos](params={}, cb_update=self.parent.update)
 
         # search for available functions
         func_names = [func[4:] for func in dir(self.system) if callable(getattr(self.system, func)) and func[:4] == 'get_']
@@ -283,7 +283,7 @@ class SystemWidget(BaseWidget):
         self.param_widgets = list()
 
         # add widgets
-        params = self.system({}).params
+        params = self.system.params
         widget_col = 0
         for param in params:
             # new widget
@@ -297,7 +297,7 @@ class SystemWidget(BaseWidget):
             widget_col += 1
 
         # update UI elements
-        self.lbl_name.setText(self.system({}).name)
+        self.lbl_name.setText(self.system.name)
         self.lbl_func.setVisible(True)
         self.cmbx_func.clear()
         self.cmbx_func.addItems(cmbx_items)

@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.0 - 2021/08/28 - 00 - Revamped Systems
+* Minor fixes to `qom.solvers.HLESolver` module.
+* Removed predefined function arguments and added validations for required and optional functions in `qom.systems.BaseSystem` and `qom.systems.SOMASystem` modules.
+* Minor fixes to bounds in `qom.ui.axes` and `qom.ui.plotters` subpackages.
+* Rearranged widgets and fixes to callables in `qom.ui.widgets` subpackage.
+* Updated `qom.utils.looper` module to match revamped system functions.
+
 ## v0.8.0 - 2021/08/26 - 00 - Version Upgrade
 * Minor fixes to attributes and callback updaters in `qom.loopers` modules.
 * Added attributes and callback updaters to `qom.solvers.HLESolver` and `qom.solvers.ODESover` modules.

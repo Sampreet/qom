@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.axes.BaseAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-10'
-__updated__ = '2021-08-02'
+__updated__ = '2021-08-27'
 
 # dependencies
 import logging
@@ -215,9 +215,11 @@ class BaseAxis():
         # if ticks are defined
         if type(_ticks) is list and len(_ticks) != 0:
             self.ticks = _ticks
+            self.bound = 'both'
         # else initialize ticks
         else:
             self.ticks = self.init_array(params.get('tick_min', _min), params.get('tick_max', _max), params.get('tick_dim', _dim))
+            self.bound = 'none'
 
         # set tick labels
         _tick_labels = params.get('tick_labels', [])
