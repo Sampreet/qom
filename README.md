@@ -1,7 +1,7 @@
 # The Quantum Optomechanics Toolbox
 
 [![Version](https://img.shields.io/badge/version-0.8.0-red?style=for-the-badge)](#)
-[![Milestone](https://img.shields.io/github/milestones/progress/sampreet/qom/1?style=for-the-badge)](https://github.com/Sampreet/qom/milestones)
+[![Milestone](https://img.shields.io/github/milestones/progress/sampreet/qom/2?style=for-the-badge)](https://github.com/Sampreet/qom/milestones)
 [![Last Commit](https://img.shields.io/github/last-commit/sampreet/qom?style=for-the-badge)](#)
 
 [![Open Issues](https://img.shields.io/github/issues-raw/sampreet/qom?style=flat-square)](https://github.com/Sampreet/qom/issues?q=is%3Aopen+is%3Aissue)

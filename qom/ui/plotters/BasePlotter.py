@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.BasePlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-06'
-__updated__ = '2021-08-27'
+__updated__ = '2021-08-28'
 
 # dependencies
 from typing import Union
@@ -141,6 +141,7 @@ class BasePlotter():
         'rlb': ['Reds_r', 'Blues']
     }
     bins = 11
+    default_markers = ['.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', '8', 's', 'p', '*', 'h', 'H', '+', 'x', 'X', 'D', 'd', '|', '_']
 
     def __init__(self, axes: dict, params: dict):
         """Class constructor for MPLPlotter."""

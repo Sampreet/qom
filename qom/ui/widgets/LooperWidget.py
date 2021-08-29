@@ -10,6 +10,7 @@ __updated__ = '2021-08-28'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
+import importlib
 import logging
 import numpy as np
 import os
@@ -189,9 +190,6 @@ class LooperWidget(BaseWidget):
             # update status
             self.parent.update(status='No function found')
             return
-        
-        # get function
-        func = get_looper_func(self.system_widget.system, {}, self.cmbx_func.currentText())
         # extract axes parameters from widgets
         looper_params = dict()
         axes = ['X', 'Y', 'Z']
@@ -205,13 +203,19 @@ class LooperWidget(BaseWidget):
         path_text = self.le_path.text()
         file_path = path_text if path_text != '' else None
 
-        # initialize looper
-        looper = self.looper(func=func, params={
+        # get all parameters
+        params = {
             'looper': looper_params,
             'solver': self.solver_widget.get_params(),
             'system': self.system_widget.get_params(),
             'plotter': self.plotter_widget.get_params()
-        }, cb_update=self.parent.update)
+        }
+        
+        # get function
+        func = get_looper_func(SystemClass=self.system_widget.system, solver_params=params['solver'], func_code=self.cmbx_func.currentText())
+
+        # initialize looper
+        looper = self.looper(func=func, params=params, cb_update=self.parent.update)
 
         # run looper on main thread
         looper.wrap(file_path=file_path, plot=self.chbx_plot.isChecked())
@@ -235,51 +239,40 @@ class LooperWidget(BaseWidget):
 
         # enable loop button
         self.btn_loop.setEnabled(True)
+        
+        # if system is selected
+        if self.system_widget.system is not None:
+            # initialize system
+            system = self.system_widget.system(params={}, cb_update=None)
 
-        # set cache path
-        cache_dir = 'data/' + self.system_widget.system.code if self.system_widget.system is not None else 'data'
-        self.le_path.setText(cache_dir + '/'+ (value if value != 'NA' else 'V'))
+            # set cache path
+            cache_dir = 'data/' + system.code
+            self.le_path.setText(cache_dir + '/'+ (value if value != 'NA' else 'V'))
 
-        # update parameters
-        params = {}
-        # search script name by matching looper dimension
-        found = lambda name, dim: sum([0 if name.find(e) == -1 else 1 for e in expr[:dim + 1]]) == dim + 1 and sum([0 if name.find(e) == -1 else 1 for e in expr]) == dim + 1
-        # search scripts
-        for script_name in os.listdir('scripts'):
-            # if script found
-            if found(script_name, self.loopers.index(self.looper) + 1):
-                # read lines
-                with open('scripts/' + script_name) as script_file:
-                    lines = script_file.readlines()
-                    line_start = 0
-                    param_lines = ''
-                    for i in range(len(lines)):
-                        if lines[i].find('params = ') == 0:
-                            line_start = i
-                    for i in range(line_start, len(lines)):
-                        param_lines += lines[i]
-                        if lines[i].find('}') == 0:
-                            break
-                    # evaluate to dictionary
-                    params = eval(param_lines[9:])
-                    # close file
-                    script_file.close()
-                    
-        # update looper parameters
-        if 'looper' in params:
-            for i in range(self.loopers.index(self.looper) + 1):
-                for j in range(4):
-                    if keys[j] in params['looper'][axes[i]]:
-                        self.param_widgets[i * 4 + j].setText(str(params['looper'][axes[i]][keys[j]])) 
-        # update system parameters
-        if 'system' in params and self.system_widget.system is not None:
-            self.system_widget.set_params(params=params['system'])
-        # update plotter parameters
-        if 'plotter' in params and self.plotter_widget.plotter is not None:
-            self.plotter_widget.set_params(params=params['plotter'])
-        # update solver parameters
-        if 'solver' in params and self.solver_widget.solver is not None:
-            self.solver_widget.set_params(params=params['solver'])
+            # searching function
+            found = lambda name, dim: sum([0 if name.find(e) == -1 else 1 for e in expr[:dim + 1]]) == dim + 1 and sum([0 if name.find(e) == -1 else 1 for e in expr]) == dim + 1
+            # search templates
+            for template_name in os.listdir('gui_templates'):
+                # if template found
+                if system is not None and template_name.find(system.code) != -1 and found(template_name, self.loopers.index(self.looper) + 1):
+                    # import template
+                    template = importlib.import_module('gui_templates.' + template_name[:-3])
+                    # if template contains parameters
+                    if template.__dict__.get('params', None) is not None:
+                        # extract parameters
+                        params = template.__dict__['params']
+                        # set looper parameters
+                        if params.get('looper', None) is not None:
+                            [[self.param_widgets[i * 4 + j].setText(str(params['looper'][axes[i]][keys[j]])) if keys[j] in params['looper'][axes[i]] else None for j in range(4)] for i in range(self.loopers.index(self.looper) + 1)]
+                        # set system parameters
+                        if self.system_widget.system is not None:
+                            self.system_widget.set_params(params.get('system', {}))
+                        # set solver parameters
+                        if self.solver_widget.solver is not None:
+                            self.solver_widget.set_params(params.get('solver', {}))
+                        # set plotter parameters
+                        if self.plotter_widget.plotter is not None:
+                            self.plotter_widget.set_params(params.get('plotter', {}))
 
         # update footer
         self.parent.update(status='Ready', progress=None, reset=True)

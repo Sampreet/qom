@@ -6,10 +6,9 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-08-28'
+__updated__ = '2021-08-29'
 
 # dependencies
-from operator import is_
 from typing import Union
 import copy
 import logging
@@ -58,6 +57,9 @@ class BaseSystem():
         ==================  ====================================================
         key                 value
         ==================  ====================================================
+        "cache"             (*bool*) option to cache the time series.
+        "cache_dir"         (*str*) directory where the time series is cached.
+        "cache_file"        (*str*) filename of the cached time series.
         "idx_e"             (*int* or *tuple* or *list*) index or indices of the elements in a list. This value should be an integer or a list of integers when the type of measure is "mode_amp" or "eigen_dm". Otherwise, it is a tuple of dimension *2* or a list of such tuples. Refer notes for all currently supported values.
         "measure_type"      (*str*) type of measure to calculate. Currently supported types of measures are described in the next table.
         "method_le"         (*str*) method used to calculate the unit vectors and eigenvalues for Lyapunov exponents. Currently supported methods are "gso" for Gram-Schmidt orthonormalization and "svd" for singular value decomposition.
@@ -65,6 +67,9 @@ class BaseSystem():
         "range_min"         (*float*) minimum index of time at which the measure is calculated.
         "range_max"         (*float*) maximum index of time at which the measure is calculated.
         "show_progress"     (*bool*) option to display the progress of the solver.
+        "t_min"             (*float*) minimum time at which integration starts.
+        "t_max"             (*float*) maximum time at which integration stops.
+        "t_dim"             (*int*) number of values from "t_max" to "t_min", both inclusive.
         ==================  ====================================================
 
     The key "measure_type" currently supports the following options (refer :class:`qom.solvers.QCMSolver` for quantum correlation measures):
@@ -120,7 +125,36 @@ class BaseSystem():
         'get_modes_corrs_stationary': ['get_ivc', 'get_mode_rates'],
         'get_pearson_correlation_coefficient': ['get_A', 'get_ivc', 'get_mode_rates'],
         'get_rhc_count_dynamics': ['get_A', 'get_ivc', 'get_mode_rates'],
-        'get_rhc_count_stationary': ['get_ivc', 'get_mode_rates'],
+        'get_rhc_count_stationary': ['get_ivc', 'get_mode_rates']
+    }
+    required_params = {
+        'get_averaged_eigenvalues': ['cache', 'cache_dir', 'cache_file', 'method', 'range_min', 'range_max', 'show_progress', 't_min', 't_max', 't_dim'],
+        'get_lyapunov_exponents': ['cache', 'cache_dir', 'cache_file', 'method', 'method_le', 'num_iters', 'show_progress', 't_min', 't_max', 't_dim'],
+        'get_mean_optical_amplitudes': [],
+        'get_mean_optical_occupancies': [],
+        'get_measure_average': ['cache', 'cache_dir', 'cache_file', 'idx_e', 'measure_type', 'method', 'range_min', 'range_max', 'show_progress', 't_min', 't_max', 't_dim'],
+        'get_measure_dynamics': ['cache', 'cache_dir', 'cache_file', 'idx_e', 'measure_type', 'method', 'range_min', 'range_max', 'show_progress', 't_min', 't_max', 't_dim'],
+        'get_modes_corrs_dynamics': ['cache', 'cache_dir', 'cache_file', 'method', 'show_progress', 't_min', 't_max', 't_dim'],
+        'get_modes_corrs_stationary': [],
+        'get_pearson_correlation_coefficient': ['cache', 'cache_dir', 'cache_file', 'idx_e', 'measure_type', 'method', 'show_progress', 't_min', 't_max', 't_dim'],
+        'get_rhc_count_dynamics': ['cache', 'cache_dir', 'cache_file', 'method', 'show_progress', 't_min', 't_max', 't_dim'],
+        'get_rhc_count_stationary': []
+    }
+    ui_defaults = {
+        'cache': True,
+        'cache_dir': 'data',
+        'cache_file': 'V',
+        'idx_e': [0],
+        'measure_type': 'mode_amp',
+        'method': 'RK45',
+        'method_le': 'svd',
+        'num_iters': 10000,
+        'range_min': 0,
+        'range_max': 10001,
+        'show_progress': True,
+        't_min': 0.0,
+        't_max': 1000.0,
+        't_dim': 10001
     }
 
     def __init__(self, params: dict, code: str, name: str, num_modes: int, cb_update=None):
@@ -435,8 +469,6 @@ class BaseSystem():
         method_le = solver_params.get('method_le', method_le)
         num_iters = int(solver_params.get('num_iters', num_iters))
 
-        # update attributes
-
         # frequently used variables
         _dim = 2 * self.num_modes
         iv, c = self.get_ivc()
@@ -444,16 +476,10 @@ class BaseSystem():
             params = c[_dim**2:]
         else:
             params = c
-        _cache, _cache_dir, _cache_file = self.__get_cache_options(solver_params=solver_params)
 
-        # initialize solver
-        solver = HLESolver(params=solver_params)
-
-        # solve and set results
-        solver.solve(func_ode=self.func_ode, iv=iv, c=c, cache=_cache, cache_dir=_cache_dir, cache_file=_cache_file)
         # get modes and times
-        Modes = solver.get_Modes(num_modes=self.num_modes)
-        T = solver.T
+        Modes, _, T = self.get_modes_corrs_dynamics(solver_params=solver_params)
+
         # extract the last element
         _dt = T[1] - T[0]
         _T = np.linspace(T[-1], T[-1] + num_iters * _dt, num_iters + 1)
@@ -710,7 +736,7 @@ class BaseSystem():
         }.get(_measure_type, 'qom.solvers.QCMSolver')
 
         # validate required function
-        assert getattr(self, 'get_A', None) is not None if _measure_type == 'eigen_dm' else False, 'Missing required predefined function ``get_A``'
+        assert getattr(self, 'get_A', None) is not None if _measure_type == 'eigen_dm' else True, 'Missing required predefined function ``get_A``'
 
         # display initialization
         if _show_progress:
@@ -784,10 +810,11 @@ class BaseSystem():
         _cache, _cache_dir, _cache_file = self.__get_cache_options(solver_params=solver_params)
 
         # update solver params
-        solver_params['method'] = _method
-        solver_params['cache'] = _cache
-        solver_params['cache_dir'] = _cache_dir
-        solver_params['cache_file'] = _cache_file
+        _solver_params = copy.deepcopy(solver_params)
+        _solver_params['method'] = _method
+        _solver_params['cache'] = _cache
+        _solver_params['cache_dir'] = _cache_dir
+        _solver_params['cache_file'] = _cache_file
 
         # get initial values and constants
         iv, c = self.get_ivc()
@@ -796,7 +823,7 @@ class BaseSystem():
             c = list()
 
         # initialize solver
-        solver = HLESolver(params=solver_params, cb_update=self.cb_update)
+        solver = HLESolver(params=_solver_params, cb_update=self.cb_update)
         
         # solve and set results
         solver.solve(func_ode=self.func_ode, iv=iv, c=c, func_ode_corrs=self.func_ode_corrs if getattr(self, 'func_ode_corrs', None) is not None else None, num_modes=self.num_modes)

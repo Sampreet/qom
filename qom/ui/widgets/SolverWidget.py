@@ -10,9 +10,11 @@ __updated__ = '2021-08-28'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
+import importlib
 import inspect
 import logging
 import numpy as np
+import os
 
 # qom modules
 from ...solvers import HLESolver
@@ -20,6 +22,8 @@ from . import BaseWidget, ParamWidget
 
 # module logger
 logger = logging.getLogger(__name__)
+
+# TODO: Add solver selection criteria for systems.
 
 class SolverWidget(BaseWidget):
     """Class to create a widget for the solvers.
@@ -170,6 +174,39 @@ class SolverWidget(BaseWidget):
         # enable solve button
         self.btn_solve.setEnabled(True)
 
+        # if a system is selected
+        if self.system_widget.system is not None and value != 'NA':
+            # initialize system
+            system = self.system_widget.system(params={}, cb_update=None)
+            
+            # initialize parameters
+            params = dict()
+            for key in system.required_params.get('get_' + value, []):
+                # set ui defaults
+                params[key] = system.ui_defaults[key]
+            self.set_params(params)
+        
+            # if template directory exists
+            if os.path.isdir('gui_templates'):
+                # search for the first matching template with parameters
+                for template_name in os.listdir('gui_templates'):
+                    # if template found
+                    if template_name.find(system.code + '_v=' + value) != -1:
+                        # import template
+                        template = importlib.import_module('gui_templates.' + template_name[:-3])
+                        # if template contains parameters
+                        if template.__dict__.get('params', None) is not None:
+                            # extract parameters
+                            params = template.__dict__['params']
+                            # set solver parameters
+                            self.set_params(params.get('solver', {}))
+                            # set system parameters
+                            self.system_widget.set_params(params.get('system', {}))
+                            # set plotter parameters
+                            if self.plotter_widget.plotter is not None:
+                                self.plotter_widget.set_params(params.get('plotter', {}))
+                            break
+
         # update footer
         self.parent.update(status='Ready', progress=None, reset=True)
 
@@ -196,8 +233,8 @@ class SolverWidget(BaseWidget):
         # initialize combo box
         cmbx_items = list()
         if self.system_widget.system is not None:
-            # dummy system
-            system = self.system_widget.system
+            # initialize system
+            system = self.system_widget.system(params={}, cb_update=None)
             # search for available functions
             func_names = [func_name[4:] for func_name in dir(system) if callable(getattr(system, func_name)) and func_name[:4] == 'get_']
             # filter functions with solver parameters and plotter parameters
@@ -206,7 +243,9 @@ class SolverWidget(BaseWidget):
                 func = getattr(system, 'get_' + func_name)
                 func_args = inspect.getfullargspec(func).args[1:]
                 counter = sum([1 if arg in func_args else 0 for arg in required_args])
-                if counter == 3 or func_args[:1] == required_args[0]:
+                # if one or all three required arguments are present
+                if counter == 3 or func_args[:1] == required_args[:1]:
+                    # if all functions required for the calculation are declared
                     if system.validate_required_funcs(func_name='get_' + func_name, mode='silent'):
                         cmbx_items.append(func_name)
         # if no functions found
@@ -230,10 +269,6 @@ class SolverWidget(BaseWidget):
             widget.key = param
             if type(val) is list:
                 widget.w_val.addItems(self.solver.ui_params[param])
-                if param in self.solver.ui_defaults:
-                    widget.val = self.solver.ui_defaults[param]
-                else:
-                    widget.val = self.solver.ui_params[param][0]
             else: 
                 widget.val = self.solver.ui_params[param]
             self.layout.addWidget(widget, 2 + int(widget_col / 2) * 2, int(widget_col % 2), 2, 1, alignment=QtCore.Qt.AlignRight)
@@ -261,7 +296,7 @@ class SolverWidget(BaseWidget):
         # set plot check box
         self.chbx_plot.setChecked(params.get('plot', True))
         # set parameter widgets
-        used_keys = ['show_progress', 'cache', 'plot']
+        used_keys = ['show_progress', 'plot']
         # set parameters
         for widget in self.param_widgets:
             if widget.key in params:
@@ -272,7 +307,7 @@ class SolverWidget(BaseWidget):
         for key in params:
             if key not in used_keys:
                 te_params[key] = params[key]
-        self.te_params.setText(str(te_params))
+        self.te_params.setText(str(te_params) if len(te_params) > 1 else '')
 
     def set_theme(self, theme=None):
         """Method to update the theme.
@@ -303,9 +338,6 @@ class SolverWidget(BaseWidget):
     def solve(self):
         """Method to solve using the selected function."""
 
-        # frequently used variables
-        system = self.system_widget.system
-
         # disable calculate button
         self.btn_solve.setDisabled(True)
 
@@ -319,8 +351,8 @@ class SolverWidget(BaseWidget):
             # update status
             self.parent.update(status='Solving...')
 
-            # system_parameters
-            system_params = self.system_widget.get_params()
+            # initialize system
+            system = self.system_widget.system(params=self.system_widget.get_params(), cb_update=self.parent.update)
             # get selected function
             func_name = self.cmbx_func.currentText()
             solver_params = self.get_params()
@@ -328,10 +360,8 @@ class SolverWidget(BaseWidget):
             plot = self.chbx_plot.isChecked()
             # get plotter parameters
             plotter_params = self.plotter_widget.get_params() if plot else dict()
-            # update system
-            system.params = system_params
             # get results
-            if 'plot' in inspect.getfullargspec(getattr(system, 'get_' + func_name)).args[1:]:
+            if self.plotter_widget.plotter is not None and 'plot' in inspect.getfullargspec(getattr(system, 'get_' + func_name)).args[1:]:
                 getattr(system, 'get_' + func_name)(solver_params=solver_params, plot=plot, plotter_params=plotter_params)
             else:
                 getattr(system, 'get_' + func_name)(solver_params=solver_params)

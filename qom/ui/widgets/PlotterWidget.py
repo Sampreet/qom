@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.PlotterWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-08-20'
-__updated__ = '2021-08-27'
+__updated__ = '2021-08-28'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -184,9 +184,6 @@ class PlotterWidget(BaseWidget):
             widget.key = param
             if type(val) is list:
                 widget.w_val.addItems(self.plotter.ui_params[param])
-                widget.val = self.plotter.ui_params[param][0]
-                if param in self.plotter.ui_defaults:
-                    widget.val = self.plotter.ui_defaults[param]
             else: 
                 widget.val = self.plotter.ui_params[param]
             self.layout.addWidget(widget, 2 + int(widget_col / 2) * 2, int(widget_col % 2), 2, 1, alignment=QtCore.Qt.AlignRight)
@@ -199,8 +196,6 @@ class PlotterWidget(BaseWidget):
         self.lbl_name.setText(str(self.plotter.name))
         self.cmbx_type.clear()
         self.cmbx_type.addItems(self.plotter.types_1D + self.plotter.types_2D + self.plotter.types_3D)
-        if 'type' in self.plotter.ui_defaults:
-            self.cmbx_type.setCurrentText(self.plotter.ui_defaults['type'])
     
     def set_params(self, params):
         """Method to set the parameters for the plotter.
@@ -212,11 +207,11 @@ class PlotterWidget(BaseWidget):
         """
         
         # set type combo box
-        self.cmbx_type.setCurrentText(params.get('type', self.plotter.ui_defaults['type']))
+        self.cmbx_type.setCurrentText(params.get('type', self.cmbx_type.currentText()))
         # set colorbar check box
-        self.chbx_cbar.setChecked(params.get('show_cbar', True))
+        self.chbx_cbar.setChecked(params.get('show_cbar', self.chbx_cbar.isChecked()))
         # set legend check box
-        self.chbx_legend.setChecked(params.get('show_legend', False))
+        self.chbx_legend.setChecked(params.get('show_legend', self.chbx_legend.isChecked()))
         # set parameter widgets
         used_keys = ['type', 'show_cbar', 'show_legend']
         for widget in self.param_widgets:

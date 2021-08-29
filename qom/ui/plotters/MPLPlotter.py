@@ -64,10 +64,6 @@ class MPLPlotter(BasePlotter):
         'x_label': '$x$',
         'y_label': '$y$'
     }
-    ui_defaults = {
-        'type': 'pcolormesh',
-        'palette': 'RdBu_r'
-    }
 
     @property
     def mpl_spec(self):
@@ -218,7 +214,7 @@ class MPLPlotter(BasePlotter):
 
         # scatter plots
         elif 'scatter' in _type:
-            self.plots = [_mpl_axes.scatter([], [], c=_colors[i], s=self.axes['Y'].sizes[i], marker=_styles[i]) for i in range(_dim)]
+            self.plots = [_mpl_axes.scatter([], [], c=_colors[i], s=self.axes['Y'].sizes[i], marker=_styles[i] if _styles[i] in BasePlotter.default_markers else BasePlotter.default_markers[i]) for i in range(_dim)]
 
         # legend
         if self.params['legend']['show']:

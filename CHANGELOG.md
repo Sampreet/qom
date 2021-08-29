@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.0 - 2021/08/29 - 00 - Updated Widgets
+* Minor fixes to `qom.solvers.HLESolver` module.
+* Added attributes for required parameters and UI defaults in `qom.systems` modules.
+* Fixed scatter plot markers in `qom.ui.axes` and `qom.ui.plotters` subpackages.
+* Updated function and parameter selection in `qom.ui.widgets` modules.
+* Reverted to system class calls in `qom.utils.looper` module.
+* Updated `README`.
+
 ## v0.8.0 - 2021/08/28 - 00 - Revamped Systems
 * Minor fixes to `qom.solvers.HLESolver` module.
 * Removed predefined function arguments and added validations for required and optional functions in `qom.systems.BaseSystem` and `qom.systems.SOMASystem` modules.

@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.SOMASystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-08-15'
-__updated__ = '2021-08-28'
+__updated__ = '2021-08-29'
 
 # dependencies
 from decimal import Decimal
@@ -61,6 +61,14 @@ class SOMASystem(BaseSystem):
             'get_mode_amplitude_dynamics': ['get_mode_rates', 'get_ivc'],
             'get_nlse_dynamics': ['get_ivc', 'get_op_d', 'get_op_n']
         })
+        self.required_params.update({
+            'get_mode_amplitude_dynamics': ['cache', 'cache_dir', 'cache_file', 'method', 'show_progress', 't_min', 't_max', 't_dim', 't_mode'],
+            'get_nlse_dynamics': ['show_progress', 't_min', 't_max', 't_dim', 't_div']
+        })
+        self.ui_defaults.update({
+           't_div': 100,
+           't_mode': 'optical'
+        })
 
     def get_mode_amplitude_dynamics(self, solver_params, plot=False, plotter_params=dict()):
         """Method to obtain the dynamics of the optical modes by solving the semi-classical equations of motion.
@@ -84,20 +92,6 @@ class SOMASystem(BaseSystem):
         # extract frequently used variables
         _N = int(self.num_modes / 2)
         _t_mode = solver_params.get('t_mode', 'optical')
-
-        def get_ivc():
-            """Function to get the initial values of the modes and the constant parameters of the system."""
-            # get initial values
-            iv, c = self.get_ivc()
-            # truncate modes
-            iv_modes = iv[:self.num_modes]
-            # extract constant parameters
-            if c is not None and len(c) > 4 * self.num_modes**2:
-                c_modes = c[4 * self.num_modes**2:]
-            else:
-                c_modes = c if c is not None else list()
-
-            return iv_modes, c_modes
 
         # get modes and times
         Modes, _, T = self.get_modes_corrs_dynamics(solver_params=solver_params)
@@ -151,6 +145,7 @@ class SOMASystem(BaseSystem):
         x_min = np.float_(solver_params.get('x_min', - (num_s - 1) / 2))
         x_max = np.float_(solver_params.get('x_max', (num_s - 1) / 2))
         x_dim = int(solver_params.get('x_dim', num_s))
+        show_progress = solver_params.get('show_progress', False)
 
         # calculate times
         ts = np.linspace(t_min, t_max, t_dim)
@@ -196,7 +191,7 @@ class SOMASystem(BaseSystem):
             # update progress
             progress = float(i) / t_div / float(t_dim - 1) * 100
             # display progress
-            if int(progress * 1000) % 10 == 0:
+            if show_progress and int(progress * 1000) % 10 == 0:
                 logger.info('Computing ({module_name}): Progress = {progress:3.2f}'.format(module_name=__name__, progress=progress))
 
             # frequently used variables
