@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.BasePlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-06'
-__updated__ = '2021-08-28'
+__updated__ = '2021-08-30'
 
 # dependencies
 from typing import Union
@@ -131,17 +131,52 @@ class BasePlotter():
     """
 
     # attributes
-    types_1D = ['line', 'lines', 'scatter', 'scatters']
-    types_2D = ['contour', 'contourf', 'pcolormesh']
-    types_3D = ['surface', 'surface_cx', 'surface_cy', 'surface_cz']
-    default_palettes = ['Accent', 'Accent_r', 'Blues', 'Blues_r', 'BrBG', 'BrBG_r', 'BuGn', 'BuGn_r', 'BuPu', 'BuPu_r', 'CMRmap', 'CMRmap_r', 'Dark2', 'Dark2_r', 'GnBu', 'GnBu_r', 'Greens', 'Greens_r', 'Greys', 'Greys_r', 'OrRd', 'OrRd_r', 'Oranges', 'Oranges_r', 'PRGn', 'PRGn_r', 'Paired', 'Paired_r', 'Pastel1', 'Pastel1_r', 'Pastel2', 'Pastel2_r', 'PiYG', 'PiYG_r', 'PuBu', 'PuBuGn', 'PuBuGn_r', 'PuBu_r', 'PuOr', 'PuOr_r', 'PuRd', 'PuRd_r', 'Purples', 'Purples_r', 'RdBu', 'RdBu_r', 'RdGy', 'RdGy_r', 'RdPu', 'RdPu_r', 'RdYlBu', 'RdYlBu_r', 'RdYlGn', 'RdYlGn_r', 'Reds', 'Reds_r', 'Set1', 'Set1_r', 'Set2', 'Set2_r', 'Set3', 'Set3_r', 'Spectral', 'Spectral_r', 'Wistia', 'Wistia_r', 'YlGn', 'YlGnBu', 'YlGnBu_r', 'YlGn_r', 'YlOrBr', 'YlOrBr_r', 'YlOrRd', 'YlOrRd_r', 'afmhot', 'afmhot_r', 'autumn', 'autumn_r', 'binary', 'binary_r', 'bone', 'bone_r', 'brg', 'brg_r', 'bwr', 'bwr_r', 'cividis', 'cividis_r', 'cool', 'cool_r', 'coolwarm', 'coolwarm_r', 'copper', 'copper_r', 'cubehelix', 'cubehelix_r', 'flag', 'flag_r', 'gist_earth', 'gist_earth_r', 'gist_gray', 'gist_gray_r', 'gist_heat', 'gist_heat_r', 'gist_ncar', 'gist_ncar_r', 'gist_rainbow', 'gist_rainbow_r', 'gist_stern', 'gist_stern_r', 'gist_yarg', 'gist_yarg_r', 'gnuplot', 'gnuplot2', 'gnuplot2_r', 'gnuplot_r', 'gray', 'gray_r', 'hot', 'hot_r', 'hsv', 'hsv_r', 'icefire', 'icefire_r', 'inferno', 'inferno_r', 'magma', 'magma_r', 'mako', 'mako_r', 'nipy_spectral', 'nipy_spectral_r', 'ocean', 'ocean_r', 'pink', 'pink_r', 'plasma', 'plasma_r', 'prism', 'prism_r', 'rainbow', 'rainbow_r', 'rocket', 'rocket_r', 'seismic', 'seismic_r', 'spring', 'spring_r', 'summer', 'summer_r', 'tab10', 'tab10_r', 'tab20', 'tab20_r', 'tab20b', 'tab20b_r', 'tab20c', 'tab20c_r', 'terrain', 'terrain_r', 'twilight', 'twilight_r', 'twilight_shifted', 'twilight_shifted_r', 'viridis', 'viridis_r', 'vlag', 'vlag_r', 'winter', 'winter_r']
+    bins = 11
     custom_palettes = {
         'blr': ['Blues_r', 'Reds'],
         'glr': ['Greens_r', 'Reds'],
         'rlb': ['Reds_r', 'Blues']
     }
-    bins = 11
     default_markers = ['.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', '8', 's', 'p', '*', 'h', 'H', '+', 'x', 'X', 'D', 'd', '|', '_']
+    default_palettes = ['Accent', 'Accent_r', 'Blues', 'Blues_r', 'BrBG', 'BrBG_r', 'BuGn', 'BuGn_r', 'BuPu', 'BuPu_r', 'CMRmap', 'CMRmap_r', 'Dark2', 'Dark2_r', 'GnBu', 'GnBu_r', 'Greens', 'Greens_r', 'Greys', 'Greys_r', 'OrRd', 'OrRd_r', 'Oranges', 'Oranges_r', 'PRGn', 'PRGn_r', 'Paired', 'Paired_r', 'Pastel1', 'Pastel1_r', 'Pastel2', 'Pastel2_r', 'PiYG', 'PiYG_r', 'PuBu', 'PuBuGn', 'PuBuGn_r', 'PuBu_r', 'PuOr', 'PuOr_r', 'PuRd', 'PuRd_r', 'Purples', 'Purples_r', 'RdBu', 'RdBu_r', 'RdGy', 'RdGy_r', 'RdPu', 'RdPu_r', 'RdYlBu', 'RdYlBu_r', 'RdYlGn', 'RdYlGn_r', 'Reds', 'Reds_r', 'Set1', 'Set1_r', 'Set2', 'Set2_r', 'Set3', 'Set3_r', 'Spectral', 'Spectral_r', 'Wistia', 'Wistia_r', 'YlGn', 'YlGnBu', 'YlGnBu_r', 'YlGn_r', 'YlOrBr', 'YlOrBr_r', 'YlOrRd', 'YlOrRd_r', 'afmhot', 'afmhot_r', 'autumn', 'autumn_r', 'binary', 'binary_r', 'bone', 'bone_r', 'brg', 'brg_r', 'bwr', 'bwr_r', 'cividis', 'cividis_r', 'cool', 'cool_r', 'coolwarm', 'coolwarm_r', 'copper', 'copper_r', 'cubehelix', 'cubehelix_r', 'flag', 'flag_r', 'gist_earth', 'gist_earth_r', 'gist_gray', 'gist_gray_r', 'gist_heat', 'gist_heat_r', 'gist_ncar', 'gist_ncar_r', 'gist_rainbow', 'gist_rainbow_r', 'gist_stern', 'gist_stern_r', 'gist_yarg', 'gist_yarg_r', 'gnuplot', 'gnuplot2', 'gnuplot2_r', 'gnuplot_r', 'gray', 'gray_r', 'hot', 'hot_r', 'hsv', 'hsv_r', 'icefire', 'icefire_r', 'inferno', 'inferno_r', 'magma', 'magma_r', 'mako', 'mako_r', 'nipy_spectral', 'nipy_spectral_r', 'ocean', 'ocean_r', 'pink', 'pink_r', 'plasma', 'plasma_r', 'prism', 'prism_r', 'rainbow', 'rainbow_r', 'rocket', 'rocket_r', 'seismic', 'seismic_r', 'spring', 'spring_r', 'summer', 'summer_r', 'tab10', 'tab10_r', 'tab20', 'tab20_r', 'tab20b', 'tab20b_r', 'tab20c', 'tab20c_r', 'terrain', 'terrain_r', 'twilight', 'twilight_r', 'twilight_shifted', 'twilight_shifted_r', 'viridis', 'viridis_r', 'vlag', 'vlag_r', 'winter', 'winter_r']
+    required_params = {
+        'line': ['bins', 'height', 'palette', 'title', 'v_label', 'v_scale', 'width', 'x_label', 'x_scale'],
+        'lines': ['bins', 'height', 'legend_location', 'palette', 'show_legend', 'title', 'v_label', 'v_scale', 'width', 'x_label', 'x_scale', 'y_label', 'y_legend', 'y_scale'],
+        'scatter': ['bins', 'height', 'palette', 'title', 'v_label', 'v_scale', 'width', 'x_label', 'x_scale'],
+        'scatters': ['bins', 'height', 'legend_location', 'palette', 'show_legend', 'title', 'v_label', 'v_scale', 'width', 'x_label', 'x_scale', 'y_label', 'y_legend', 'y_scale'],
+        'contour': ['bins', 'cbar_position', 'cbar_title', 'height', 'palette', 'show_cbar', 'title', 'width', 'x_label', 'x_scale', 'y_label', 'y_scale'],
+        'contourf': ['bins', 'cbar_position', 'cbar_title', 'height', 'palette', 'show_cbar', 'title', 'width', 'x_label', 'x_scale', 'y_label', 'y_scale'],
+        'pcolormesh': ['bins', 'cbar_position', 'cbar_title', 'height', 'palette', 'show_cbar', 'title', 'width', 'x_label', 'x_scale', 'y_label', 'y_scale'],
+        'surface': ['bins', 'cbar_position', 'cbar_title', 'height', 'palette', 'show_cbar', 'title', 'v_label', 'v_scale', 'width', 'x_label', 'x_scale', 'y_label', 'y_scale'],
+        'surface_cx': ['bins', 'cbar_position', 'cbar_title', 'height', 'palette', 'show_cbar', 'title', 'v_label', 'v_scale', 'width', 'x_label', 'x_scale', 'y_label', 'y_scale'],
+        'surface_cy': ['bins', 'cbar_position', 'cbar_title', 'height', 'palette', 'show_cbar', 'title', 'v_label', 'v_scale', 'width', 'x_label', 'x_scale', 'y_label', 'y_scale'],
+        'surface_cz': ['bins', 'cbar_position', 'cbar_title', 'height', 'palette', 'show_cbar', 'title', 'v_label', 'v_scale', 'width', 'x_label', 'x_scale', 'y_label', 'y_scale']
+    }
+    types_1D = ['line', 'lines', 'scatter', 'scatters']
+    types_2D = ['contour', 'contourf', 'pcolormesh']
+    types_3D = ['surface', 'surface_cx', 'surface_cy', 'surface_cz']
+    ui_defaults = {
+        'bins': 11,
+        'cbar_position': 'right',
+        'cbar_title': '',
+        'height': 5.0,
+        'legend_location': 'best',
+        'palette': 'RdBu_r',
+        'show_cbar': False,
+        'show_legend': False,
+        'title': '',
+        'type': 'contourf',
+        'v_label': '$value$',
+        'v_scale': 'linear',
+        'width': 5.0,
+        'x_label': '$x$',
+        'x_scale': 'linear',
+        'y_label': '$y$',
+        'y_legend': [0, 1, 2, 3, 4],
+        'y_scale': 'linear',
+        'z_label': '$z$',
+        'z_scale': 'linear',
+    }
 
     def __init__(self, axes: dict, params: dict):
         """Class constructor for MPLPlotter."""
@@ -369,8 +404,8 @@ class BasePlotter():
         """
 
         # get minimum maximum
-        _mini = mini
-        _maxi = maxi
+        _mini = np.real(mini)
+        _maxi = np.real(maxi)
         _mult_min = 10**res
         _mult_max = 10**res
 
@@ -388,8 +423,8 @@ class BasePlotter():
         _mult = min(10**res, min(_mult_min, _mult_max))
 
         # round off
-        _mini = np.floor(mini * _mult) / _mult
-        _maxi = np.ceil(maxi * _mult) / _mult
+        _mini = np.floor(np.real(mini) * _mult) / _mult
+        _maxi = np.ceil(np.real(maxi) * _mult) / _mult
         _prec = int(np.round(np.log10(_mult)))
 
         # return

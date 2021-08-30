@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.SolverWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-08-28'
+__updated__ = '2021-08-30'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -18,7 +18,8 @@ import os
 
 # qom modules
 from ...solvers import HLESolver
-from . import BaseWidget, ParamWidget
+from .BaseWidget import BaseWidget
+from .ParamWidget import ParamWidget
 
 # module logger
 logger = logging.getLogger(__name__)
@@ -163,7 +164,7 @@ class SolverWidget(BaseWidget):
         return params
 
     def set_curr_func(self, value):
-        """Method to update the widget when combo box selection changes.
+        """Method to update widgets when combo box selection changes.
         
         Parameters
         ----------
@@ -358,16 +359,26 @@ class SolverWidget(BaseWidget):
             solver_params = self.get_params()
             # options
             plot = self.chbx_plot.isChecked()
+            # get plotter
+            plotter = self.plotter_widget.plotter
             # get plotter parameters
             plotter_params = self.plotter_widget.get_params() if plot else dict()
-            # get results
-            if self.plotter_widget.plotter is not None and 'plot' in inspect.getfullargspec(getattr(system, 'get_' + func_name)).args[1:]:
-                getattr(system, 'get_' + func_name)(solver_params=solver_params, plot=plot, plotter_params=plotter_params)
-            else:
-                getattr(system, 'get_' + func_name)(solver_params=solver_params)
             
-            # update footer
-            self.parent.update(status='Results Obtained', progress=None, reset=True)
+            # function arguments 
+            args = inspect.getfullargspec(getattr(system, 'get_' + func_name)).args[1:]
+            # if plottable
+            if plotter is not None and 'plot' in args:
+                # plot results
+                results = getattr(system, 'get_' + func_name)(solver_params=solver_params, plot=plot, plotter_params=plotter_params)
+                
+                # update footer
+                self.parent.update(status='Results Obtained', progress=None, reset=True)
+            else:
+                # get results
+                results = getattr(system, 'get_' + func_name)(solver_params=solver_params)
+                
+                # update footer
+                self.parent.update(status='Results Obtained{}'.format(': ' + str(results) if type(results) is not tuple else ''), progress=None, reset=True)
 
             # enable calculate button
             self.btn_solve.setDisabled(False)

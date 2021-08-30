@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-08-29'
+__updated__ = '2021-08-30'
 
 # dependencies
 from typing import Union
@@ -121,9 +121,10 @@ class BaseSystem():
         'get_mean_optical_occupancies': ['get_ivc', 'get_oss_args'],
         'get_measure_average': ['get_ivc', 'get_mode_rates'],
         'get_measure_dynamics': ['get_ivc', 'get_mode_rates'],
+        'get_measure_stationary': ['get_ivc'],
         'get_modes_corrs_dynamics': ['get_ivc', 'get_mode_rates'],
-        'get_modes_corrs_stationary': ['get_ivc', 'get_mode_rates'],
-        'get_pearson_correlation_coefficient': ['get_A', 'get_ivc', 'get_mode_rates'],
+        'get_modes_corrs_stationary': ['get_ivc'],
+        'get_pearson_correlation_coefficient': ['get_ivc', 'get_mode_rates'],
         'get_rhc_count_dynamics': ['get_A', 'get_ivc', 'get_mode_rates'],
         'get_rhc_count_stationary': ['get_ivc', 'get_mode_rates']
     }
@@ -134,6 +135,7 @@ class BaseSystem():
         'get_mean_optical_occupancies': [],
         'get_measure_average': ['cache', 'cache_dir', 'cache_file', 'idx_e', 'measure_type', 'method', 'range_min', 'range_max', 'show_progress', 't_min', 't_max', 't_dim'],
         'get_measure_dynamics': ['cache', 'cache_dir', 'cache_file', 'idx_e', 'measure_type', 'method', 'range_min', 'range_max', 'show_progress', 't_min', 't_max', 't_dim'],
+        'get_measure_stationary': ['idx_e', 'measure_type', 'show_progress'],
         'get_modes_corrs_dynamics': ['cache', 'cache_dir', 'cache_file', 'method', 'show_progress', 't_min', 't_max', 't_dim'],
         'get_modes_corrs_stationary': [],
         'get_pearson_correlation_coefficient': ['cache', 'cache_dir', 'cache_file', 'idx_e', 'measure_type', 'method', 'show_progress', 't_min', 't_max', 't_dim'],
@@ -269,9 +271,6 @@ class BaseSystem():
         measure : float
             Calculated measure.
         """
-
-        # validate required functions
-        assert self.validate_required_funcs(func_name='get_measure', mode='verbose') is True, 'Missing required predefined functions'
 
         # extract frequently used variables
         _measure_type = solver_params['measure_type']
@@ -433,7 +432,7 @@ class BaseSystem():
         
         # update eigenvalues
         eigenvalues, _ = np.linalg.eig(A)
-        for idx in solver_params['idx_e']:
+        for idx in _solver_params['idx_e']:
             eig_avg.append(eigenvalues[idx])
 
         return eig_avg
@@ -699,13 +698,18 @@ class BaseSystem():
 
         return M_avg
     
-    def get_measure_dynamics(self, solver_params: dict):
+    def get_measure_dynamics(self, solver_params: dict, plot: bool=False, plotter_params: dict=dict()):
         """Method to obtain the dynamics of a measure.
 
         Parameters
         ----------
         solver_params : dict
             Parameters for the solver.
+        plot : bool
+            Option to plot the dynamics.
+        plotter_params : dict
+            Parameters for the plotter.
+
         Returns
         -------
         M : list
@@ -725,14 +729,13 @@ class BaseSystem():
 
         # extract frequently used variables
         _show_progress = solver_params.get('show_progress', False)
-        _range_min = solver_params.get('range_min', 0)
-        _range_max = solver_params.get('range_max', len(T))
+        _range_min = int(solver_params.get('range_min', 0))
+        _range_max = int(solver_params.get('range_max', len(T)))
         _measure_type = solver_params['measure_type']
         _module_name = {
             'corr_ele': __name__,
             'eigen_dm': __name__,
             'mode_amp': __name__,
-            'qcm': 'qom.solvers.QCMSolver'
         }.get(_measure_type, 'qom.solvers.QCMSolver')
 
         # validate required function
@@ -766,6 +769,8 @@ class BaseSystem():
                 else:
                     params = c
                 eigs, _ = np.linalg.eig(self.get_A(modes=Modes[i], params=params, t=T[i]))
+
+                # extract eigenvalues
                 measure = list()
                 for idx in solver_params['idx_e']:
                     measure.append(eigs[idx])
@@ -782,7 +787,66 @@ class BaseSystem():
             if self.cb_update is not None:
                 self.cb_update(status='Measures Obtained', progress=None, reset=True)
 
+        if plot:
+            self.plot_dynamics(plotter_params=plotter_params, V=np.transpose(M).tolist() if _measure_type in self.types_qcm else M, T=T[_range_min:_range_max])
+
         return M, T[_range_min:_range_max]
+    
+    def get_measure_stationary(self, solver_params: dict):
+        """Method to obtain the stationary value of a measure.
+
+        Parameters
+        ----------
+        solver_params : dict
+            Parameters for the solver.
+
+        Returns
+        -------
+        measure : float
+            Calculated measure.
+        """
+
+        # validate required functions
+        assert self.validate_required_funcs(func_name='get_measure_stationary', mode='verbose') is True, 'Missing required predefined functions'
+
+        # validate parameters
+        self.__validate_params_measure(solver_params=solver_params)
+
+        # get stationary values of mode and correlation
+        modes, corrs = self.get_modes_corrs_stationary(type_func='complex')
+
+        # extract frequently used variables
+        _show_progress = solver_params.get('show_progress', False)
+        _measure_type = solver_params['measure_type']
+
+        # validate required function
+        assert getattr(self, 'get_A', None) is not None if _measure_type == 'eigen_dm' else True, 'Missing required predefined function ``get_A``'
+
+        # eigenvalues of drift matrix
+        if _measure_type == 'eigen_dm':
+            # extract parameters
+            _, c = self.get_ivc()
+            if len(c) > 4 * self.num_modes**2:
+                params = c[4 * self.num_modes**2:]
+            else:
+                params = c
+            eigs, _ = np.linalg.eig(self.get_A(modes=modes, params=params, t=None))
+                
+            # extract eigenvalues
+            measure = list()
+            for idx in solver_params['idx_e']:
+                measure.append(eigs[idx])
+        # elif correlation matrix element or mode amplitude
+        else:
+            measure = self.__get_measure(solver_params=solver_params, modes=modes, corrs=corrs)
+
+        # display completion
+        if _show_progress:
+            logger.info('------------------Measure Obtained-------------------\n')
+            if self.cb_update is not None:
+                self.cb_update(status='Measures Obtained', progress=None, reset=True)
+
+        return measure
 
     def get_modes_corrs_dynamics(self, solver_params: dict):
         """Method to obtain the dynamics of the classical mode amplitudes and quantum correlations from the Heisenberg and Lyapunov equations.
@@ -818,6 +882,10 @@ class BaseSystem():
 
         # get initial values and constants
         iv, c = self.get_ivc()
+        # if correlations are required
+        if len(iv) != self.num_modes:
+            # validate drift matrix function
+            assert getattr(self, 'get_A', None) is not None, 'Missing required function ``get_A``'
         # handle null constants
         if c is None:
             c = list()
@@ -865,6 +933,12 @@ class BaseSystem():
 
         # get initial values and constants
         iv, c = self.get_ivc()
+
+        # if correlations are required
+        if len(iv) != self.num_modes:
+            # validate drift matrix function
+            assert getattr(self, 'get_A', None) is not None, 'Missing required function ``get_A``'
+
         # handle null constants
         if c is None:
             c = list()
@@ -875,7 +949,7 @@ class BaseSystem():
             params = c
 
         # if modes are to be calculated
-        if self.get_mode_rates is not None:
+        if getattr(self, 'get_mode_rates', None) is not None:
             # complex-valued function
             if type_func == 'real':
                 # real-valued function
@@ -957,13 +1031,17 @@ class BaseSystem():
 
         return S_Pearson
 
-    def get_rhc_count_dynamics(self, solver_params: dict):
+    def get_rhc_count_dynamics(self, solver_params: dict, plot: bool=False, plotter_params: dict=dict()):
         """Function to obtain the number of positive real roots of the drift matrix using the Routh-Hurwitz criterion.
 
         Parameters
         ----------
         solver_params : dict
             Parameters for the solver.
+        plot : bool
+            Option to plot the dynamics.
+        plotter_params : dict
+            Parameters for the plotter.
         
         Returns
         -------
@@ -979,9 +1057,9 @@ class BaseSystem():
 
         # extract frequently used variables
         _show_progress = solver_params.get('show_progress', False)
-        _range_min = solver_params.get('range_min', 0)
-        _range_max = solver_params.get('range_max', len(T))
-        _t_ss = solver_params.get('t_max', T[-1] - T[0]) / solver_params.get('t_dim', len(T))
+        _range_min = int(solver_params.get('range_min', 0))
+        _range_max = int(solver_params.get('range_max', len(T)))
+        _t_ss = np.float_(solver_params.get('t_max', T[-1] - T[0])) / int(solver_params.get('t_dim', len(T)))
 
         # extract parameters
         _, c = self.get_ivc()
@@ -1021,7 +1099,10 @@ class BaseSystem():
         if _show_progress:
             logger.info('------------------Counts Obtained--------------------\n')
             if self.cb_update is not None:
-                self.cb_update(status='Counst Obtained', progress=None, reset=True)
+                self.cb_update(status='Counts Obtained', progress=None, reset=True)
+
+        if plot:
+            self.plot_dynamics(plotter_params=plotter_params, V=Counts, T=T[_range_min:_range_max])
 
         return Counts, T[_range_min:_range_max]
 

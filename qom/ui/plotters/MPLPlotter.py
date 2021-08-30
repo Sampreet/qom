@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2021-08-28'
+__updated__ = '2021-08-30'
 
 # dependencies
 from matplotlib.colors import BoundaryNorm, LinearSegmentedColormap, Normalize
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 # TODO: Add annotations.
 # TODO: Options for 3D plot parameters.
 # TODO: Options for `ticklabel_format` and padding.
-# TODO: Options for saving plots.
+# TODO: Add segmented color bar for contour plots.
 
 class MPLPlotter(BasePlotter):
     """Class to handle matplotlib plots.
@@ -80,6 +80,10 @@ class MPLPlotter(BasePlotter):
 
         # initialize super class
         super().__init__(axes, params)
+
+        # set attributes
+        self.plots = None
+        # self.heads = None
 
         # extract frequently used variables
         _type = self.params['type']
@@ -183,8 +187,14 @@ class MPLPlotter(BasePlotter):
         # return
         return _font_props
 
-    def __init_1D(self):
-        """Method to initialize 1D plots."""
+    def __init_1D(self, dim=1):
+        """Method to initialize 1D plots.
+        
+        Parameters
+        ----------
+        dim : int
+            Dimension of the Y-axis.
+        """
 
         # extract frequently used variables
         _type = self.params['type']
@@ -192,11 +202,10 @@ class MPLPlotter(BasePlotter):
         _palette = self.params['palette']
         _colors = self.axes['Y'].colors
         _styles = self.axes['Y'].styles
-        _dim = len(self.axes['Y'].legend)
-
-        # handle dimension for single-value plot
-        if _type == 'line' or _type == 'scatter':
-            _dim = 1
+        if self.plots is None:
+            self.plots = []
+            # self.heads = []
+        _dim = len(self.plots)
 
         # udpate colors
         if _colors is None:
@@ -206,19 +215,19 @@ class MPLPlotter(BasePlotter):
         # line plots
         if 'line' in _type:
             # plots
-            self.plots = [Line2D([], [], color=_colors[i], linestyle=_styles[i]) for i in range(_dim)]
-            [_mpl_axes.add_line(self.plots[i]) for i in range(_dim)]
-            # heads
-            self.heads = [Line2D([], [], color=_colors[i], linestyle=_styles[i], marker='o') for i in range(_dim)]
-            [_mpl_axes.add_line(self.heads[i]) for i in range(_dim)]
+            self.plots += [Line2D([], [], color=_colors[i], linestyle=_styles[i]) for i in range(_dim, dim)]
+            [_mpl_axes.add_line(self.plots[i]) for i in range(_dim, dim)]
+            # # heads
+            # self.heads += [Line2D([], [], color=_colors[i], linestyle=_styles[i], marker='o') for i in range(_dim, dim)]
+            # [_mpl_axes.add_line(self.heads[i]) for i in range(_dim, dim)]
 
         # scatter plots
         elif 'scatter' in _type:
-            self.plots = [_mpl_axes.scatter([], [], c=_colors[i], s=self.axes['Y'].sizes[i], marker=_styles[i] if _styles[i] in BasePlotter.default_markers else BasePlotter.default_markers[i]) for i in range(_dim)]
+            self.plots += [_mpl_axes.scatter([], [], c=_colors[i], s=self.axes['Y'].sizes[i], marker=_styles[i] if _styles[i] in BasePlotter.default_markers else BasePlotter.default_markers[i]) for i in range(_dim, dim)]
 
         # legend
         if self.params['legend']['show']:
-            _l = plt.legend(self.axes['Y'].legend, loc=self.params['legend']['location'])  
+            _l = plt.legend(self.axes['Y'].legend[:dim], loc=self.params['legend']['location'])  
             plt.setp(_l.texts, fontproperties=self.__get_font_props(self.params['font_dicts']['label']))
 
     def __init_2D(self):
@@ -329,21 +338,25 @@ class MPLPlotter(BasePlotter):
         # frequently used variables
         _type = self.params['type']
         _mpl_axes = plt.gca()
-        _dim = len(xs[0])
+        # _dim = len(xs[0])
+
+        # handle non-single plots
+        if len(xs) != len(self.plots):
+            self.__init_1D(dim=len(xs))
         
         # line plots
         if 'line' in _type:
             for j in range(len(self.plots)):
                 self.plots[j].set_xdata(xs[j])
                 self.plots[j].set_ydata(vs[j])
-                _idx_nan = np.argwhere(np.isnan(vs[j]))
-                _idx_nan = _idx_nan[0][0] if len(_idx_nan) != 0 else -1
-                if head and _idx_nan < _dim - 1 and _idx_nan != -1:
-                    self.heads[j].set_xdata(xs[j][_idx_nan - 1 : _idx_nan])
-                    self.heads[j].set_ydata(vs[j][_idx_nan - 1 : _idx_nan])
-                else:
-                    self.heads[j].set_xdata([])
-                    self.heads[j].set_ydata([])
+                # _idx_nan = np.argwhere(np.isnan(vs[j]))
+                # _idx_nan = _idx_nan[0][0] if len(_idx_nan) != 0 else -1
+                # if head and _idx_nan < _dim - 1 and _idx_nan != -1:
+                #     self.heads[j].set_xdata(xs[j][_idx_nan - 1 : _idx_nan])
+                #     self.heads[j].set_ydata(vs[j][_idx_nan - 1 : _idx_nan])
+                # else:
+                #     self.heads[j].set_xdata([])
+                #     self.heads[j].set_ydata([])
 
         # scatter plots
         if 'scatter' in _type:
@@ -361,11 +374,11 @@ class MPLPlotter(BasePlotter):
                 _no_nan = [y if y == y else 0 for y in vs[j]]
 
                 # update limits
-                _minis.append(min(_no_nan))
-                _maxis.append(max(_no_nan))
+                _minis.append(np.min(_no_nan))
+                _maxis.append(np.max(_no_nan))
 
         # get limits
-        _mini, _maxi = min(_minis), max(_maxis)
+        _mini, _maxi = np.min(_minis), np.max(_maxis)
         _mini, _maxi, _prec = super().get_limits(_mini, _maxi)
 
         # ticks and tick labels
@@ -374,8 +387,8 @@ class MPLPlotter(BasePlotter):
         if self.axes['V'].bound == 'none':
             _ticks = np.around(np.linspace(_mini, _maxi, len(_mpl_axes.get_yticks())), decimals=_prec)
             _tick_labels = _ticks
-        _mini = min(_ticks)
-        _maxi = max(_ticks)
+        _mini = np.min(_ticks)
+        _maxi = np.max(_ticks)
         _mpl_axes.set_yticks(_ticks)
         _mpl_axes.set_yticklabels(_tick_labels)
 
@@ -402,7 +415,7 @@ class MPLPlotter(BasePlotter):
 
         # initialize values
         _no_nan = [z if z == z else 0 for z in _rave]
-        _mini, _maxi = min(_no_nan), max(_no_nan)
+        _mini, _maxi = np.min(_no_nan), np.max(_no_nan)
 
         # handle color bar limits
         if self.params['cbar']['show'] and self.params['cbar']['ticks'] is not None:
@@ -457,7 +470,7 @@ class MPLPlotter(BasePlotter):
         # initialize values
         _X, _Y = np.meshgrid(self.axes['X'].val, self.axes['Y'].val)
         _Z = np.array(vs) if type(vs) is list else vs
-        _mini, _maxi = min(_Z.ravel()), max(_Z.ravel())
+        _mini, _maxi = np.min(_Z.ravel()), np.max(_Z.ravel())
 
         # update ticks and tick labels
         _ticks = self.axes['V'].ticks
@@ -465,8 +478,8 @@ class MPLPlotter(BasePlotter):
         if self.axes['V'].bound == 'none':
             _ticks = np.linspace(_mini, _maxi, len(_mpl_axes.get_zticks()))
             _tick_labels = _ticks
-        _mini = min(_ticks)
-        _maxi = max(_ticks)
+        _mini = np.min(_ticks)
+        _maxi = np.max(_ticks)
         _mpl_axes.set_zticks(_ticks)
         _mpl_axes.set_zticklabels(_tick_labels)
         _mini, _maxi, _prec = super().get_limits(_mini, _maxi)
@@ -518,7 +531,7 @@ class MPLPlotter(BasePlotter):
 
         # ticks
         suffix = '3d' if _type in self.types_3D else ''
-        getattr(ax.axes, 'set_' + ax_name + 'lim' + suffix)(min(ax_data.ticks), max(ax_data.ticks))
+        getattr(ax.axes, 'set_' + ax_name + 'lim' + suffix)(np.min(ax_data.ticks), np.max(ax_data.ticks))
         getattr(ax, 'set_' + ax_name + 'ticks')(ax_data.ticks)
         ax.tick_params(axis=ax_name, which='major', pad=12)
 
@@ -612,7 +625,6 @@ class MPLPlotter(BasePlotter):
         _ticks = self.params['cbar']['ticks']
         _norm = Normalize(vmin=mini, vmax=maxi)
         if _ticks is None:
-            print('heya')
             _ticks = np.around(np.linspace(mini, maxi, self.bins), decimals=prec)
         _cmap = LinearSegmentedColormap.from_list(self.params['palette'], self.params['colors'])
 
@@ -714,11 +726,16 @@ class MPLPlotter(BasePlotter):
         # handle mismatched shapes
         if type(vs[0]) is not list:
             vs = [vs]
-        if len(np.shape(xs)) == 1:
-            xs = [xs] * len(vs)
+
+        # handle complex values
+        if type(vs[0][0]) is complex:
+            logger.warning('Plotting only real parts of the complex values\n')
+            vs = np.abs(vs).tolist()
 
         # 1D plots
         if _type in self.types_1D:
+            if np.shape(xs) != np.shape(vs):
+                xs = [xs for _ in range(len(vs))]
             self.__update_1D(xs, vs, head)
         
         # 2D plots

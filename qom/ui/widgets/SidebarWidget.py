@@ -6,14 +6,14 @@
 __name__    = 'qom.ui.widgets.SidebarWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-08-25'
+__updated__ = '2021-08-30'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
 import logging
 
 # qom modules
-from . import BaseWidget
+from .BaseWidget import BaseWidget
 
 # module logger
 logger = logging.getLogger(__name__)

@@ -17,6 +17,7 @@ default_looper_func_names = {
     'lyapunov_exponents': 'les', 
     'measure_average': 'mav',
     'measure_dynamics': 'mdy',
+    'measure_stationary': 'mss',
     'mean_optical_occupancy': 'moo',
     'pearson_correlation_coefficient': 'pcc'
 }
@@ -41,6 +42,7 @@ def get_looper_func(SystemClass, solver_params: dict, func_code: str):
             "les"       Lyapunov exponents.
             "mav"       measure averages.
             "mdy"       measure dynamics.
+            "mss"       stationary measure.
             "moo"       mean optical occupancies.
             "pcc"       Pearson correlation factor.
             ==========  ================================================
@@ -72,6 +74,15 @@ def get_looper_func(SystemClass, solver_params: dict, func_code: str):
         mdy, _ = system.get_measure_dynamics(solver_params=solver_params)
         # update results
         results.append((val, [mdy]))
+
+    # function to calculate stationary measure
+    def func_measure_stationary(system_params, val, logger, results):
+        # initialize system
+        system = SystemClass(system_params)
+        # get stationary measure
+        mss = system.get_measure_stationary(solver_params=solver_params)
+        # update results
+        results.append((val, mss))
 
     # function to obtain the maximum Lyapunov exponent
     def func_lyapunov_exponents(system_params, val, logger, results):
@@ -125,6 +136,7 @@ def get_looper_func(SystemClass, solver_params: dict, func_code: str):
         'les': func_lyapunov_exponents, 
         'mav': func_measure_average,
         'mdy': func_measure_dynamics,
+        'mss': func_measure_stationary,
         'moo': func_mean_optical_occupanies,
         'pcc': func_pearson_correlation_coefficient
     }.get(func_code, get_func_params(func_code))

@@ -6,14 +6,14 @@
 __name__    = 'qom.ui.widgets.FooterWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-08-25'
+__updated__ = '2021-08-30'
 
 # dependencies
 from PyQt5 import QtCore, QtWidgets
 import logging
 
 # qom modules
-from . import BaseWidget
+from .BaseWidget import BaseWidget
 
 # module logger
 logger = logging.getLogger(__name__)
@@ -40,42 +40,47 @@ class FooterWidget(BaseWidget):
         """Method to initialize layout."""
         
         # frequently used variables
-        width = 600
+        width = 300
         height = 32
-
-        # match parent width
-        self.setFixedWidth(1280)
-        # move to bottom
-        self.move(0, 720 - height)
-
-        # initialize UI elements
-        # blank left
-        self.blank_left = QtWidgets.QLabel('')
-        self.blank_left.setFixedSize(32, height)
-        # status
-        self.status = QtWidgets.QLabel('Ready')
-        self.status.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-        self.status.setFixedSize(width, height)
-        # blank center
-        self.blank_center = QtWidgets.QLabel('')
-        self.blank_center.setFixedSize(16, height)
-        # progress
-        self.progress = QtWidgets.QProgressBar()
-        self.progress.setAlignment(QtCore.Qt.AlignCenter)
-        self.progress.setFixedSize(width, height)
-        # blank right
-        self.blank_right = QtWidgets.QLabel('')
-        self.blank_right.setFixedSize(32, height)
+        padding = 32
 
         # update layout 
         self.layout = QtWidgets.QHBoxLayout()
-        self.layout.addWidget(self.blank_left)
-        self.layout.addWidget(self.status)
-        self.layout.addWidget(self.blank_center)
-        self.layout.addWidget(self.progress)
-        self.layout.addWidget(self.blank_right)
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0, 0, 0, 0)
+
+        # initialize left blank label
+        self.lbl_left = QtWidgets.QLabel('')
+        self.lbl_left.setFixedSize(padding, height)
+        self.layout.addWidget(self.lbl_left)
+        # initialize status label
+        self.lbl_status = QtWidgets.QLabel('Ready')
+        self.lbl_status.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.lbl_status.setFixedSize(width, height)
+        self.layout.addWidget(self.lbl_status)
+        # initialize status line edit
+        self.le_status = QtWidgets.QLineEdit('')
+        self.le_status.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.le_status.setFixedSize(width, height)
+        self.layout.addWidget(self.le_status)
+        # initialize center blank label
+        self.lbl_center = QtWidgets.QLabel('')
+        self.lbl_center.setFixedSize(padding / 2, height)
+        self.layout.addWidget(self.lbl_center)
+        # initialize progress bar
+        self.pb = QtWidgets.QProgressBar()
+        self.pb.setAlignment(QtCore.Qt.AlignCenter)
+        self.pb.setFixedSize(2 * width, height)
+        self.layout.addWidget(self.pb)
+        # initialize right blank label
+        self.lbl_right = QtWidgets.QLabel('')
+        self.lbl_right.setFixedSize(padding, height)
+        self.layout.addWidget(self.lbl_right)
+
+        # update main layout
+        self.move(0, 720 - height)
+        self.setFixedWidth(1280)
+        self.setFixedHeight(height)
         self.setLayout(self.layout)
 
         # set theme
@@ -123,14 +128,20 @@ class FooterWidget(BaseWidget):
 
         # update status
         if status is not None:
-            self.status.setText(str(status))
+            parts = str(status).split(': ')
+            status = parts[0]
+            self.lbl_status.setText(str(status))
+            value = ''
+            for part in parts[1:]:
+                value += part
+            self.le_status.setText(value)
 
         # update progress
         if progress is not None:
-            self.progress.setValue(int(progress))
-            self.progress.setTextVisible(True)
+            self.pb.setValue(int(progress))
+            self.pb.setTextVisible(True)
 
         # reset progress
         if reset:
-            self.progress.setValue(0)
-            self.progress.setTextVisible(False)
+            self.pb.setValue(0)
+            self.pb.setTextVisible(False)

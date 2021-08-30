@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.8.0 - 2021/08/30 - 00 - Bugfixes and Improvements
+* Added stationary measure calculation and minor fixes to `qom.solvers` modules.
+* Added required parameters and fixed multi-plots in `qom.ui.plotters` modules.
+* Updated footer layout and combo box selection functions in `qom.ui.widgets` modules.
+* Added stationary measure calculation in `qom.utils.looper` module.
+
+## v0.8.0 - 2021/08/29 - 00 - Updated Widgets
+* Minor fixes to `qom.solvers.HLESolver` module.
+* Added attributes for required parameters and UI defaults in `qom.systems` modules.
+* Fixed scatter plot markers in `qom.ui.axes` and `qom.ui.plotters` subpackages.
+* Updated function and parameter selection in `qom.ui.widgets` modules.
+* Reverted to system class calls in `qom.utils.looper` module.
+* Updated `README`.
+
 ## v0.8.0 - 2021/08/29 - 00 - Updated Widgets
 * Minor fixes to `qom.solvers.HLESolver` module.
 * Added attributes for required parameters and UI defaults in `qom.systems` modules.

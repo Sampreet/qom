@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.PlotterWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-08-20'
-__updated__ = '2021-08-28'
+__updated__ = '2021-08-30'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -15,7 +15,8 @@ import numpy as np
 
 # qom modules
 from ..plotters import MPLPlotter
-from . import BaseWidget, ParamWidget
+from .BaseWidget import BaseWidget
+from .ParamWidget import ParamWidget
 
 # module logger
 logger = logging.getLogger(__name__)
@@ -74,6 +75,7 @@ class PlotterWidget(BaseWidget):
         self.cmbx_type = QtWidgets.QComboBox()
         self.cmbx_type.setFixedSize(width / 2 - 1.5 * padding, row_height)
         self.cmbx_type.setDisabled(True)
+        self.cmbx_type.currentTextChanged.connect(self.set_curr_type)
         self.layout.addWidget(self.cmbx_type, 1, 0, 1, 2, alignment=QtCore.Qt.AlignRight)
         # initialize colorbar check box
         self.chbx_cbar = QtWidgets.QCheckBox('Colorbar')
@@ -196,6 +198,27 @@ class PlotterWidget(BaseWidget):
         self.lbl_name.setText(str(self.plotter.name))
         self.cmbx_type.clear()
         self.cmbx_type.addItems(self.plotter.types_1D + self.plotter.types_2D + self.plotter.types_3D)
+
+    def set_curr_type(self, value):
+        """Method to update widgets when combo box selection changes.
+        
+        Parameters
+        ----------
+        value : str
+            New text of the combo box.
+        """
+
+        # clear parameter text edit
+        self.te_params.setText('')
+
+        # initialize parameters
+        params = dict()
+        for key in self.plotter.required_params.get(value, []):
+            # set ui defaults
+            params[key] = self.plotter.ui_defaults[key]
+
+        # set parameters
+        self.set_params(params)
     
     def set_params(self, params):
         """Method to set the parameters for the plotter.
@@ -207,22 +230,29 @@ class PlotterWidget(BaseWidget):
         """
         
         # set type combo box
-        self.cmbx_type.setCurrentText(params.get('type', self.cmbx_type.currentText()))
+        if params.get('type', None) is not None:
+            self.cmbx_type.setCurrentText(params['type'])
         # set colorbar check box
         self.chbx_cbar.setChecked(params.get('show_cbar', self.chbx_cbar.isChecked()))
         # set legend check box
         self.chbx_legend.setChecked(params.get('show_legend', self.chbx_legend.isChecked()))
+
         # set parameter widgets
         used_keys = ['type', 'show_cbar', 'show_legend']
         for widget in self.param_widgets:
             if widget.key in params:
                 widget.val = params[widget.key]
                 used_keys.append(widget.key)
-        # set parameter text edit
-        te_params = dict()
+        # get current parameters
+        te_params = self.get_params()
+        # remove used keys
+        for key in used_keys:
+            te_params.pop(key, None)
+        # update extra parameters
         for key in params:
             if key not in used_keys:
                 te_params[key] = params[key]
+        # set parameter text edit
         self.te_params.setText(str(te_params))
 
     def set_theme(self, theme=None):

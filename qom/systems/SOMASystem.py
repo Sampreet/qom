@@ -70,7 +70,7 @@ class SOMASystem(BaseSystem):
            't_mode': 'optical'
         })
 
-    def get_mode_amplitude_dynamics(self, solver_params, plot=False, plotter_params=dict()):
+    def get_mode_amplitude_dynamics(self, solver_params: dict, plot: bool=False, plotter_params: dict=dict()):
         """Method to obtain the dynamics of the optical modes by solving the semi-classical equations of motion.
 
         Requires ``get_mode_rates`` and ``get_ivc`` function for the 
@@ -79,7 +79,11 @@ class SOMASystem(BaseSystem):
         ----------
         solver_params : dict
             Parameters for the solver containing the keys "t_min", "t_max" and "t_dim" for the integration timescale.
-        
+        plot : bool
+            Option to plot the dynamics.
+        plotter_params : dict
+            Parameters for the plotter.
+
         Returns
         -------
         amps : list
