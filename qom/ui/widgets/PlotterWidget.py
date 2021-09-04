@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.PlotterWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-08-20'
-__updated__ = '2021-08-30'
+__updated__ = '2021-09-01'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -240,9 +240,9 @@ class PlotterWidget(BaseWidget):
         # set parameter widgets
         used_keys = ['type', 'show_cbar', 'show_legend']
         for widget in self.param_widgets:
+            used_keys.append(widget.key)
             if widget.key in params:
                 widget.val = params[widget.key]
-                used_keys.append(widget.key)
         # get current parameters
         te_params = self.get_params()
         # remove used keys

@@ -114,7 +114,7 @@ For example, the `qom.systems.SOSMSystem` class can be used to interface a singl
 # initialize the system with system parameters
 system = MySystem(system_params)
 # obtain mean occupancy of the optical mode
-N_o = system.get_mean_optical_occupancies(system.get_ivc, system.get_oss_args)
+N_o, _ = system.get_mean_optical_occupancies()
 ```
 
 Here, `MySystem` is a class inheriting `SOSMSystem`, initialized by `system_params`, which is a dictionary containing the parameters of the system.

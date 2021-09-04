@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.SOMASystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-08-15'
-__updated__ = '2021-08-29'
+__updated__ = '2021-09-03'
 
 # dependencies
 from decimal import Decimal
@@ -36,7 +36,7 @@ class SOMASystem(BaseSystem):
         key                 value
         ==================  ====================================================
         "t_div"             (*int*) Number of divisions in the time axis.
-        "t_mode"            (*str*) Type of modes, "optical" (default) or "mechanical" for which the dynamics are calculated.
+        "mode_type"         (*str*) Type of mode, "optical" (default) or "mechanical", for which the dynamics are calculated.
         ==================  ====================================================
 
     Some functions require one or more of the following predefined functions to work properly. Refer :class:`qom.systems.BaseSystem` for a complete list of supported options. Additionally, the following functions are supported:
@@ -62,23 +62,21 @@ class SOMASystem(BaseSystem):
             'get_nlse_dynamics': ['get_ivc', 'get_op_d', 'get_op_n']
         })
         self.required_params.update({
-            'get_mode_amplitude_dynamics': ['cache', 'cache_dir', 'cache_file', 'method', 'show_progress', 't_min', 't_max', 't_dim', 't_mode'],
+            'get_mode_amplitude_dynamics': ['cache', 'cache_dir', 'cache_file', 'method', 'mode_type', 'show_progress', 't_min', 't_max', 't_dim'],
             'get_nlse_dynamics': ['show_progress', 't_min', 't_max', 't_dim', 't_div']
         })
         self.ui_defaults.update({
            't_div': 100,
-           't_mode': 'optical'
+           'mode_type': 'optical'
         })
 
     def get_mode_amplitude_dynamics(self, solver_params: dict, plot: bool=False, plotter_params: dict=dict()):
         """Method to obtain the dynamics of the optical modes by solving the semi-classical equations of motion.
 
-        Requires ``get_mode_rates`` and ``get_ivc`` function for the 
-
         Parameters
         ----------
         solver_params : dict
-            Parameters for the solver containing the keys "t_min", "t_max" and "t_dim" for the integration timescale.
+            Parameters for the solver.
         plot : bool
             Option to plot the dynamics.
         plotter_params : dict
@@ -95,13 +93,13 @@ class SOMASystem(BaseSystem):
 
         # extract frequently used variables
         _N = int(self.num_modes / 2)
-        _t_mode = solver_params.get('t_mode', 'optical')
+        _mode_type = solver_params.get('mode_type', 'optical')
 
         # get modes and times
         Modes, _, T = self.get_modes_corrs_dynamics(solver_params=solver_params)
 
         # extract required modes
-        amps = [[np.linalg.norm(modes[2 * j + (1 if _t_mode == 'mechanical' else 0)]) for j in range(int(len(modes) / 2))] for modes in Modes]
+        amps = [[np.linalg.norm(modes[2 * j + (1 if _mode_type == 'mechanical' else 0)]) for j in range(int(len(modes) / 2))] for modes in Modes]
 
         # get positions
         X = np.linspace(0, _N - 1, _N).tolist()

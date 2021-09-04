@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-08-30'
+__updated__ = '2021-09-03'
 
 # dependencies
 from typing import Union
@@ -488,28 +488,23 @@ class BaseSystem():
             # ODE function
             def func_ode(t, v, c=None):
                 # extract frequently used variables
-                quads = v[0:_dim]
-                modes = [quads[2 * i] + 1j * quads[2 * i + 1] for i in range(int(_dim / 2))]
-                W = np.reshape(v[_dim:], (_dim, _dim))
+                modes = v[0:self.num_modes]
+                W = np.real(np.reshape(v[self.num_modes:], (_dim, _dim)))
 
                 # obtain quadrature rates
-                quad_rates = self.__get_func_real(func=self.get_mode_rates)(v_real=quads, c=params, t=t)
+                mode_rates = self.get_mode_rates(modes=modes, params=params, t=t)
                 # obtain deviation rates
                 W_rate = np.dot(self.get_A(modes=modes, params=params, t=t), W).flatten().tolist()
 
-                return quad_rates + W_rate
+                return mode_rates + W_rate
 
             # initial values
-            iv_quads = list()
-            for m in Modes[-1]:
-                iv_quads.append(np.real(m))
-                iv_quads.append(np.imag(m))
-            iv = iv_quads + np.identity(_dim, dtype=np.float_).flatten().tolist()
+            iv = Modes[-1] + np.identity(_dim, dtype=np.complex_).flatten().tolist()
 
             # initialize solver
             solver = ODESolver(params=solver_params, func=func_ode, iv=iv)
             # extract final vector for another t_dim points
-            W = np.reshape(solver.solve(T=_T)[-1][_dim:], (_dim, _dim))
+            W = np.reshape(solver.solve(T=_T)[-1][self.num_modes:], (_dim, _dim))
 
             # singular value decomposition
             _, s, _ = sl.svd(W)
@@ -1144,14 +1139,14 @@ class BaseSystem():
         else:
             params = c
 
-        # if drift matrix is given
-        if self.get_A is not None:
-            # initialize solver
-            solver = RHCSolver(A=self.get_A(modes=modes, params=params, t=None))
-        # use coefficients
-        else:
+        # if coefficients is given
+        if getattr(self, 'get_coeffs', None) is not None:
             # initialize solver
             solver = RHCSolver(coeffs=self.get_coeffs(modes=modes, params=params, t=None))
+        # use drift matrix
+        else:
+            # initialize solver
+            solver = RHCSolver(A=self.get_A(modes=modes, params=params, t=None))
             
         # get indices with sign changes
         idxs = solver.get_indices()

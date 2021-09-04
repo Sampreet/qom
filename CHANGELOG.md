@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.0 - 2021/09/04 - 00 - Updated Systems
+* Updated `qom.systems` package:
+    * Updated LE and RHC methods in `qom.systems.BaseSystem` module.
+    * Updated solver parameters in `qom.systems.SOMASystem` module.
+    * Added optical stability zone calculation in `qom.systems.SOSMSystem` module.
+* Minor fixes to parameter widgets in `qom.ui.widgets` modules.
+* Updated `README`.
+
 ## v0.8.0 - 2021/08/30 - 00 - Bugfixes and Improvements
 * Added stationary measure calculation and minor fixes to `qom.solvers` modules.
 * Added required parameters and fixed multi-plots in `qom.ui.plotters` modules.

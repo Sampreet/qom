@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.SolverWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-08-30'
+__updated__ = '2021-09-01'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -199,8 +199,12 @@ class SolverWidget(BaseWidget):
                         if template.__dict__.get('params', None) is not None:
                             # extract parameters
                             params = template.__dict__['params']
+                            # get current parameters
+                            te_params = self.get_params()
+                            # update solver parameters
+                            te_params.update(params.get('solver', {}))
                             # set solver parameters
-                            self.set_params(params.get('solver', {}))
+                            self.set_params(te_params)
                             # set system parameters
                             self.system_widget.set_params(params.get('system', {}))
                             # set plotter parameters
@@ -300,9 +304,9 @@ class SolverWidget(BaseWidget):
         used_keys = ['show_progress', 'plot']
         # set parameters
         for widget in self.param_widgets:
+            used_keys.append(widget.key)
             if widget.key in params:
                 widget.val = params[widget.key]
-                used_keys.append(widget.key)
         # set parameter text edit
         te_params = dict()
         for key in params:
