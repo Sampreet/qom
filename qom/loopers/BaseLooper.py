@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-08-26'
+__updated__ = '2021-09-08'
 
 # dependencies
 from decimal import Decimal
@@ -246,14 +246,9 @@ class BaseLooper():
             _x = results[i][0]
             _v = results[i][1]
 
-            # handle multi-value result
-            if type(_v) is list:
-                for j in range(len(_v)):
-                    xs.append(_x)
-                    vs.append(_v[j])
-            else:
-                xs.append(_x)
-                vs.append(_v)
+            # update lists
+            xs.append(_x)
+            vs.append(_v)
 
         # if opted for gradient calculation
         if grad:

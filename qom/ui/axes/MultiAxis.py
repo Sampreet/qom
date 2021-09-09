@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.axes.MultiAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-10'
-__updated__ = '2021-08-29'
+__updated__ = '2021-09-08'
 
 # TODO: set color and style variants.
 
@@ -64,7 +64,7 @@ class MultiAxis(BaseAxis):
             self.sizes = _sizes
         # else set default sizes
         else:
-            self.sizes = [25 for i in range(self.dim)]
+            self.sizes = None
 
         # set styles
         _styles = params.get('styles', [])
@@ -73,4 +73,4 @@ class MultiAxis(BaseAxis):
             self.styles = _styles
         # else set default styles
         else:
-            self.styles = ['-' for i in range(self.dim)]
+            self.styles = None

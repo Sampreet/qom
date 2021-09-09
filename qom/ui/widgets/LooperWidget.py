@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.LooperWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-08-19'
-__updated__ = '2021-08-30'
+__updated__ = '2021-09-08'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -251,28 +251,30 @@ class LooperWidget(BaseWidget):
 
             # searching function
             found = lambda name, dim: sum([0 if name.find(e) == -1 else 1 for e in expr[:dim + 1]]) == dim + 1 and sum([0 if name.find(e) == -1 else 1 for e in expr]) == dim + 1
-            # search templates
-            for template_name in os.listdir('gui_templates'):
-                # if template found
-                if system is not None and template_name.find(system.code) != -1 and found(template_name, self.loopers.index(self.looper) + 1):
-                    # import template
-                    template = importlib.import_module('gui_templates.' + template_name[:-3])
-                    # if template contains parameters
-                    if template.__dict__.get('params', None) is not None:
-                        # extract parameters
-                        params = template.__dict__['params']
-                        # set looper parameters
-                        if params.get('looper', None) is not None:
-                            [[self.param_widgets[i * 4 + j].setText(str(params['looper'][axes[i]][keys[j]])) if keys[j] in params['looper'][axes[i]] else None for j in range(4)] for i in range(self.loopers.index(self.looper) + 1)]
-                        # set system parameters
-                        if self.system_widget.system is not None:
-                            self.system_widget.set_params(params.get('system', {}))
-                        # set solver parameters
-                        if self.solver_widget.solver is not None:
-                            self.solver_widget.set_params(params.get('solver', {}))
-                        # set plotter parameters
-                        if self.plotter_widget.plotter is not None:
-                            self.plotter_widget.set_params(params.get('plotter', {}))
+            # if template directory exists
+            if os.path.isdir('gui_templates'):
+                # search templates
+                for template_name in os.listdir('gui_templates'):
+                    # if template found
+                    if system is not None and template_name.find(system.code) != -1 and found(template_name, self.loopers.index(self.looper) + 1):
+                        # import template
+                        template = importlib.import_module('gui_templates.' + template_name[:-3])
+                        # if template contains parameters
+                        if template.__dict__.get('params', None) is not None:
+                            # extract parameters
+                            params = template.__dict__['params']
+                            # set looper parameters
+                            if params.get('looper', None) is not None:
+                                [[self.param_widgets[i * 4 + j].setText(str(params['looper'][axes[i]][keys[j]])) if keys[j] in params['looper'][axes[i]] else None for j in range(4)] for i in range(self.loopers.index(self.looper) + 1)]
+                            # set system parameters
+                            if self.system_widget.system is not None:
+                                self.system_widget.set_params(params.get('system', {}))
+                            # set solver parameters
+                            if self.solver_widget.solver is not None:
+                                self.solver_widget.set_params(params.get('solver', {}))
+                            # set plotter parameters
+                            if self.plotter_widget.plotter is not None:
+                                self.plotter_widget.set_params(params.get('plotter', {}))
 
         # update footer
         self.parent.update(status='Ready', progress=None, reset=True)

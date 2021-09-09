@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2021-08-30'
+__updated__ = '2021-09-08'
 
 # dependencies
 from matplotlib.colors import BoundaryNorm, LinearSegmentedColormap, Normalize
@@ -83,7 +83,6 @@ class MPLPlotter(BasePlotter):
 
         # set attributes
         self.plots = None
-        # self.heads = None
 
         # extract frequently used variables
         _type = self.params['type']
@@ -95,7 +94,7 @@ class MPLPlotter(BasePlotter):
         self.mpl_spec = _fig.add_gridspec(ncols=3, nrows=3, width_ratios=[1, 8, 1], height_ratios=[1, 8, 1])
         # initialize and validate colorbar
         self.cbar = None
-        if self.params['cbar']['show']:
+        if self.params['cbar']['show'] and _type not in self.types_1D:
             if _cbar_position not in self.cbar_positions:
                 _cbar_position = 'right'
             gs = self.cbar_positions_toggled[_cbar_position](self.mpl_spec)
@@ -201,29 +200,37 @@ class MPLPlotter(BasePlotter):
         _mpl_axes = plt.gca()
         _palette = self.params['palette']
         _colors = self.axes['Y'].colors
+        _sizes = self.axes['Y'].sizes
         _styles = self.axes['Y'].styles
         if self.plots is None:
             self.plots = []
-            # self.heads = []
         _dim = len(self.plots)
 
         # udpate colors
-        if _colors is None:
-            _colors = self.get_colors(_palette, self.bins)
+        if _colors is None or len(_colors) < dim:
+            palette_colors = self.get_colors(_palette, self.bins)
+            _colors = [[palette_colors[i % self.bins]] if 'scatter' in _type else palette_colors[i % self.bins] for i in range(dim)]
             self.axes['Y'].colors = _colors
+
+        # udpate styles
+        if _styles is None or len(_styles) < dim:
+            _styles = [BasePlotter.default_linestyles[i % len(BasePlotter.default_linestyles)] if 'line' in _type else BasePlotter.default_markers[i % len(BasePlotter.default_markers)] for i in range(dim)]
+            self.axes['Y'].styles = _styles
+
+        # udpate sizes
+        if _sizes is None or len(_sizes) < dim:
+            _sizes = [5 for _ in range(dim)]
+            self.axes['Y'].sizes = _sizes
 
         # line plots
         if 'line' in _type:
             # plots
             self.plots += [Line2D([], [], color=_colors[i], linestyle=_styles[i]) for i in range(_dim, dim)]
             [_mpl_axes.add_line(self.plots[i]) for i in range(_dim, dim)]
-            # # heads
-            # self.heads += [Line2D([], [], color=_colors[i], linestyle=_styles[i], marker='o') for i in range(_dim, dim)]
-            # [_mpl_axes.add_line(self.heads[i]) for i in range(_dim, dim)]
 
         # scatter plots
         elif 'scatter' in _type:
-            self.plots += [_mpl_axes.scatter([], [], c=_colors[i], s=self.axes['Y'].sizes[i], marker=_styles[i] if _styles[i] in BasePlotter.default_markers else BasePlotter.default_markers[i]) for i in range(_dim, dim)]
+            self.plots += [_mpl_axes.scatter([], [], c=_colors[i], s=_sizes[i], marker=_styles[i]) for i in range(_dim, dim)]
 
         # legend
         if self.params['legend']['show']:
@@ -338,25 +345,36 @@ class MPLPlotter(BasePlotter):
         # frequently used variables
         _type = self.params['type']
         _mpl_axes = plt.gca()
-        # _dim = len(xs[0])
 
         # handle non-single plots
         if len(xs) != len(self.plots):
             self.__init_1D(dim=len(xs))
+
+        # handle multi-data points
+        for i in range(len(self.plots)):
+            _xs = list()
+            _vs = list()
+            # iterate each point
+            for j in range(len(vs[i])):
+                # if multi-data point
+                if type(vs[i][j]) is list:
+                    for k in range(len(vs[i][j])):
+                        _xs.append(xs[i][j])
+                        _vs.append(vs[i][j][k])
+                # if single-data point
+                else:
+                    _xs.append(xs[i][j])
+                    _vs.append(vs[i][j])
+
+            # update lists
+            xs[i] = _xs
+            vs[i] = _vs
         
         # line plots
         if 'line' in _type:
             for j in range(len(self.plots)):
                 self.plots[j].set_xdata(xs[j])
                 self.plots[j].set_ydata(vs[j])
-                # _idx_nan = np.argwhere(np.isnan(vs[j]))
-                # _idx_nan = _idx_nan[0][0] if len(_idx_nan) != 0 else -1
-                # if head and _idx_nan < _dim - 1 and _idx_nan != -1:
-                #     self.heads[j].set_xdata(xs[j][_idx_nan - 1 : _idx_nan])
-                #     self.heads[j].set_ydata(vs[j][_idx_nan - 1 : _idx_nan])
-                # else:
-                #     self.heads[j].set_xdata([])
-                #     self.heads[j].set_ydata([])
 
         # scatter plots
         if 'scatter' in _type:
@@ -723,19 +741,18 @@ class MPLPlotter(BasePlotter):
         # extract frequently used variables
         _type = self.params['type']
 
-        # handle mismatched shapes
-        if type(vs[0]) is not list:
-            vs = [vs]
-
         # handle complex values
-        if type(vs[0][0]) is complex:
+        if type(vs[0]) is complex or (type(vs[0]) is list and type(vs[0][0]) is complex):
             logger.warning('Plotting only real parts of the complex values\n')
-            vs = np.abs(vs).tolist()
+            vs = np.real(vs).tolist()
 
         # 1D plots
         if _type in self.types_1D:
-            if np.shape(xs) != np.shape(vs):
+            if len(xs) != len(vs): 
                 xs = [xs for _ in range(len(vs))]
+            elif type(xs[0]) is not list:
+                xs = [xs]
+                vs = [vs]
             self.__update_1D(xs, vs, head)
         
         # 2D plots

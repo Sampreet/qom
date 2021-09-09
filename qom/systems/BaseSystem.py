@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-09-03'
+__updated__ = '2021-09-07'
 
 # dependencies
 from typing import Union
@@ -47,9 +47,11 @@ class BaseSystem():
     References
     ----------
 
-    .. [1] M. Aspelmeyer, T. J. Kippenberg, and F. Marquardt, *Cavity Optomechanics*, Review of Modern Physics **86** (4), 1931 (2014).
+    .. [1] M. Aspelmeyer, T. J. Kippenberg, and F. Marquardt, *Cavity Optomechanics*, Review of Modern Physics **86**, 1931 (2014).
 
-    .. [2] F. Galve, G. L. Giorgi, R. Zambrini, *Quantum Correlations and Synchronization Measures*, Lectures on General Quantum Correlations and their Applications, Quantum Science and Technology, Springer (2017).
+    .. [2] F. Galve, G. L. Giorgi and R. Zambrini, *Quantum Correlations and Synchronization Measures*, Lectures on General Quantum Correlations and their Applications, Quantum Science and Technology, Springer (2017).
+
+    .. [3] T. F. Roque, F. Marquardt and O. M. Yevtushenko, *Nonlinear Dynamics of Weakly Dissipative Optomechanical Systems*, New J. Phys. **22**, 013049 (2020).
 
     Notes
     -----
@@ -62,7 +64,8 @@ class BaseSystem():
         "cache_file"        (*str*) filename of the cached time series.
         "idx_e"             (*int* or *tuple* or *list*) index or indices of the elements in a list. This value should be an integer or a list of integers when the type of measure is "mode_amp" or "eigen_dm". Otherwise, it is a tuple of dimension *2* or a list of such tuples. Refer notes for all currently supported values.
         "measure_type"      (*str*) type of measure to calculate. Currently supported types of measures are described in the next table.
-        "method_le"         (*str*) method used to calculate the unit vectors and eigenvalues for Lyapunov exponents. Currently supported methods are "gso" for Gram-Schmidt orthonormalization and "svd" for singular value decomposition.
+        "method_le"         (*str*) method used to calculate the unit vectors and eigenvalues for Lyapunov exponents. Currently supported methods are "gso" for Gram-Schmidt orthonormalization and "svd" for singular value decomposition (fallback).
+        "method_sz"         (*str*) method used to calculate the stability zone. Currently supported method is "oss" for optical steady state based calculation.
         "num_iters"         (*int*) number of iterations to calculate the deviations for Lyapunov exponents. 
         "range_min"         (*float*) minimum index of time at which the measure is calculated.
         "range_max"         (*float*) maximum index of time at which the measure is calculated.
@@ -70,6 +73,7 @@ class BaseSystem():
         "t_min"             (*float*) minimum time at which integration starts.
         "t_max"             (*float*) maximum time at which integration stops.
         "t_dim"             (*int*) number of values from "t_max" to "t_min", both inclusive.
+        "type_func"         (*str*) type of the function used, "complex" (fallback) or "real"
         ==================  ====================================================
 
     The key "measure_type" currently supports the following options (refer :class:`qom.solvers.QCMSolver` for quantum correlation measures):
@@ -87,16 +91,17 @@ class BaseSystem():
 
     .. note:: All the options defined in ``params`` supersede individual function arguments.
 
-    Some functions require one or more of the following predefined functions to work properly:
+    Some methods require one or more of the following predefined callables to work properly:
         ======================  ================================================
-        function                purpose
+        callable                purpose
         ======================  ================================================
-        func_ode                Function returning the rate equations of the classical mode amplitudes and quantum correlations, formatted as ``func_ode(t, v, c)``, where ``t`` is the time at which the integration is performed, ``v`` is a list of the amplitudes and fluctuations and ``c`` is a list of constant parameters. The output should match the dimension of ``v``. If ``func_ode_corrs`` parameter is given, this function is treated as the function for the modes only.
-        func_ode_corrs          Function returning rate equations of the quantum correlations. It follows the same formatting as ``func_ode``.
-        get_A                   Function returning the drift matrix, formatted as ``get_A(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the drift matrix ``A``.
-        get_ivc                 Function returning the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
-        get_mode_rates          Function returning the rate of the classical mode amplitudes for a given list of modes, formatted as ``get_mode_rates(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the mode rates with same dimension as ``modes``.
-        get_oss_args            Function to obtain the required parameters to calculate the optical steady state, formatted as ``get_oss_args(params)``, where ``params`` are the constant parameters of the system. 
+        func_ode                function returning the rate equations of the classical mode amplitudes and quantum correlations, formatted as ``func_ode(t, v, c)``, where ``t`` is the time at which the integration is performed, ``v`` is a list of the amplitudes and fluctuations and ``c`` is a list of constant parameters. The output should match the dimension of ``v``. If ``func_ode_corrs`` parameter is given, this function is treated as the function for the modes only.
+        func_ode_corrs          function returning rate equations of the quantum correlations. It follows the same formatting as ``func_ode``.
+        get_A                   function to obtain the drift matrix, formatted as ``get_A(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the drift matrix ``A``.
+        get_ivc                 function to obtain the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
+        get_mode_rates          function to obtain the rate of the classical mode amplitudes for a given list of modes, formatted as ``get_mode_rates(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the mode rates with same dimension as ``modes``.
+        get_oss_args            function to obtain the required parameters to calculate the optical steady state, formatted as ``get_oss_args(params)``, where ``params`` are the constant parameters of the system. 
+        get_oss_modes           function to obtain the classical mode amplitudes from the mean optical occupancy, formatted as ``get_oss_modes(params)``, where ``params`` are the constant parameters of the system. Returns the list of modes calculated for each mean optical occupancy.
         ======================  ================================================
 
     The ``get_oss_args`` function should return the following values in order:
@@ -121,9 +126,10 @@ class BaseSystem():
         'get_mean_optical_occupancies': ['get_ivc', 'get_oss_args'],
         'get_measure_average': ['get_ivc', 'get_mode_rates'],
         'get_measure_dynamics': ['get_ivc', 'get_mode_rates'],
-        'get_measure_stationary': ['get_ivc'],
+        'get_measure_stationary': ['get_ivc', 'get_mode_rates'],
         'get_modes_corrs_dynamics': ['get_ivc', 'get_mode_rates'],
         'get_modes_corrs_stationary': ['get_ivc'],
+        'get_optical_stability_zone': ['get_ivc', 'get_oss_args', 'get_oss_modes'],
         'get_pearson_correlation_coefficient': ['get_ivc', 'get_mode_rates'],
         'get_rhc_count_dynamics': ['get_A', 'get_ivc', 'get_mode_rates'],
         'get_rhc_count_stationary': ['get_ivc', 'get_mode_rates']
@@ -135,12 +141,13 @@ class BaseSystem():
         'get_mean_optical_occupancies': [],
         'get_measure_average': ['cache', 'cache_dir', 'cache_file', 'idx_e', 'measure_type', 'method', 'range_min', 'range_max', 'show_progress', 't_min', 't_max', 't_dim'],
         'get_measure_dynamics': ['cache', 'cache_dir', 'cache_file', 'idx_e', 'measure_type', 'method', 'range_min', 'range_max', 'show_progress', 't_min', 't_max', 't_dim'],
-        'get_measure_stationary': ['idx_e', 'measure_type', 'show_progress'],
+        'get_measure_stationary': ['idx_e', 'measure_type', 'show_progress', 'type_func'],
         'get_modes_corrs_dynamics': ['cache', 'cache_dir', 'cache_file', 'method', 'show_progress', 't_min', 't_max', 't_dim'],
-        'get_modes_corrs_stationary': [],
+        'get_modes_corrs_stationary': ['type_func'],
+        'get_optical_stability_zone': ['method_sz'],
         'get_pearson_correlation_coefficient': ['cache', 'cache_dir', 'cache_file', 'idx_e', 'measure_type', 'method', 'show_progress', 't_min', 't_max', 't_dim'],
-        'get_rhc_count_dynamics': ['cache', 'cache_dir', 'cache_file', 'method', 'show_progress', 't_min', 't_max', 't_dim'],
-        'get_rhc_count_stationary': []
+        'get_rhc_count_dynamics': ['cache', 'cache_dir', 'cache_file', 'method', 'range_min', 'range_max', 'show_progress', 't_min', 't_max', 't_dim'],
+        'get_rhc_count_stationary': ['type_func']
     }
     ui_defaults = {
         'cache': True,
@@ -150,13 +157,15 @@ class BaseSystem():
         'measure_type': 'mode_amp',
         'method': 'RK45',
         'method_le': 'svd',
+        'method_sz': 'oss',
         'num_iters': 10000,
         'range_min': 0,
         'range_max': 10001,
         'show_progress': True,
         't_min': 0.0,
         't_max': 1000.0,
-        't_dim': 10001
+        't_dim': 10001,
+        'type_func': 'complex'
     }
 
     def __init__(self, params: dict, code: str, name: str, num_modes: int, cb_update=None):
@@ -341,7 +350,7 @@ class BaseSystem():
     def func_ode(self, t, v, c):
         """Wrapper function for the rate equations of the modes and quadrature correlations. 
 
-        Requires already defined callables ``get_mode_rates`` and ``get_A`` inside the system class.
+        Requires predefined callable ``get_mode_rates``. Additionally, ``get_A`` should be defined for quantum correlations.
         
         The variables are complex-valued, hence the model requires a complex-valued integrator.
         
@@ -393,7 +402,7 @@ class BaseSystem():
     def get_averaged_eigenvalues(self, solver_params: dict):
         """Function to obtain the averaged eigenvalues of the drift matrix.
 
-        Requires already defined callables ``func_ode``, ``get_A`` inside the system class.
+        Requires predefined callables ``get_A``, ``get_ivc`` and ``get_mode_rates``.
 
         Parameters
         ----------
@@ -407,7 +416,7 @@ class BaseSystem():
         """
 
         # validate required functions
-        assert self.validate_required_funcs(func_name='get_averaged_eigenvalues', mode='verbose') is True, 'Missing required predefined functions'
+        assert self.validate_required_funcs(func_name='get_averaged_eigenvalues', mode='verbose') is True, 'Missing required predefined callables'
 
         # update a deep copy of parameters
         _solver_params = copy.deepcopy(solver_params)
@@ -437,23 +446,17 @@ class BaseSystem():
 
         return eig_avg
 
-    def get_lyapunov_exponents(self, solver_params, method_le: str='svd', num_iters: int=10000):
+    def get_lyapunov_exponents(self, solver_params: dict):
         """Method to obtain the Lyapunov exponents.
+
+        Requires predefined callables ``get_A``, ``get_ivc`` and ``get_mode_rates``.
+
+        Refer [3]_ for the implementation details.
 
         Parameters
         ----------
         solver_params : dict
             Parameters for the solver.
-        method_le : int, optional
-            Method used to calculate the unit vectors and eigenvalues. Currently available options are
-                ==========  ====================================================
-                value       meaning
-                ==========  ====================================================
-                "gso"       Gram-Schmidt orthonormalization (fallback).
-                "svd"       singular value decomposition.
-                ==========  ====================================================
-        num_iters : int, optional
-            Number of iterations for the calculation of deviations.
 
         Returns
         -------
@@ -462,13 +465,11 @@ class BaseSystem():
         """
 
         # validate required functions
-        assert self.validate_required_funcs(func_name='get_lyapunov_exponents', mode='verbose') is True, 'Missing required predefined functions'
+        assert self.validate_required_funcs(func_name='get_lyapunov_exponents', mode='verbose') is True, 'Missing required predefined callables'
 
-        # supersede solver parameterss
-        method_le = solver_params.get('method_le', method_le)
-        num_iters = int(solver_params.get('num_iters', num_iters))
-
-        # frequently used variables
+        # extract frequently used variables
+        method_le = solver_params.get('method_le', 'svd')
+        num_iters = int(solver_params.get('num_iters', 10000))
         _dim = 2 * self.num_modes
         iv, c = self.get_ivc()
         if len(c) > _dim**2:
@@ -483,35 +484,8 @@ class BaseSystem():
         _dt = T[1] - T[0]
         _T = np.linspace(T[-1], T[-1] + num_iters * _dt, num_iters + 1)
 
-        # if singular value decomposition
-        if method_le == 'svd':
-            # ODE function
-            def func_ode(t, v, c=None):
-                # extract frequently used variables
-                modes = v[0:self.num_modes]
-                W = np.real(np.reshape(v[self.num_modes:], (_dim, _dim)))
-
-                # obtain quadrature rates
-                mode_rates = self.get_mode_rates(modes=modes, params=params, t=t)
-                # obtain deviation rates
-                W_rate = np.dot(self.get_A(modes=modes, params=params, t=t), W).flatten().tolist()
-
-                return mode_rates + W_rate
-
-            # initial values
-            iv = Modes[-1] + np.identity(_dim, dtype=np.complex_).flatten().tolist()
-
-            # initialize solver
-            solver = ODESolver(params=solver_params, func=func_ode, iv=iv)
-            # extract final vector for another t_dim points
-            W = np.reshape(solver.solve(T=_T)[-1][self.num_modes:], (_dim, _dim))
-
-            # singular value decomposition
-            _, s, _ = sl.svd(W)
-            # exponents
-            lambdas = [np.log10(s[i]) / num_iters / _dt  for i in range(len(s))]
-        # Gram-Schmidt orthonormalization    
-        else:
+        # if Gram-Schmidt orthonormalization
+        if method_le == 'gso':
             # ODE function
             def func_ode(t, modes, c=None):
                 return self.get_mode_rates(modes=modes, params=params, t=t)
@@ -543,18 +517,47 @@ class BaseSystem():
 
                     # update Lyapunov exponents
                     lambdas[i] += np.log10(np.linalg.norm(Z_T[i])) / num_iters
+        # if singular value decomposition    
+        else:
+            # ODE function
+            def func_ode(t, v, c=None):
+                # extract frequently used variables
+                modes = v[0:self.num_modes]
+                W = np.real(np.reshape(v[self.num_modes:], (_dim, _dim)))
+
+                # obtain quadrature rates
+                mode_rates = self.get_mode_rates(modes=modes, params=params, t=t)
+                # obtain deviation rates
+                W_rate = np.dot(self.get_A(modes=modes, params=params, t=t), W).flatten().tolist()
+
+                return mode_rates + W_rate
+
+            # initial values
+            iv = Modes[-1] + np.identity(_dim, dtype=np.complex_).flatten().tolist()
+
+            # initialize solver
+            solver = ODESolver(params=solver_params, func=func_ode, iv=iv)
+            # extract final vector for another t_dim points
+            W = np.reshape(solver.solve(T=_T)[-1][self.num_modes:], (_dim, _dim))
+
+            # singular value decomposition
+            _, s, _ = sl.svd(W)
+            # exponents
+            lambdas = [np.log10(s[i]) / num_iters / _dt  for i in range(len(s))]
 
         return lambdas
 
     def get_mean_optical_amplitudes(self, method: str='cubic'):
         r"""Method to obtain the mean optical amplitudes.
 
-        The optical steady state is assumed to be of the form [1]_,
+        Requires predefined callables ``get_ivc`` and ``get_oss_args``.
+
+        The optical steady state is assumed to be of the form (refer [1]_),
 
         .. math::
             \alpha_{s} = \frac{A_{l}}{\frac{\kappa}{2} - \iota \Delta}
 
-        where :math:`\Delta = \Delta_{l} + C |\alpha_{s}|^{2}`.
+        where :math:`\Delta = \Delta_{o} + C |\alpha_{s}|^{2}`.
 
         Parameters
         ----------
@@ -576,7 +579,7 @@ class BaseSystem():
         """
 
         # validate required functions
-        assert self.validate_required_funcs(func_name='get_mean_optical_amplitudes', mode='verbose') is True, 'Missing required predefined functions'
+        assert self.validate_required_funcs(func_name='get_mean_optical_amplitudes', mode='verbose') is True, 'Missing required predefined callables'
         
         # extract parameters
         _, c = self.get_ivc()
@@ -593,10 +596,10 @@ class BaseSystem():
         # cubic method
         else:
             # get mean optical occupancies and roots of the cubic equation
-            N_o, roots = self.get_mean_optical_occupancies()
+            N_os, roots = self.get_mean_optical_occupancies()
             alpha_s = list()
-            for n_o in N_o:
-                alpha_s.append(A_l / (kappa / 2 - 1j * (Delta + C * n_o)))
+            for N_o in N_os:
+                alpha_s.append(A_l / (kappa / 2 - 1j * (Delta + C * N_o)))
 
         # return
         return alpha_s, roots
@@ -604,7 +607,9 @@ class BaseSystem():
     def get_mean_optical_occupancies(self, method: str='cubic'):
         r"""Method to obtain the mean optical occupancies.
 
-        The mean optical occupancy can be written as [1]_,
+        Requires predefined callables ``get_ivc`` and ``get_oss_args``. 
+
+        The mean optical occupancy can be written as (refer [1]_),
 
         .. math::
             N_{o} = |\alpha_{s}|^{2} = \frac{\left| A_{l} \right|^{2}}{\frac{\kappa^{2}}{4} + \Delta^{2}}
@@ -624,15 +629,15 @@ class BaseSystem():
         
         Returns
         -------
-        N_o : list
+        N_os : list
             Mean optical occupancies.
         roots : list
-            Roots of the cubic equation. If ``method`` is "basic", this is the same as ``N_o``.
+            Roots of the cubic equation. If ``method`` is "basic", this is the same as ``N_os``.
         """
 
         # validate required functions
-        assert self.validate_required_funcs(func_name='get_mean_optical_occupancies', mode='verbose') is True, 'Missing required predefined functions'
-
+        assert self.validate_required_funcs(func_name='get_mean_optical_occupancies', mode='verbose') is True, 'Missing required predefined callables'
+        
         # extract parameters
         _, c = self.get_ivc()
         if len(c) > 4 * self.num_modes**2:
@@ -644,8 +649,8 @@ class BaseSystem():
         # basic method
         if method == 'basic':
             # get mean optical amplitudea
-            _, N_o = self.get_mean_optical_amplitude()
-            roots = [n_o for n_o in N_o]
+            _, N_os = self.get_mean_optical_amplitude()
+            roots = [N_o for N_o in N_os]
 
         # cubic method
         else:
@@ -659,17 +664,19 @@ class BaseSystem():
             roots = np.roots([coeff_0, coeff_1, coeff_2, coeff_3])
 
             # mean optical occupancy
-            N_o = list()
+            N_os = list()
             # retain real roots
             for root in roots:
                 if np.imag(root) == 0.0:
-                    N_o.append(np.real(root))
+                    N_os.append(np.real(root))
 
         # return
-        return N_o, roots
+        return N_os, roots
 
     def get_measure_average(self, solver_params: dict):
         """Method to obtain the average value of a measure.
+
+        Requires predefined callables ``get_ivc`` and ``get_mode_rates``. Additionally, ``get_A`` should be defined if the type of measure is a quantum correlation measure or "eigen_dm".
         
         Parameters
         ----------
@@ -683,7 +690,7 @@ class BaseSystem():
         """
 
         # validate required functions
-        assert self.validate_required_funcs(func_name='get_measure_average', mode='verbose') is True, 'Missing required predefined functions'
+        assert self.validate_required_funcs(func_name='get_measure_average', mode='verbose') is True, 'Missing required predefined callables'
 
         # get measures at all times
         M, _ = self.get_measure_dynamics(solver_params=solver_params)
@@ -695,6 +702,8 @@ class BaseSystem():
     
     def get_measure_dynamics(self, solver_params: dict, plot: bool=False, plotter_params: dict=dict()):
         """Method to obtain the dynamics of a measure.
+
+        Requires predefined callables ``get_ivc`` and ``get_mode_rates``. Additionally, ``get_A`` should be defined if the type of measure is a quantum correlation measure or "eigen_dm".
 
         Parameters
         ----------
@@ -714,7 +723,7 @@ class BaseSystem():
         """
 
         # validate required functions
-        assert self.validate_required_funcs(func_name='get_measure_dynamics', mode='verbose') is True, 'Missing required predefined functions'
+        assert self.validate_required_funcs(func_name='get_measure_dynamics', mode='verbose') is True, 'Missing required predefined callables'
 
         # validate parameters
         self.__validate_params_measure(solver_params=solver_params)
@@ -734,7 +743,7 @@ class BaseSystem():
         }.get(_measure_type, 'qom.solvers.QCMSolver')
 
         # validate required function
-        assert getattr(self, 'get_A', None) is not None if _measure_type == 'eigen_dm' else True, 'Missing required predefined function ``get_A``'
+        assert getattr(self, 'get_A', None) is not None if _measure_type == 'eigen_dm' else True, 'Missing required predefined callable ``get_A``'
 
         # display initialization
         if _show_progress:
@@ -782,6 +791,7 @@ class BaseSystem():
             if self.cb_update is not None:
                 self.cb_update(status='Measures Obtained', progress=None, reset=True)
 
+        # if plot opted
         if plot:
             self.plot_dynamics(plotter_params=plotter_params, V=np.transpose(M).tolist() if _measure_type in self.types_qcm else M, T=T[_range_min:_range_max])
 
@@ -789,6 +799,8 @@ class BaseSystem():
     
     def get_measure_stationary(self, solver_params: dict):
         """Method to obtain the stationary value of a measure.
+
+        Requires predefined callables ``get_ivc`` and ``get_mode_rates``. Additionally, ``get_A`` should be defined if the type of measure is a quantum correlation measure or "eigen_dm".
 
         Parameters
         ----------
@@ -802,7 +814,7 @@ class BaseSystem():
         """
 
         # validate required functions
-        assert self.validate_required_funcs(func_name='get_measure_stationary', mode='verbose') is True, 'Missing required predefined functions'
+        assert self.validate_required_funcs(func_name='get_measure_stationary', mode='verbose') is True, 'Missing required predefined callables'
 
         # validate parameters
         self.__validate_params_measure(solver_params=solver_params)
@@ -815,7 +827,7 @@ class BaseSystem():
         _measure_type = solver_params['measure_type']
 
         # validate required function
-        assert getattr(self, 'get_A', None) is not None if _measure_type == 'eigen_dm' else True, 'Missing required predefined function ``get_A``'
+        assert getattr(self, 'get_A', None) is not None if _measure_type == 'eigen_dm' else True, 'Missing required predefined callable ``get_A``'
 
         # eigenvalues of drift matrix
         if _measure_type == 'eigen_dm':
@@ -846,6 +858,8 @@ class BaseSystem():
     def get_modes_corrs_dynamics(self, solver_params: dict):
         """Method to obtain the dynamics of the classical mode amplitudes and quantum correlations from the Heisenberg and Lyapunov equations.
 
+        Requires predefined callables ``get_ivc`` and ``get_mode_rates``. Additionally, ``get_A`` can be defined.
+
         Parameters
         ----------
         solver_params : dict
@@ -862,7 +876,7 @@ class BaseSystem():
         """
 
         # validate required functions
-        assert self.validate_required_funcs(func_name='get_modes_corrs_dynamics', mode='verbose') is True, 'Missing required predefined functions'
+        assert self.validate_required_funcs(func_name='get_modes_corrs_dynamics', mode='verbose') is True, 'Missing required predefined callables'
 
         # extract frequently used variables
         _method = solver_params.get('method', 'RK45')
@@ -898,19 +912,15 @@ class BaseSystem():
         
         return Modes, Corrs, T
 
-    def get_modes_corrs_stationary(self, type_func: str='complex'):
+    def get_modes_corrs_stationary(self, solver_params: dict):
         """Method to obtain the steady states of the classical mode amplitudes and quantum correlations from the Heisenberg and Lyapunov equations.
+
+        Requires predefined callable ``get_ivc``. Also, either one of the functions ``get_A`` and ``get_mode_rates`` should be defined.
 
         Parameters
         ----------
-        type_func : str, optional
-            Return data-type of ``get_mode_rates``. Currently available options are:
-                ==========  ====================================================
-                value       meaning
-                ==========  ====================================================
-                "real"      real-valued rates.
-                "complex"   complex-valued rates (fallback).
-                ==========  ====================================================
+        solver_params : dict
+            Parameters for the solver.
 
         Returns
         -------
@@ -921,7 +931,10 @@ class BaseSystem():
         """
 
         # validate required functions
-        assert self.validate_required_funcs(func_name='get_modes_corrs_stationary', mode='verbose') is True, 'Missing required predefined functions'
+        assert self.validate_required_funcs(func_name='get_modes_corrs_stationary', mode='verbose') is True, 'Missing required predefined callables'
+
+        # extract frequently used variables
+        type_func = solver_params.get('type_func', 'complex')
 
         # extract the modes and correlations
         _dim = 2 * self.num_modes
@@ -989,7 +1002,9 @@ class BaseSystem():
     def get_pearson_correlation_coefficient(self, solver_params: dict):
         r"""Method to obtain the Pearson correlation coefficient.
 
-        The implementation measure reads as [2]_,
+        Requires predefined callables ``get_ivc`` and ``get_mode_rates``.
+
+        The implementation measure reads as (refer [2]_),
 
         .. math::
             C_{ij} = \frac{\Sigma_{t} \langle \delta \mathcal{O}_{i} (t) \delta \mathcal{O}_{j} (t) \rangle}{\sqrt{\Sigma_{t} \langle \delta \mathcal{O}_{i}^{2} (t) \rangle} \sqrt{\Sigma_{t} \langle \delta \mathcal{O}_{j}^{2} (t) \rangle}}
@@ -1008,13 +1023,13 @@ class BaseSystem():
         """
 
         # validate required functions
-        assert self.validate_required_funcs(func_name='get_pearson_correlation_coefficient', mode='verbose') is True, 'Missing required predefined functions'
+        assert self.validate_required_funcs(func_name='get_pearson_correlation_coefficient', mode='verbose') is True, 'Missing required predefined callables'
 
         # validate parameters
         self.__validate_params_measure(solver_params=solver_params, count=3)
 
         # get measures at all times
-        M, T = self.get_measure_dynamics(solver_params=solver_params)
+        M, _ = self.get_measure_dynamics(solver_params=solver_params)
 
         # get mean values
         mean_ii = np.mean([m[0] for m in M])
@@ -1028,6 +1043,10 @@ class BaseSystem():
 
     def get_rhc_count_dynamics(self, solver_params: dict, plot: bool=False, plotter_params: dict=dict()):
         """Function to obtain the number of positive real roots of the drift matrix using the Routh-Hurwitz criterion.
+
+        Requires predefined callables ``get_A``, ``get_ivc`` and ``get_mode_rates``.
+
+        Refer :class:`qom.solvers.RHCSolver` for the implementation details.
 
         Parameters
         ----------
@@ -1045,7 +1064,7 @@ class BaseSystem():
         """
 
         # validate required functions
-        assert self.validate_required_funcs(func_name='get_rhc_count_dynamics', mode='verbose') is True, 'Missing required predefined functions'
+        assert self.validate_required_funcs(func_name='get_rhc_count_dynamics', mode='verbose') is True, 'Missing required predefined callables'
 
         # get modes
         Modes, _, T = self.get_modes_corrs_dynamics(solver_params=solver_params)
@@ -1096,24 +1115,23 @@ class BaseSystem():
             if self.cb_update is not None:
                 self.cb_update(status='Counts Obtained', progress=None, reset=True)
 
+        # if plot opted
         if plot:
             self.plot_dynamics(plotter_params=plotter_params, V=Counts, T=T[_range_min:_range_max])
 
         return Counts, T[_range_min:_range_max]
 
-    def get_rhc_count_stationary(self, type_func: str='complex'):
+    def get_rhc_count_stationary(self, solver_params: dict):
         """Function to obtain the number of positive real roots of the drift matrix from the stationary state using the Routh-Hurwitz criterion.
+
+        Requires predefined callables ``get_ivc`` and ``get_mode_rates``. Also, either one of the functions ``get_A`` and ``get_coeffs`` should be defined.
+
+        Refer :class:`qom.solvers.RHCSolver` for the implementation details.
 
         Parameters
         ----------
-        type_func : str, optional
-            Return data-type of ``get_mode_rates``. Currently available options are:
-                ==========  ====================================================
-                value       meaning
-                ==========  ====================================================
-                "real"      real-valued rates.
-                "complex"   complex-valued rates (fallback).
-                ==========  ====================================================
+        solver_params : dict
+            Parameters for the solver.
         
         Returns
         -------
@@ -1124,13 +1142,13 @@ class BaseSystem():
         """
 
         # validate required functions
-        assert self.validate_required_funcs(func_name='get_rhc_count_stationary', mode='verbose') is True, 'Missing required predefined functions'
+        assert self.validate_required_funcs(func_name='get_rhc_count_stationary', mode='verbose') is True, 'Missing required predefined callables'
 
         # validate optional functions
         assert getattr(self, 'get_A', None) is not None or getattr(self, 'get_coeffs', None) is not None, 'Either of the functions ``get_A`` or ``get_corrs`` should be non-none'
 
         # get modes
-        modes, _ = self.get_modes_corrs_stationary(type_func=type_func)
+        modes, _ = self.get_modes_corrs_stationary(solver_params=solver_params)
 
         # extract parameters
         _, c = self.get_ivc()
@@ -1155,19 +1173,101 @@ class BaseSystem():
 
         return count, idxs
 
-    def plot_dynamics(self, plotter_params: dict, V: list, T: list, X: list=None, hold: bool=True, width: float=5.0, height: float=5.0):
+    def get_optical_stability_zone(self, solver_params: dict):
+        """Function to obtain the stability zone using the optical steady state mode amplitudes and the Routh-Hurwitz criterion.
+
+        Requires predefined callables ``get_ivc``, ``get_oss_args`` and ``get_oss_modes``. Also, either one of the functions ``get_A`` and ``get_coeffs`` should be defined.
+
+        Refer :class:`qom.solvers.RHCSolver` for the implementation details.
+
+        Parameters
+        ----------
+        solver_params : dict
+            Parameters for the solver.
+        
+        Returns
+        -------
+        osz : list
+            Stability zone indicator of the optical steady state. The indicator codes are: 
+                ==========  ================================================
+                value       meaning
+                ==========  ================================================
+                1           one stable root.
+                2           one unstable root.
+                3           one stable root and two unstable roots.
+                4           two stable roots and one unstable root.
+                ==========  ================================================
+        """
+
+        # validate required functions
+        assert self.validate_required_funcs(func_name='get_optical_stability_zone', mode='verbose') is True, 'Missing required predefined callables'
+
+        # validate optional functions
+        assert getattr(self, 'get_A', None) is not None or getattr(self, 'get_coeffs', None) is not None, 'Either of the functions ``get_A`` or ``get_corrs`` should be non-none'
+
+        # extract frequently used variables
+        method_sz = solver_params.get('method_sz', 'oss')
+        _, c = self.get_ivc()
+        if len(c) > 4 * self.num_modes**2:
+            params = c[4 * self.num_modes**2:]
+        else:
+            params = c
+
+        # initialize lists
+        counts = list()
+        Idxs = list()
+
+        # get optical steady state mode amplitudes for all mean optical occupancies
+        Modes = self.get_oss_modes(params=params)
+
+        # for each mean optical occupancy
+        for modes in Modes:
+            # if coefficients is given
+            if getattr(self, 'get_coeffs', None) is not None:
+                # initialize solver
+                solver = RHCSolver(coeffs=self.get_coeffs(modes=modes, params=params, t=None))
+            # use drift matrix
+            else:
+                # initialize solver
+                solver = RHCSolver(A=self.get_A(modes=modes, params=params, t=None))
+                
+            # get indices with sign changes
+            idxs = solver.get_indices()
+
+            # update lists
+            counts.append(len(idxs))
+            Idxs.append(idxs)
+
+        # initialize zone
+        osz = len(counts)
+
+        # if monostable
+        if osz == 1:
+            # if unstable root
+            if counts[0] > 0:
+                osz = 2
+
+        # if bistable
+        if osz == 3:
+            # if one unstable root
+            if np.sum([1 if count > 0 else 0 for count in counts]) == 1:
+                osz = 4
+
+        return osz
+
+    def plot_dynamics(self, plotter_params: dict, V: list, T: list, N: list=None, hold: bool=True, width: float=5.0, height: float=5.0):
         """Method to plot the dynamics.
         
         Parameters
         ----------
         plotter_params : dict
             Parameters for the plotter. Refer :class:`qom.ui.plotters.MPLPlotter` for curently available options.
-        T : list
-            Times at which values are calculated.
         V : list
             Values calculated at all times.
-        X : list, optional
-            X-axis values.
+        T : list
+            Times at which values are calculated.
+        N : list, optional
+            Positions at which the values are calculated.
         hold : bool, optional
             Option to hold the plot.
         width : float, optional
@@ -1191,15 +1291,17 @@ class BaseSystem():
 
         # set plotter axes 
         axes = {
-            'X': X,
+            'X': N,
             'Y': T
-        } if X is not None else {'X': T}
+        } if N is not None else {
+            'X': T
+        }
         
         # initialize plotter
         plotter = MPLPlotter(axes=axes, params=plotter_params)
         
         # update plotter
-        plotter.update(xs=X if X is not None else T, ys=T if X is not None else None, vs=V)
+        plotter.update(xs=N if N is not None else T, ys=T if N is not None else None, vs=V)
         plotter.show(hold)
 
         return plotter
@@ -1222,12 +1324,12 @@ class BaseSystem():
 
         Returns
         -------
-        is_go : bool
+        is_valid : bool
             Verdict whether all requirements are met.
         """
 
         # initialize variables
-        is_go = True
+        is_valid = True
 
         # search for all required functions
         for required_func in self.required_funcs.get(func_name, {}):
@@ -1236,7 +1338,7 @@ class BaseSystem():
                 if mode == 'verbose':
                     logger.warning('Missing required function {required_func}\n'.format(required_func=required_func))
                 # flag
-                is_go = False
+                is_valid = False
                 break
 
-        return is_go
+        return is_valid

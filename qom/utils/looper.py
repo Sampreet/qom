@@ -6,7 +6,7 @@
 __name__    = 'qom.utils.looper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-05-25'
-__updated__ = '2021-08-28'
+__updated__ = '2021-09-09'
 
 # qom modules
 from ..ui import init_log
@@ -15,10 +15,11 @@ from ..loopers import XLooper, XYLooper, XYZLooper
 default_looper_func_names = {
     'averaged_eigenvalues': 'aes',
     'lyapunov_exponents': 'les', 
+    'mean_optical_occupancies': 'moo',
     'measure_average': 'mav',
     'measure_dynamics': 'mdy',
     'measure_stationary': 'mss',
-    'mean_optical_occupancy': 'moo',
+    'optical_stability_zone': 'osz',
     'pearson_correlation_coefficient': 'pcc'
 }
 
@@ -40,58 +41,14 @@ def get_looper_func(SystemClass, solver_params: dict, func_code: str):
             ==========  ================================================
             "aes"       averaged eigenvalue of the drift matrix.
             "les"       Lyapunov exponents.
+            "moo"       mean optical occupancies.
             "mav"       measure averages.
             "mdy"       measure dynamics.
             "mss"       stationary measure.
-            "moo"       mean optical occupancies.
+            "osz"       optical stability zone.
             "pcc"       Pearson correlation factor.
             ==========  ================================================
     """
-
-    # function to calculate averaged eigenvalues of the drift matrix
-    def func_averaged_eigenvalues(system_params, val, logger, results):
-        # initialize system
-        system = SystemClass(system_params)
-        # get averaged eigenvalues
-        aes = system.get_averaged_eigenvalues(solver_params=solver_params)
-        # update results
-        results.append((val, [aes]))
-
-    # function to calculate measure average
-    def func_measure_average(system_params, val, logger, results):
-        # initialize system
-        system = SystemClass(system_params)
-        # get measure average
-        mav = system.get_measure_average(solver_params=solver_params)
-        # update results
-        results.append((val, mav))
-
-    # function to calculate measure dynamics
-    def func_measure_dynamics(system_params, val, logger, results):
-        # initialize system
-        system = SystemClass(system_params)
-        # get measure dynamics
-        mdy, _ = system.get_measure_dynamics(solver_params=solver_params)
-        # update results
-        results.append((val, [mdy]))
-
-    # function to calculate stationary measure
-    def func_measure_stationary(system_params, val, logger, results):
-        # initialize system
-        system = SystemClass(system_params)
-        # get stationary measure
-        mss = system.get_measure_stationary(solver_params=solver_params)
-        # update results
-        results.append((val, mss))
-
-    # function to obtain the maximum Lyapunov exponent
-    def func_lyapunov_exponents(system_params, val, logger, results):
-        # initialize system
-        system = SystemClass(system_params)
-        # get Lyapunov exponents
-        les = system.get_lyapunov_exponents(solver_params=solver_params)
-        # update results
-        results.append((val, [les]))
 
     # function to calculate mean optical occupancies
     def func_mean_optical_occupanies(system_params, val, logger, results):
@@ -102,14 +59,18 @@ def get_looper_func(SystemClass, solver_params: dict, func_code: str):
         # update results
         results.append((val, moo))
 
-    # function to calculate Pearson correlation coefficient
-    def func_pearson_correlation_coefficient(system_params, val, logger, results):
-        # initialize system
-        system = SystemClass(system_params)
-        # get Pearson correlation coefficient
-        pcc = system.get_pearson_correlation_coefficient(solver_params=solver_params)
-        # update results
-        results.append((val, pcc))
+    # function to return a function to calculate
+    def get_func_solver_params(func_name):
+        # function to calculate
+        def func_solver_params(system_params, val, logger, results):
+            # initialize system
+            system = SystemClass(system_params)
+            # get value
+            value = getattr(system, 'get_' + func_name)(solver_params=solver_params)
+            # update results
+            results.append((val, value))
+
+        return func_solver_params
 
     # function to return a function to calculate
     def get_func_params(func_name):
@@ -122,7 +83,7 @@ def get_looper_func(SystemClass, solver_params: dict, func_code: str):
             _len_D = 4 * system.num_modes**2
             params = c[_len_D:] if len(c) > _len_D else c
             # get value
-            value = getattr(system, 'get_' + func_name)(params)
+            value = getattr(system, 'get_' + func_name)(params=params)
             # update results
             results.append((val, value))
         
@@ -132,13 +93,14 @@ def get_looper_func(SystemClass, solver_params: dict, func_code: str):
         func_code = default_looper_func_names[func_code]
 
     func = {
-        'aes': func_averaged_eigenvalues,
-        'les': func_lyapunov_exponents, 
-        'mav': func_measure_average,
-        'mdy': func_measure_dynamics,
-        'mss': func_measure_stationary,
+        'aes': get_func_solver_params('averaged_eigenvalues'),
+        'les': get_func_solver_params('lyapunov_exponents'),
+        'mav': get_func_solver_params('measure_average'),
+        'mdy': get_func_solver_params('measure_dynamics'),
+        'mss': get_func_solver_params('measure_stationary'),
         'moo': func_mean_optical_occupanies,
-        'pcc': func_pearson_correlation_coefficient
+        'osz': get_func_solver_params('optical_stability_zone'),
+        'pcc': get_func_solver_params('pearson_correlation_coefficient')
     }.get(func_code, get_func_params(func_code))
 
     return func
@@ -197,7 +159,7 @@ def wrap_looper(SystemClass, params: dict, func, looper, file_path: str=None, pl
 
     # select function
     if type(func) is str:
-        func = get_looper_func(SystemClass=SystemClass, solver_params=params['solver'], func_code=func)
+        func = get_looper_func(SystemClass=SystemClass, solver_params=params.get('solver', {}), func_code=func)
 
     # select looper
     if type(looper) is str:

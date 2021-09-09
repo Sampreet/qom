@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.8.0 - 2021/09/09 - 00 - Improved Callables
+* Removed multi-value appending from `qom.loopers.BaseLooper` module.
+* Updated `qom.systems` package:
+    * Updated all callables and added stability zone calculation in `BaseSystem` module.
+    * Improved mode dynamics calculation in `SOMASystem` module.
+    * Removed stability zone calculation from `SOSMSystem` module.
+* Minor fixes to styles and sizes in `qom.ui.axes` and `qom.ui.plotters` modules.
+* Handled template directory error in `qom.ui.widgets.LooperWidget` module.
+* Compacted functions in `qom.utils.looper` module.
+
 ## v0.8.0 - 2021/09/04 - 00 - Updated Systems
 * Updated `qom.systems` package:
     * Updated LE and RHC methods in `qom.systems.BaseSystem` module.
