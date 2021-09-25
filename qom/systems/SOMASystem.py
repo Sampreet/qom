@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.SOMASystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-08-15'
-__updated__ = '2021-09-07'
+__updated__ = '2021-09-25'
 
 # dependencies
 from decimal import Decimal
@@ -81,6 +81,8 @@ class SOMASystem(BaseSystem):
         """Method to obtain the dynamics of the optical mode amplitudes by solving the classical equations of motion.
 
         Requires predefined callables ``get_ivc`` and ``get_mode_rates``.
+        
+        Refer [1]_ for the implementation details.
 
         Parameters
         ----------

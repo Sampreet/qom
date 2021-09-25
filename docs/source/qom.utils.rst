@@ -5,4 +5,4 @@ qom.utils package
    :maxdepth: 1
    :caption: Modules:
 
-   qom.utils.wrappers
+   qom.utils.looper

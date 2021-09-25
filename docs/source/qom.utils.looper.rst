@@ -1,7 +1,7 @@
-qom.utils.wrappers module
+qom.utils.looper module
 =========================
 
-.. automodule:: qom.utils.wrappers
+.. automodule:: qom.utils.looper
    :members:
    :private-members:
    :undoc-members:

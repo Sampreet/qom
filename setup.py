@@ -27,7 +27,6 @@ setup(
     install_requires=[
         'matplotlib>=3.3',
         'numpy>=1.19',
-        'pyqt5>=5.9',
         'scipy>=1.5',
         'seaborn>=0.11',
         'sympy>=1.6'

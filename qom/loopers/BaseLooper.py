@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-09-08'
+__updated__ = '2021-09-24'
 
 # dependencies
 from decimal import Decimal
@@ -176,85 +176,39 @@ class BaseLooper():
             _val = _val.tolist()
             # update axis
             self.axes[axis]['val'] = _val
-    
-    def get_X_results(self, grad: bool=False, mode: str='serial'):
-        """Method to obtain results for variation in X-axis.
+
+    def get_full_file_path(self, file_path: str):
+        """Method to obtain the complete file path.
         
         Parameters
         ----------
-        grad : bool, optional
-            Option to calculate gradients.
-        mode : str, optional
-            Mode of computation. Available modes are:
-                ==================  ====================================================
-                value               meaning
-                ==================  ====================================================
-                "multiprocess"      multi-processor execution.
-                "multithread"       multi-thread execution.
-                "serial"            single-thread execution (fallback).
-                ==================  ====================================================
-
+        file_path : str
+            Original file path.
+            
         Returns
         -------
-        xs : list
-            Values of the X-axis.
-        vs : list
-            Calculated values.
+        file_path : str
+            Full file path.
         """
 
-        # supersede looper parameters
-        grad = self.params['looper'].get('grad', grad)
-        mode = self.params['looper'].get('mode', mode)
-        show_progress = self.params['looper'].get('show_progress', False)
+        # complete filename with system parameters
+        for key in self.params['system']:
+            file_path += '_' + str(self.params['system'][key])
+        # update for XLooper variable
+        for key in self.params['looper']['X']:
+            file_path += '_' + str(self.params['looper']['X'][key])
+        # update for XYLooper variable
+        if 'xy' in self.code:
+            Y = self.axes['Y']
+            for key in self.params['looper']['Y']:
+                file_path += '_' + str(self.params['looper']['Y'][key])
+        # update for XYZLooper variable
+        if 'xyz' in self.code:
+            Z = self.axes['Z']
+            for key in self.params['looper']['Z']:
+                file_path += '_' + str(self.params['looper']['Z'][key])
 
-        # extract frequently used variables
-        x_var = self.axes['X']['var']
-        x_idx = self.axes['X']['idx']
-        x_val = self.axes['X']['val']
-        x_dim = len(x_val)
-
-        # initialize axes
-        xs = list()
-        vs = list()
-        results = list()
-
-        # if multithreading is opted
-        if mode == 'multiprocess':
-            # obtain sorted results
-            results = self.get_multiprocessed_results(x_var, x_idx, x_val)
-        # if multithreading is opted
-        elif mode == 'multithread':
-            # obtain sorted results
-            results = self.get_multithreaded_results(x_var, x_idx, x_val)
-        else:
-            # iterate
-            for i in range(x_dim):
-                # update progress
-                if show_progress :
-                    self.update_progress(pos=i, dim=x_dim)
-                # update a deep copy
-                system_params = copy.deepcopy(self.params['system'])
-                if x_idx is not None:
-                    system_params[x_var][x_idx] = x_val[i]
-                else:
-                    system_params[x_var] = x_val[i]
-                # calculate value
-                self.func(system_params, x_val[i], logger, results)
-
-        # structure results
-        for i in range(x_dim):
-            _x = results[i][0]
-            _v = results[i][1]
-
-            # update lists
-            xs.append(_x)
-            vs.append(_v)
-
-        # if opted for gradient calculation
-        if grad:
-            vs = np.gradient(vs, xs)
-
-        return xs, vs
+        return file_path
 
     def get_grad_index(self, axis_values: list, calc_values: list=None, grad_position='mean', grad_mono_idx: int=0):
         """Function to calculate the index of a particular position in a list to calculate the gradients.
@@ -426,6 +380,85 @@ class BaseLooper():
             thres['V'] = self.results['V'][int(_index / _x_dim)][_index % _x_dim]
 
         return thres
+    
+    def get_X_results(self, grad: bool=False, mode: str='serial'):
+        """Method to obtain results for variation in X-axis.
+        
+        Parameters
+        ----------
+        grad : bool, optional
+            Option to calculate gradients.
+        mode : str, optional
+            Mode of computation. Available modes are:
+                ==================  ====================================================
+                value               meaning
+                ==================  ====================================================
+                "multiprocess"      multi-processor execution.
+                "multithread"       multi-thread execution.
+                "serial"            single-thread execution (fallback).
+                ==================  ====================================================
+
+        Returns
+        -------
+        xs : list
+            Values of the X-axis.
+        vs : list
+            Calculated values.
+        """
+
+        # supersede looper parameters
+        grad = self.params['looper'].get('grad', grad)
+        mode = self.params['looper'].get('mode', mode)
+        show_progress = self.params['looper'].get('show_progress', False)
+
+        # extract frequently used variables
+        x_var = self.axes['X']['var']
+        x_idx = self.axes['X']['idx']
+        x_val = self.axes['X']['val']
+        x_dim = len(x_val)
+
+        # initialize axes
+        xs = list()
+        vs = list()
+        results = list()
+
+        # if multithreading is opted
+        if mode == 'multiprocess':
+            # obtain sorted results
+            results = self.get_multiprocessed_results(x_var, x_idx, x_val)
+        # if multithreading is opted
+        elif mode == 'multithread':
+            # obtain sorted results
+            results = self.get_multithreaded_results(x_var, x_idx, x_val)
+        else:
+            # iterate
+            for i in range(x_dim):
+                # update progress
+                if show_progress :
+                    self.update_progress(pos=i, dim=x_dim)
+                # update a deep copy
+                system_params = copy.deepcopy(self.params['system'])
+                if x_idx is not None:
+                    system_params[x_var][x_idx] = x_val[i]
+                else:
+                    system_params[x_var] = x_val[i]
+                # calculate value
+                self.func(system_params, x_val[i], logger, results)
+
+        # structure results
+        for i in range(x_dim):
+            _x = results[i][0]
+            _v = results[i][1]
+
+            # update lists
+            xs.append(_x)
+            vs.append(_v)
+
+        # if opted for gradient calculation
+        if grad:
+            vs = np.gradient(vs, xs)
+
+        return xs, vs
 
     def plot_results(self, hold: bool=True, width: float=5.0, height: float=5.0):
         """Method to plot the results.
@@ -471,6 +504,31 @@ class BaseLooper():
         plotter.show(hold)
 
         return plotter
+
+    def save_results(self, file_path):
+        """Method to obtain the complete file path.
+        
+        Parameters
+        ----------
+        file_path : str
+            Original file path.
+        """
+
+        # create directories
+        file_dir = file_path[:len(file_path) - len(file_path.split('/')[-1])]
+        try:
+            os.makedirs(file_dir)
+        except FileExistsError:
+            # update log
+            logger.debug('Directory {dir_name} already exists\n'.format(dir_name=file_dir))
+
+        # save data
+        np.savez_compressed(file_path, np.array(self.results['V']))
+        
+        # display completion
+        logger.info('------------------Results Saved----------------------\t\n')
+        if self.cb_update is not None:
+            self.cb_update(status='Results Saved', progress=None, reset=True)
 
     def update_progress(self, pos, dim):
         """Method to update the progress of the calculation.
@@ -518,22 +576,8 @@ class BaseLooper():
         Y = None
         Z = None
         if file_path is not None:
-            # complete filename with system parameters
-            for key in self.params['system']:
-                file_path += '_' + str(self.params['system'][key])
-            # update for XLooper variable
-            for key in self.params['looper']['X']:
-                file_path += '_' + str(self.params['looper']['X'][key])
-            # update for XYLooper variable
-            if 'xy' in self.code:
-                Y = self.axes['Y']
-                for key in self.params['looper']['Y']:
-                    file_path += '_' + str(self.params['looper']['Y'][key])
-            # update for XYZLooper variable
-            if 'xyz' in self.code:
-                Z = self.axes['Z']
-                for key in self.params['looper']['Z']:
-                    file_path += '_' + str(self.params['looper']['Z'][key])
+
+            file_path = self.get_full_file_path(file_path=file_path)
 
             # attempt to load results if exists
             if os.path.isfile(file_path + '.npz'):
@@ -553,21 +597,8 @@ class BaseLooper():
             else:
                 self.loop()
 
-                # create directories
-                file_dir = file_path[:len(file_path) - len(file_path.split('/')[-1])]
-                try:
-                    os.makedirs(file_dir)
-                except FileExistsError:
-                    # update log
-                    logger.debug('Directory {dir_name} already exists\n'.format(dir_name=file_dir))
-
                 # save data
-                np.savez_compressed(file_path, np.array(self.results['V']))
-                
-                # display completion
-                logger.info('------------------Results Saved----------------------\t\n')
-                if self.cb_update is not None:
-                    self.cb_update(status='Results Saved', progress=None, reset=True)
+                self.save_results(file_path=file_path)
         
         # loop
         else:

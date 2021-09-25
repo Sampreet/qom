@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2021-09-08'
+__updated__ = '2021-09-24'
 
 # dependencies
 from matplotlib.colors import BoundaryNorm, LinearSegmentedColormap, Normalize
@@ -389,7 +389,7 @@ class MPLPlotter(BasePlotter):
             # calculate minimum and maximum values
             if len(vs[j]) != 0:
                 # handle NaN values
-                _no_nan = [y if y == y else 0 for y in vs[j]]
+                _no_nan = [0 if np.isnan(y) or np.isinf(y) else y for y in vs[j]]
 
                 # update limits
                 _minis.append(np.min(_no_nan))
@@ -432,7 +432,7 @@ class MPLPlotter(BasePlotter):
         _rave = np.ravel(vs)
 
         # initialize values
-        _no_nan = [z if z == z else 0 for z in _rave]
+        _no_nan = [0 if np.isnan(z) or np.isinf(z) else z for z in _rave]
         _mini, _maxi = np.min(_no_nan), np.max(_no_nan)
 
         # handle color bar limits

@@ -39,6 +39,8 @@ Backed by numerical libraries like NumPy and SciPy, and featuring the highly cus
 
 The project requires `Python 3.8+` installed, preferably via the [Anaconda distribution](https://www.anaconda.com/products/individual).
 
+***Note: To run the GUI modules, `pyqt` needs to be installed via Anaconda distribution.***
+
 ### Installing from PyPI
 
 To install the package and its requirements from the Python Package Index, execute: 

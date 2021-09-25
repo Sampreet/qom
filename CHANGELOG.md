@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.8.0 - 2021/09/25 - 00 - Added Classical Differences
+* Updated `docs` and fixed documentation of modules.
+* Added file-path and results-saving functions in `qom.loopers.BaseLooper` module.
+* Updated `qom.systems.BaseSystem` module:
+    * Added classical amplitude and phase difference methods.
+    * Updated Pearson correlation coefficient method.
+    * Handled mode amplitude calculation without correlations.
+* Handled infinity and NaN values in `qom.ui.plotters.MPLPlotter` module.
+* Added wrapper-merger function to `qom.utils.loopers` module and updated system-functions.
+* Updated requirements for `pyqt` in `README`, `requirements` and `setup`.
+
 ## v0.8.0 - 2021/09/09 - 00 - Improved Callables
 * Removed multi-value appending from `qom.loopers.BaseLooper` module.
 * Updated `qom.systems` package:

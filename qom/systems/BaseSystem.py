@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-09-07'
+__updated__ = '2021-09-25'
 
 # dependencies
 from typing import Union
@@ -52,6 +52,10 @@ class BaseSystem():
     .. [2] F. Galve, G. L. Giorgi and R. Zambrini, *Quantum Correlations and Synchronization Measures*, Lectures on General Quantum Correlations and their Applications, Quantum Science and Technology, Springer (2017).
 
     .. [3] T. F. Roque, F. Marquardt and O. M. Yevtushenko, *Nonlinear Dynamics of Weakly Dissipative Optomechanical Systems*, New J. Phys. **22**, 013049 (2020).
+
+    .. [4] M. Ludwig and F. Marquardt, *Quantum Many-body Dynamics in Optomechanical Arrays*, Phys. Rev. Lett. **111**, 073603 (2013).
+
+    .. [5] N. Yang, A. Miranowicz, Y.-C. Liu, K. Xia and F. Nori, *Chaotic Synchronization of Two Optical Cavity Modes in Optomechanical Systems*, Sci. Rep. ***9***, 15874 (2019).
 
     Notes
     -----
@@ -121,6 +125,8 @@ class BaseSystem():
     types_plots = getattr(MPLPlotter, 'types_1D') + getattr(MPLPlotter, 'types_2D') + getattr(MPLPlotter, 'types_3D')
     required_funcs = {
         'get_averaged_eigenvalues': ['get_A', 'get_ivc', 'get_mode_rates'],
+        'get_classical_amplitude_difference': ['get_ivc', 'get_mode_rates'],
+        'get_classical_phase_difference': ['get_ivc', 'get_mode_rates'],
         'get_lyapunov_exponents': ['get_A', 'get_ivc', 'get_mode_rates'],
         'get_mean_optical_amplitudes': ['get_ivc', 'get_oss_args'],
         'get_mean_optical_occupancies': ['get_ivc', 'get_oss_args'],
@@ -136,6 +142,8 @@ class BaseSystem():
     }
     required_params = {
         'get_averaged_eigenvalues': ['cache', 'cache_dir', 'cache_file', 'method', 'range_min', 'range_max', 'show_progress', 't_min', 't_max', 't_dim'],
+        'get_classical_amplitude_difference': ['cache', 'cache_dir', 'cache_file', 'idx_e', 'measure_type', 'method', 'show_progress', 't_min', 't_max', 't_dim'],
+        'get_classical_phase_difference': ['cache', 'cache_dir', 'cache_file', 'idx_e', 'measure_type', 'method', 'show_progress', 't_min', 't_max', 't_dim'],
         'get_lyapunov_exponents': ['cache', 'cache_dir', 'cache_file', 'method', 'method_le', 'num_iters', 'show_progress', 't_min', 't_max', 't_dim'],
         'get_mean_optical_amplitudes': [],
         'get_mean_optical_occupancies': [],
@@ -446,6 +454,76 @@ class BaseSystem():
 
         return eig_avg
 
+    def get_classical_amplitude_difference(self, solver_params: dict):
+        """Method to obtain the classical amplitude difference between two dynamical variables.
+        
+        Requires predefined callables ``get_ivc`` and ``get_mode_rates``.
+        
+        Refer [5]_ for the implementation details.
+
+        Parameters
+        ----------
+        solver_params : dict
+            Parameters for the solver.
+        
+        Returns
+        -------
+        cad : float
+            Classical amplitude difference.
+        """
+
+        # validate required functions
+        assert self.validate_required_funcs(func_name='get_classical_amplitude_difference', mode='verbose') is True, 'Missing required predefined callables'
+
+        # validate parameters
+        solver_params['measure_type'] = 'mode_amp'
+        self.__validate_params_measure(solver_params=solver_params, count=2)
+
+        # get measures at all times
+        M, _ = self.get_measure_dynamics(solver_params=solver_params)
+
+        # get mean
+        mean_i = np.mean([m[0] for m in M])
+        mean_j = np.mean([m[1] for m in M])
+        cad = np.mean([np.linalg.norm(m[0] - mean_i) - np.linalg.norm(m[1]- mean_j) for m in M])
+
+        return cad
+
+    def get_classical_phase_difference(self, solver_params: dict):
+        """Method to obtain the classical phase difference between two dynamical variables.
+        
+        Requires predefined callables ``get_ivc`` and ``get_mode_rates``.
+        
+        Refer [4]_ and [5]_ for the implementation details.
+
+        Parameters
+        ----------
+        solver_params : dict
+            Parameters for the solver.
+        
+        Returns
+        -------
+        cpd : float
+            Classical phase difference.
+        """
+
+        # validate required functions
+        assert self.validate_required_funcs(func_name='get_classical_phase_difference', mode='verbose') is True, 'Missing required predefined callables'
+
+        # validate parameters
+        solver_params['measure_type'] = 'mode_amp'
+        self.__validate_params_measure(solver_params=solver_params, count=2)
+
+        # get measures at all times
+        M, _ = self.get_measure_dynamics(solver_params=solver_params)
+
+        # get mean
+        mean_i = np.mean([m[0] for m in M])
+        mean_j = np.mean([m[1] for m in M])
+        cpd = np.mean([np.angle(m[0] - mean_i) - np.angle(m[1]- mean_j) for m in M])
+
+        return cpd
+
     def get_lyapunov_exponents(self, solver_params: dict):
         """Method to obtain the Lyapunov exponents.
 
@@ -516,7 +594,7 @@ class BaseSystem():
                     W_T[i] = Z_T[i] / np.linalg.norm(Z_T[i])
 
                     # update Lyapunov exponents
-                    lambdas[i] += np.log10(np.linalg.norm(Z_T[i])) / num_iters
+                    lambdas[i] = np.log10(np.linalg.norm(Z_T[i])) / num_iters
         # if singular value decomposition    
         else:
             # ODE function
@@ -780,7 +858,7 @@ class BaseSystem():
                     measure.append(eigs[idx])
             # elif correlation matrix element or mode amplitude
             else:
-                measure = self.__get_measure(solver_params=solver_params, modes=Modes[i], corrs=Corrs[i])
+                measure = self.__get_measure(solver_params=solver_params, modes=Modes[i], corrs=Corrs[i] if Corrs is not None else None)
 
             # update list
             M.append(measure)
@@ -1018,28 +1096,38 @@ class BaseSystem():
         
         Returns
         -------
-        S_Pearson : float
-            Pearson synchronization measure.
+        pcc : float
+            Pearson correlation coefficient.
         """
 
         # validate required functions
         assert self.validate_required_funcs(func_name='get_pearson_correlation_coefficient', mode='verbose') is True, 'Missing required predefined callables'
 
+        # extract frequently used variables
+        _measure_type = solver_params['measure_type']
+
         # validate parameters
-        self.__validate_params_measure(solver_params=solver_params, count=3)
+        self.__validate_params_measure(solver_params=solver_params, count=3 if _measure_type == 'corr_ele' else 2)
 
         # get measures at all times
         M, _ = self.get_measure_dynamics(solver_params=solver_params)
 
         # get mean values
-        mean_ii = np.mean([m[0] for m in M])
-        mean_ij = np.mean([m[1] for m in M])
-        mean_jj = np.mean([m[2] for m in M])
+        if _measure_type == 'corr_ele':
+            mean_ii = np.mean([m[0] for m in M])
+            mean_ij = np.mean([m[1] for m in M])
+            mean_jj = np.mean([m[2] for m in M])
+        else:
+            mean_i = np.mean([m[0] for m in M])
+            mean_j = np.mean([m[1] for m in M])
+            mean_ii = np.mean([np.linalg.norm(m[0] - mean_i)**2 for m in M])
+            mean_ij = np.mean([np.linalg.norm(m[0] - mean_i) * np.linalg.norm(m[1] - mean_j) for m in M])
+            mean_jj = np.mean([np.linalg.norm(m[1] - mean_j)**2 for m in M])
 
-        # Pearson synchronztion measure
-        S_Pearson = mean_ij / np.sqrt(mean_ii * mean_jj)
+        # Pearson correlation coefficient
+        pcc = mean_ij / np.sqrt(mean_ii * mean_jj)
 
-        return S_Pearson
+        return pcc
 
     def get_rhc_count_dynamics(self, solver_params: dict, plot: bool=False, plotter_params: dict=dict()):
         """Function to obtain the number of positive real roots of the drift matrix using the Routh-Hurwitz criterion.
