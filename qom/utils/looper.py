@@ -11,7 +11,7 @@ import numpy as np
 __name__    = 'qom.utils.looper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-05-25'
-__updated__ = '2021-09-25'
+__updated__ = '2021-09-26'
 
 # qom modules
 from ..ui import init_log
@@ -262,7 +262,7 @@ def merge_xy_loopers(y_ss, SystemClass, params: dict, func, looper, file_path: s
     _val = np.linspace(y_min, y_max, _num + 1)
     # truncate values
     _step_size = (Decimal(str(y_max)) - Decimal(str(y_min))) / (_num - 1)
-    _decimals = - _step_size.as_tuple().exponent
+    _decimals = - Decimal(str(y_ss)).as_tuple().exponent
     _val = np.around(_val, _decimals)
 
     # initialize lists

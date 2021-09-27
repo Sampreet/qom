@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-09-25'
+__updated__ = '2021-09-28'
 
 # dependencies
 from typing import Union
@@ -546,7 +546,7 @@ class BaseSystem():
         assert self.validate_required_funcs(func_name='get_lyapunov_exponents', mode='verbose') is True, 'Missing required predefined callables'
 
         # extract frequently used variables
-        method_le = solver_params.get('method_le', 'svd')
+        method_le = solver_params.get('method_le', 'gso')
         num_iters = int(solver_params.get('num_iters', 10000))
         _dim = 2 * self.num_modes
         iv, c = self.get_ivc()
@@ -562,28 +562,49 @@ class BaseSystem():
         _dt = T[1] - T[0]
         _T = np.linspace(T[-1], T[-1] + num_iters * _dt, num_iters + 1)
 
-        # if Gram-Schmidt orthonormalization
-        if method_le == 'gso':
-            # ODE function
-            def func_ode(t, modes, c=None):
-                return self.get_mode_rates(modes=modes, params=params, t=t)
+        # new initial values
+        modes = Modes[-1]
+        W_T = np.identity(_dim, dtype=np.complex_)
+        iv = modes + np.transpose(W_T).flatten().tolist()
 
-            # initialize solver
-            solver = ODESolver(params=solver_params, func=func_ode, iv=Modes[-1])
+        # ODE function
+        def func_ode(t, v, c=None):
+            # extract frequently used variables
+            modes = v[0:self.num_modes]
+            W = np.real(np.reshape(v[self.num_modes:], (_dim, _dim)))
+
+            # obtain quadrature rates
+            mode_rates = self.get_mode_rates(modes=modes, params=params, t=t)
+            # obtain deviation rates
+            W_rate = np.dot(self.get_A(modes=modes, params=params, t=t), W).flatten().tolist()
+
+            return mode_rates + W_rate
+
+        # initialize solver
+        solver = ODESolver(params=solver_params, func=func_ode, iv=iv)
+
+        # if singular value decomposition    
+        if method_le == 'svd':
             # extract final vector for another t_dim points
-            Modes = solver.solve(T=_T)
+            W = np.reshape(solver.solve(T=_T)[-1][self.num_modes:], (_dim, _dim))
 
-            # initialize variables
+            # singular value decomposition
+            _, s, _ = sl.svd(W)
+            # exponents
+            lambdas = [np.log10(s[i]) / num_iters / _dt  for i in range(len(s))]
+        # if Gram-Schmidt orthonormalization
+        else:
             lambdas = np.zeros(_dim, dtype=np.float_)
-            W_T = np.identity(_dim, dtype=np.float_)
-
             # iterate
             for k in range(0, num_iters):
-                # get drift matrix at steady state
-                jac = self.get_A(modes=Modes[k], params=params, t=_T[k])
+                # initialize solver
+                solver.v = copy.deepcopy(modes + np.transpose(W_T).flatten().tolist())
+                # solve one step
+                results = solver.solve(T=[_T[k], _T[k + 1]])
 
-                # calculate zs and transpose for ease in next steps
-                Z_T = np.transpose(np.dot(np.identity(_dim, dtype=np.float_) + jac * _dt, np.transpose(W_T)))
+                # extract modes and deviations
+                modes = results[-1][:self.num_modes]
+                Z_T = np.transpose(np.reshape(results[-1][self.num_modes:], (_dim, _dim)))
 
                 # perform Gram-Schmidt orthonormalization
                 for i in range(_dim):
@@ -594,34 +615,7 @@ class BaseSystem():
                     W_T[i] = Z_T[i] / np.linalg.norm(Z_T[i])
 
                     # update Lyapunov exponents
-                    lambdas[i] = np.log10(np.linalg.norm(Z_T[i])) / num_iters
-        # if singular value decomposition    
-        else:
-            # ODE function
-            def func_ode(t, v, c=None):
-                # extract frequently used variables
-                modes = v[0:self.num_modes]
-                W = np.real(np.reshape(v[self.num_modes:], (_dim, _dim)))
-
-                # obtain quadrature rates
-                mode_rates = self.get_mode_rates(modes=modes, params=params, t=t)
-                # obtain deviation rates
-                W_rate = np.dot(self.get_A(modes=modes, params=params, t=t), W).flatten().tolist()
-
-                return mode_rates + W_rate
-
-            # initial values
-            iv = Modes[-1] + np.identity(_dim, dtype=np.complex_).flatten().tolist()
-
-            # initialize solver
-            solver = ODESolver(params=solver_params, func=func_ode, iv=iv)
-            # extract final vector for another t_dim points
-            W = np.reshape(solver.solve(T=_T)[-1][self.num_modes:], (_dim, _dim))
-
-            # singular value decomposition
-            _, s, _ = sl.svd(W)
-            # exponents
-            lambdas = [np.log10(s[i]) / num_iters / _dt  for i in range(len(s))]
+                    lambdas[i] += np.log10(np.linalg.norm(Z_T[i])) / num_iters / _dt
 
         return lambdas
 

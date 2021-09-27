@@ -84,7 +84,6 @@ ROOT_DIR/
 │   ├───foo_bar.py
 │   └───...
 │
-├───_config.yml
 ├───.gitignore
 ├───CHANGELOG.md
 ├───CODE_OF_CONDUCT.md

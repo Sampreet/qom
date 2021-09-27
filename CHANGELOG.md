@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.8.0 - 2021/09/28 - 00 - Updated Lyapunov Exponents
+* Updated Lyapunov exponents in `qom.systems.BaseSystem` module.
+* Minor fixes to `qom.utils.looper` module.
+* Updated `CONTRIBUTING` and `README`.
+
 ## v0.8.0 - 2021/09/25 - 00 - Added Classical Differences
 * Updated `docs` and fixed documentation of modules.
 * Added file-path and results-saving functions in `qom.loopers.BaseLooper` module.
