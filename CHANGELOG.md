@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.1 - 2021/12/20 - 00 - Updated Stability Zone
+* Minor updates to `qom.loopers.BaseLooper` module.
+* Updated stability zone calculation in `qom.systems.BaseSystem` module.
+* Updated legend for `qom.ui.axes.MultiAxis` module.
+* Templated function to obtain scripts in `qom.ui.widgets.SystemWidget` module.
+* Updated `README` and `setup`.
+
 ## v0.8.0 - 2021/09/28 - 00 - Updated Lyapunov Exponents
 * Updated Lyapunov exponents in `qom.systems.BaseSystem` module.
 * Minor fixes to `qom.utils.looper` module.
