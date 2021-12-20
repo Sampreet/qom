@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.SystemWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-08-30'
+__updated__ = '2021-10-28'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -312,6 +312,8 @@ class SystemWidget(BaseWidget):
         param_rows = int(widget_col / 4) * 2 + (2 if widget_col % 4 != 0 else 0)
         self.setFixedHeight((pre_count + param_rows) * row_height)
 
+        self.get_scripts()
+
         # update theme
         self.set_theme()
     
@@ -328,6 +330,27 @@ class SystemWidget(BaseWidget):
         for widget in self.param_widgets:
             if widget.key in params:
                 widget.val = params[widget.key]
+
+    def get_scripts(self):
+        """Method to obtain available scripts."""
+
+        # initialize list
+        fig_names = list()
+
+        # if system is selected 
+        if self.system is not None:
+            # initialize system
+            system = self.system(params={}, cb_update=None)
+            # script directory
+            script_dir = 'scripts/' + str(system.code)
+
+            # if script directory exists
+            if os.path.isdir(script_dir):
+                # search scripts
+                for script_name in os.listdir(script_dir):
+                    # if script found
+                        # collect figure names
+                        fig_names.append(script_name)
 
     def set_theme(self, theme=None):
         """Method to update the theme.

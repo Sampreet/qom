@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-09-24'
+__updated__ = '2021-10-20'
 
 # dependencies
 from decimal import Decimal
@@ -576,7 +576,7 @@ class BaseLooper():
         Y = None
         Z = None
         if file_path is not None:
-
+            # get full file path
             file_path = self.get_full_file_path(file_path=file_path)
 
             # attempt to load results if exists

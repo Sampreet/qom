@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-09-28'
+__updated__ = '2021-11-25'
 
 # dependencies
 from typing import Union
@@ -132,10 +132,10 @@ class BaseSystem():
         'get_mean_optical_occupancies': ['get_ivc', 'get_oss_args'],
         'get_measure_average': ['get_ivc', 'get_mode_rates'],
         'get_measure_dynamics': ['get_ivc', 'get_mode_rates'],
-        'get_measure_stationary': ['get_ivc', 'get_mode_rates'],
+        'get_measure_stationary': ['get_ivc'],
         'get_modes_corrs_dynamics': ['get_ivc', 'get_mode_rates'],
         'get_modes_corrs_stationary': ['get_ivc'],
-        'get_optical_stability_zone': ['get_ivc', 'get_oss_args', 'get_oss_modes'],
+        'get_optical_stability_zone': ['get_ivc', 'get_oss_modes'],
         'get_pearson_correlation_coefficient': ['get_ivc', 'get_mode_rates'],
         'get_rhc_count_dynamics': ['get_A', 'get_ivc', 'get_mode_rates'],
         'get_rhc_count_stationary': ['get_ivc', 'get_mode_rates']
@@ -449,7 +449,7 @@ class BaseSystem():
         
         # update eigenvalues
         eigenvalues, _ = np.linalg.eig(A)
-        for idx in _solver_params['idx_e']:
+        for idx in solver_params['idx_e']:
             eig_avg.append(eigenvalues[idx])
 
         return eig_avg
@@ -892,7 +892,7 @@ class BaseSystem():
         self.__validate_params_measure(solver_params=solver_params)
 
         # get stationary values of mode and correlation
-        modes, corrs = self.get_modes_corrs_stationary(type_func='complex')
+        modes, corrs = self.get_modes_corrs_stationary(solver_params=solver_params)
 
         # extract frequently used variables
         _show_progress = solver_params.get('show_progress', False)
@@ -1071,6 +1071,93 @@ class BaseSystem():
         
         return modes, corrs
 
+    def get_optical_stability_zone(self, solver_params: dict):
+        """Function to obtain the stability zone using the optical steady state mode amplitudes and the Routh-Hurwitz criterion.
+
+        Requires predefined callables ``get_ivc`` and ``get_oss_modes``. Also, either one of the functions ``get_A`` and ``get_coeffs`` should be defined.
+
+        Refer :class:`qom.solvers.RHCSolver` for the implementation details.
+
+        Parameters
+        ----------
+        solver_params : dict
+            Parameters for the solver.
+        
+        Returns
+        -------
+        osz : int
+            Stability zone indicator of the optical steady state. The indicator is calculated in the following pattern:
+                ==========  ================================================
+                value       meaning
+                ==========  ================================================
+                0           one unstable root.
+                1           one stable root.
+                2           three unstable roots.
+                3           one stable root and two unstable roots.
+                4           two stable roots and one unstable root.
+                5           three stable roots.
+                6           five unstable roots.
+                7           one stable root and four unstable roots.
+                8           two stable roots and three unstable root.
+                9           three stable roots and two unstable root.
+                10          four stable roots and one unstable root.
+                11          five stable roots.
+                ...         ...
+                ==========  ================================================
+        """
+
+        # validate required functions
+        assert self.validate_required_funcs(func_name='get_optical_stability_zone', mode='verbose') is True, 'Missing required predefined callables'
+
+        # validate optional functions
+        assert getattr(self, 'get_A', None) is not None or getattr(self, 'get_coeffs', None) is not None, 'Either of the functions ``get_A`` or ``get_corrs`` should be non-none'
+
+        # extract frequently used parameters
+        method_sz = solver_params.get('method_sz', 'oss')
+        _, c = self.get_ivc()
+        if len(c) > 4 * self.num_modes**2:
+            params = c[4 * self.num_modes**2:]
+        else:
+            params = c
+            
+        # get optical steady state mode amplitudes for all mean optical occupancies
+        Modes = self.get_oss_modes(params=params)
+
+        # initialize lists
+        counts = list()
+        Idxs = list()
+
+        # for each mean optical occupancy
+        for modes in Modes:
+            # if coefficients is given
+            if getattr(self, 'get_coeffs', None) is not None:
+                # initialize solver
+                solver = RHCSolver(coeffs=self.get_coeffs(modes=modes, params=params, t=None))
+            # use drift matrix
+            else:
+                # initialize solver
+                solver = RHCSolver(A=self.get_A(modes=modes, params=params, t=None))
+                
+            # get indices with sign changes
+            idxs = solver.get_indices()
+
+            # update lists
+            counts.append(len(idxs))
+            Idxs.append(idxs)
+
+        # count number of unstable roots
+        _u = np.sum([1 if count > 0 else 0 for count in counts])
+        # set stability zone codes
+        _codes = list()
+        for j in range(len(Modes)):
+            if j % 2 == 0:
+                for i in range(j + 2):
+                    _codes.append(10 * i + (j - i + 1))
+        # set stability zone
+        osz = _codes.index(10 * (len(counts) - _u) + _u)
+
+        return osz
+
     def get_pearson_correlation_coefficient(self, solver_params: dict):
         r"""Method to obtain the Pearson correlation coefficient.
 
@@ -1181,12 +1268,17 @@ class BaseSystem():
                 logger.info('Computing ({module_name}): Progress = {progress:3.2f}'.format(module_name=__name__, progress=progress))
                 if self.cb_update is not None:
                     self.cb_update(status='Computing ({module_name})...'.format(module_name=__name__), progress=progress)
-                
-            # drift matrix
-            A = self.get_A(Modes[i], params, i * _t_ss)
+                    
+            # if coefficients is given
+            if getattr(self, 'get_coeffs', None) is not None:
+                # initialize solver
+                solver = RHCSolver(coeffs=self.get_coeffs(modes=Modes[i], params=params, t=i * _t_ss))
+            # use drift matrix
+            else:
+                # initialize solver
+                solver = RHCSolver(A=self.get_A(modes=Modes[i], params=params, t=i * _t_ss))
 
             # indices of the RHC sequence
-            solver = RHCSolver(A)
             _idxs = solver.get_indices()
             # update counter
             Counts.append(len(_idxs))
@@ -1254,88 +1346,6 @@ class BaseSystem():
         count = len(idxs)
 
         return count, idxs
-
-    def get_optical_stability_zone(self, solver_params: dict):
-        """Function to obtain the stability zone using the optical steady state mode amplitudes and the Routh-Hurwitz criterion.
-
-        Requires predefined callables ``get_ivc``, ``get_oss_args`` and ``get_oss_modes``. Also, either one of the functions ``get_A`` and ``get_coeffs`` should be defined.
-
-        Refer :class:`qom.solvers.RHCSolver` for the implementation details.
-
-        Parameters
-        ----------
-        solver_params : dict
-            Parameters for the solver.
-        
-        Returns
-        -------
-        osz : list
-            Stability zone indicator of the optical steady state. The indicator codes are: 
-                ==========  ================================================
-                value       meaning
-                ==========  ================================================
-                1           one stable root.
-                2           one unstable root.
-                3           one stable root and two unstable roots.
-                4           two stable roots and one unstable root.
-                ==========  ================================================
-        """
-
-        # validate required functions
-        assert self.validate_required_funcs(func_name='get_optical_stability_zone', mode='verbose') is True, 'Missing required predefined callables'
-
-        # validate optional functions
-        assert getattr(self, 'get_A', None) is not None or getattr(self, 'get_coeffs', None) is not None, 'Either of the functions ``get_A`` or ``get_corrs`` should be non-none'
-
-        # extract frequently used variables
-        method_sz = solver_params.get('method_sz', 'oss')
-        _, c = self.get_ivc()
-        if len(c) > 4 * self.num_modes**2:
-            params = c[4 * self.num_modes**2:]
-        else:
-            params = c
-
-        # initialize lists
-        counts = list()
-        Idxs = list()
-
-        # get optical steady state mode amplitudes for all mean optical occupancies
-        Modes = self.get_oss_modes(params=params)
-
-        # for each mean optical occupancy
-        for modes in Modes:
-            # if coefficients is given
-            if getattr(self, 'get_coeffs', None) is not None:
-                # initialize solver
-                solver = RHCSolver(coeffs=self.get_coeffs(modes=modes, params=params, t=None))
-            # use drift matrix
-            else:
-                # initialize solver
-                solver = RHCSolver(A=self.get_A(modes=modes, params=params, t=None))
-                
-            # get indices with sign changes
-            idxs = solver.get_indices()
-
-            # update lists
-            counts.append(len(idxs))
-            Idxs.append(idxs)
-
-        # initialize zone
-        osz = len(counts)
-
-        # if monostable
-        if osz == 1:
-            # if unstable root
-            if counts[0] > 0:
-                osz = 2
-
-        # if bistable
-        if osz == 3:
-            # if one unstable root
-            if np.sum([1 if count > 0 else 0 for count in counts]) == 1:
-                osz = 4
-
-        return osz
 
     def plot_dynamics(self, plotter_params: dict, V: list, T: list, N: list=None, hold: bool=True, width: float=5.0, height: float=5.0):
         """Method to plot the dynamics.
@@ -1418,7 +1428,7 @@ class BaseSystem():
             if getattr(self, required_func, None) is None:
                 # update log
                 if mode == 'verbose':
-                    logger.warning('Missing required function {required_func}\n'.format(required_func=required_func))
+                    logger.warning('Missing required function ``{required_func}``\n'.format(required_func=required_func))
                 # flag
                 is_valid = False
                 break
