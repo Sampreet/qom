@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.log'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-02-05'
-__updated__ = '2021-07-01'
+__updated__ = '2021-12-24'
 
 # dependencies
 import datetime as dt
@@ -46,8 +46,8 @@ def init_log(log_format='full', debug=False):
         handler = get_handler(formatter)
         main_logger.addHandler(handler)
 
-    # test
-    logger.info('------------------------------Logger Initialized-----------------\n')
+        # test
+        logger.info('------------------------------Logger Initialized-----------------\n')
     
 def get_formatter(log_format='full'):
     """Function to obtain the formatter for stream handler.

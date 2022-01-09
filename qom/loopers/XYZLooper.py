@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.XYZLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-28'
-__updated__ = '2021-08-26'
+__updated__ = '2022-01-09'
 
 # dependencies
 from typing import Union
@@ -126,10 +126,16 @@ class XYZLooper(BaseLooper):
 
             # update system parametes
             if y_idx is not None:
+                # handle non system parameter
+                if system_params.get(y_var, None) is None:
+                    system_params[y_var] = [0 for _ in range(y_idx + 1)]
                 system_params[y_var][y_idx] = _y
             else:
                 system_params[y_var] = _y
             if z_idx is not None:
+                # handle non system parameter
+                if system_params.get(z_var, None) is None:
+                    system_params[z_var] = [0 for _ in range(z_idx + 1)]
                 system_params[z_var][z_idx] = _z
             else:
                 system_params[z_var] = _z

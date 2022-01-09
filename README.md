@@ -1,6 +1,6 @@
 # The Quantum Optomechanics Toolbox
 
-[![Version](https://img.shields.io/badge/version-0.8.1-red?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/version-0.8.2-red?style=for-the-badge)](#)
 [![Milestone](https://img.shields.io/github/milestones/progress/sampreet/qom/2?style=for-the-badge)](https://github.com/Sampreet/qom/milestones)
 [![Last Commit](https://img.shields.io/github/last-commit/sampreet/qom?style=for-the-badge)](#)
 
@@ -29,9 +29,10 @@ Backed by numerical libraries like NumPy and SciPy, and featuring the highly cus
 - Multithreaded looping
 - Project website
 
-### Up Next in v0.9!
+### Up Next!
 
 - [ ] Support for Delay Differential Equations
+- [ ] Multiprocessing Support
 
 ## Installation
 
@@ -116,7 +117,7 @@ For example, the `qom.systems.SOSMSystem` class can be used to interface a singl
 # initialize the system with system parameters
 system = MySystem(system_params)
 # obtain mean occupancy of the optical mode
-N_o, _ = system.get_mean_optical_occupancies()
+N_os, _ = system.get_mean_optical_occupancies()
 ```
 
 Here, `MySystem` is a class inheriting `SOSMSystem`, initialized by `system_params`, which is a dictionary containing the parameters of the system.

@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.BasePlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-06'
-__updated__ = '2021-09-08'
+__updated__ = '2022-01-02'
 
 # dependencies
 from typing import Union
@@ -68,6 +68,7 @@ class BasePlotter():
             "title"                 (*str*) title of the plot.
             "type"                  (*str*) type of the plot (refer notes).
             "v_bound"               (*str*) option to check user-defined bounds.
+            "v_comp"                (*str*) component of complex value. Options are "real" or "imag".
             "v_label"               (*str*) label of the V-axis.
             "v_name"                (*str*) display name of the V-axis.
             "v_scale"               (*str*) scale of the V-axis.
@@ -167,6 +168,7 @@ class BasePlotter():
         'show_legend': False,
         'title': '',
         'type': 'contourf',
+        'v_comp': 'real',
         'v_label': '$value$',
         'v_scale': 'linear',
         'width': 5.0,
@@ -223,6 +225,7 @@ class BasePlotter():
                 'ticks': params.get('cbar_ticks', None),
                 'tick_labels': params.get('cbar_tick_labels', None),
             },
+            'v_comp': params.get('v_comp', 'real'),
             'v_scale': params.get('v_scale', 'linear'),
             'x_scale': params.get('x_scale', 'linear'),
             'y_scale': params.get('y_scale', 'linear'),

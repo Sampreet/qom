@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.XYLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-08-26'
+__updated__ = '2022-01-09'
 
 # dependencies
 from typing import Union
@@ -117,6 +117,9 @@ class XYLooper(BaseLooper):
             # update system parameter
             _val = y_val[k]
             if y_idx is not None:
+                # handle non system parameter
+                if system_params.get(y_var, None) is None:
+                    system_params[y_var] = [0 for _ in range(y_idx + 1)]
                 system_params[y_var][y_idx] = _val
             else:
                 system_params[y_var] = _val

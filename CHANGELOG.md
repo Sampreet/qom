@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.8.2 - 2022/01/09 - 00 - Updated Loopers and Bugfixes
+* Added support for custom parameters in `qom.loopers` modules.
+* Added default time parameters in `qom.solvers.HLESover` module.
+* Fixed dimension mismatch in `qom.ui.axes.MultiAxis` module.
+* Updated `qom.ui.plotters` package:
+    * Added option to choose real or imaginary components in `BasePlotter` and `MPLPlotter` modules.
+    * Fixed dimension mismatch and scale in `MPLPlotter` module.
+* Minor fixes to `qom.ui.log` and `qom.utils.looper` modules.
+* Updated `README` and `setup`.
+
 ## v0.8.1 - 2021/12/20 - 00 - Updated Stability Zone
 * Minor updates to `qom.loopers.BaseLooper` module.
 * Updated stability zone calculation in `qom.systems.BaseSystem` module.

@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2021-09-24'
+__updated__ = '2022-01-02'
 
 # dependencies
 from matplotlib.colors import BoundaryNorm, LinearSegmentedColormap, Normalize
@@ -125,6 +125,7 @@ class MPLPlotter(BasePlotter):
         if _type in self.types_1D:
             # update y-axis
             self.__update_axis(_mpl_axes, 'y', self.axes['V'])
+            _mpl_axes.set_yscale(self.params['v_scale'])
 
             # initialize 1D plot
             self.__init_1D()
@@ -210,22 +211,19 @@ class MPLPlotter(BasePlotter):
         if _colors is None or len(_colors) < dim:
             palette_colors = self.get_colors(_palette, self.bins)
             _colors = [[palette_colors[i % self.bins]] if 'scatter' in _type else palette_colors[i % self.bins] for i in range(dim)]
-            self.axes['Y'].colors = _colors
 
         # udpate styles
         if _styles is None or len(_styles) < dim:
             _styles = [BasePlotter.default_linestyles[i % len(BasePlotter.default_linestyles)] if 'line' in _type else BasePlotter.default_markers[i % len(BasePlotter.default_markers)] for i in range(dim)]
-            self.axes['Y'].styles = _styles
 
         # udpate sizes
         if _sizes is None or len(_sizes) < dim:
-            _sizes = [5 for _ in range(dim)]
-            self.axes['Y'].sizes = _sizes
+            _sizes = [1 for _ in range(dim)]
 
         # line plots
         if 'line' in _type:
             # plots
-            self.plots += [Line2D([], [], color=_colors[i], linestyle=_styles[i]) for i in range(_dim, dim)]
+            self.plots += [Line2D([], [], color=_colors[i], linestyle=_styles[i], linewidth=_sizes[i]) for i in range(_dim, dim)]
             [_mpl_axes.add_line(self.plots[i]) for i in range(_dim, dim)]
 
         # scatter plots
@@ -743,8 +741,12 @@ class MPLPlotter(BasePlotter):
 
         # handle complex values
         if type(vs[0]) is complex or (type(vs[0]) is list and type(vs[0][0]) is complex):
-            logger.warning('Plotting only real parts of the complex values\n')
-            vs = np.real(vs).tolist()
+            if 'imag' in self.params['v_comp']:
+                logger.info('Plotting only imaginary parts of the complex values\n')
+                vs = np.imag(vs).tolist()
+            else: 
+                logger.info('Plotting only real parts of the complex values\n')
+                vs = np.real(vs).tolist()
 
         # 1D plots
         if _type in self.types_1D:

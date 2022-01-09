@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-10-20'
+__updated__ = '2022-01-09'
 
 # dependencies
 from decimal import Decimal
@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 # TODO: Handle multi-valued points for gradients in `get_X_results`.
 # TODO: Handle monotonic modes in `get_index`.
 # TODO: Support gradients in `wrap`.
+# TODO: Fix `update_progress`.
 
 class BaseLooper():
     """Class to interface loopers.
@@ -439,6 +440,9 @@ class BaseLooper():
                 # update a deep copy
                 system_params = copy.deepcopy(self.params['system'])
                 if x_idx is not None:
+                    # handle non system parameter
+                    if system_params.get(x_var, None) is None:
+                        system_params[x_var] = [0 for _ in range(x_idx + 1)]
                     system_params[x_var][x_idx] = x_val[i]
                 else:
                     system_params[x_var] = x_val[i]

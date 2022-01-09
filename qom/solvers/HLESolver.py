@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.HLESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-08-28'
+__updated__ = '2022-01-01'
 
 # dependencies
 from decimal import Decimal
@@ -65,8 +65,8 @@ class HLESolver():
     ui_params = {
         'method': ODESolver.new_methods + ODESolver.old_methods,
         't_min': 0.0,
-        't_max': 100.0,
-        't_dim': 1001
+        't_max': 1000.0,
+        't_dim': 10001
     }
 
     @property
@@ -114,7 +114,8 @@ class HLESolver():
 
         # validate parameters
         for key in ['t_min', 't_max', 't_dim']:
-            assert key in params, 'Parameter ``params`` should contain key "{}" for looper parameters'.format(key)
+            if key not in params:
+                logger.info('``params`` does not contain "{}", using {}\n'.format(key, self.ui_params[key]))
 
         # set attributes
         self.params = params
@@ -155,9 +156,9 @@ class HLESolver():
         """
 
         # extract frequently used variables
-        t_min = np.float_(self.params['t_min'])
-        t_max = np.float_(self.params['t_max'])
-        t_dim = int(self.params['t_dim'])
+        t_min = np.float_(self.params.get('t_min', self.ui_params['t_min']))
+        t_max = np.float_(self.params.get('t_max', self.ui_params['t_max']))
+        t_dim = int(self.params.get('t_dim', self.ui_params['t_dim']))
 
         # calculate times
         _ts = np.linspace(t_min, t_max, t_dim)

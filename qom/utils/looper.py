@@ -11,7 +11,7 @@ import numpy as np
 __name__    = 'qom.utils.looper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-05-25'
-__updated__ = '2021-09-26'
+__updated__ = '2022-01-06'
 
 # qom modules
 from ..ui import init_log
@@ -181,11 +181,11 @@ def wrap_looper(SystemClass, params: dict, func, looper, file_path: str=None, pl
     # select looper
     if type(looper) is str:
         if looper == 'xy_looper':
-            looper = XYLooper(func, params)
+            looper = XYLooper(func, copy.deepcopy(params))
         elif looper == 'xyz_looper':
-            looper = XYZLooper(func, params)
+            looper = XYZLooper(func, copy.deepcopy(params))
         else:
-            looper = XLooper(func, params)
+            looper = XLooper(func, copy.deepcopy(params))
 
     # wrap looper
     looper.wrap(file_path=file_path, plot=plot, hold=hold, width=width, height=height)
