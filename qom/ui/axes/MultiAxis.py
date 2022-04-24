@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.axes.MultiAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-10'
-__updated__ = '2022-01-02'
+__updated__ = '2022-04-24'
 
 # TODO: set color and style variants.
 
@@ -24,34 +24,50 @@ class MultiAxis(BaseAxis):
 
     Parameters
     ----------
-    params : dict or list
-        Parameters for the axis supporting a list of values or a dictionary of parameters. Refer :class:`qom.ui.axes.BaseAxis` for currently supported keys.
+    axis : str
+        Name of the axis, "X", "Y", "Z" or "V".
+    axis_params : dict or list
+        Values for the axis supporting a list of values or a dictionary containing the range of values with keys "min", "max", "dim" and "scale" or the values themselves under key "val".
+    plotter_params : dict
+        Parameters for the plotter. Along with the keys defined in :class:`qom.ui.axes.BaseAxis`, additionally supported keys are:
+            ==============  ====================================================
+            key             value
+            ==============  ====================================================
+            "colors"        (*list*) colors for plots.
+            "legend"        (*list*) legend of the plots.
+            "name"          (*str*) display name of the axis.
+            "sizes"         (*list*) sizes of the plots.
+            "styles"        (*list*) styles of the plots.
+            "unit"          (*str*) unit of the plots.
+            ==============  ====================================================
     """
 
-    def __init__(self, params={}):
+    def __init__(self, axis, axis_params, plotter_params):
         """Class constructor for MultiAxis."""
 
         # initialize super class
-        super().__init__(params)
-
-        # set var
-        self.var = params.get('var', 'multi_axis')
+        super().__init__(axis, axis_params, plotter_params)
 
         # set name
-        self.name = params.get('name', '')
+        self.name = plotter_params.get(axis.lower() + '_name', 'MultiAxis')
 
         # set unit
-        self.unit = params.get('unit', '')
+        self.unit = plotter_params.get(axis.lower() + '_unit', self.axis_defaults['unit'])
 
         # set params
-        self.legend = params.get('legend', '')
-        if self.name == '' and self.var == 'multi_axis':
-            self.legend = ['{value} {unit}'.format(value=v, unit=self.unit) for v in self.val]
-        elif self.legend == '':
-            self.legend = ['{name} = {value} {unit}'.format(name=self.name if self.name != '' else self.var, value=v, unit=self.unit) for v in self.val]
+        _legend = plotter_params.get(axis.lower() + '_legend', self.axis_defaults['legend'])
+        # if legend are defined
+        if type(_legend) is list and len(_legend) != 0:
+            self.legend = _legend
+        # else set legend from name value and unit
+        else:
+            if self.name == 'MultiAxis':
+                self.legend = ['{value} {unit}'.format(value=v, unit=self.unit) for v in self.val]
+            else:
+                self.legend = ['{name} = {value} {unit}'.format(name=self.name, value=v, unit=self.unit) for v in self.val]
 
         # set colors
-        _colors = params.get('colors', [])
+        _colors = plotter_params.get(axis.lower() + '_colors', self.axis_defaults['colors'])
         # if colors are defined
         if type(_colors) is list and len(_colors) != 0:
             self.colors = _colors
@@ -60,7 +76,7 @@ class MultiAxis(BaseAxis):
             self.colors = None
 
         # set sizes
-        _sizes = params.get('sizes', [])
+        _sizes = plotter_params.get(axis.lower() + '_sizes', self.axis_defaults['sizes'])
         # if sizes are defined
         if type(_sizes) is list and len(_sizes) != 0:
             self.sizes = _sizes
@@ -69,7 +85,7 @@ class MultiAxis(BaseAxis):
             self.sizes = None
 
         # set styles
-        _styles = params.get('styles', [])
+        _styles = plotter_params.get(axis.lower() + '_styles', self.axis_defaults['styles'])
         # if styles are defined
         if type(_styles) is list and len(_styles) != 0:
             self.styles = _styles

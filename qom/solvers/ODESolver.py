@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.ODESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-08-26'
+__updated__ = '2022-04-24'
 
 # dependencies
 import copy
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class ODESolver():
     r"""Class to solve ordinary differential equations.
 
-    Initializes ``integrator`` and ``T`` properties.
+    Initializes ``c``, ``cb_update``, ``func``, ``integrator``, ``params``, ``T`` and ``v``.
 
     Parameters
     ----------
@@ -74,7 +74,7 @@ class ODESolver():
     """
 
     # attributes
-    code = 'ode_solver'
+    code = 'ODESolver'
     name = 'Ordinary Differential Equations Solver'
     new_methods = ['BDF', 'DOP853', 'LSODA', 'Radau', 'RK23', 'RK45']
     old_methods = ['dop853', 'dopri5', 'lsoda', 'vode', 'zvode']
@@ -110,11 +110,11 @@ class ODESolver():
         assert method in supported_methods, 'Parameter ``method`` should assume one of {}'.format(supported_methods)
 
         # set attributes
-        self.params = params
-        self.func = func
-        self.v = copy.deepcopy(iv)
         self.c = copy.deepcopy(c)
         self.cb_update = cb_update
+        self.func = func
+        self.params = params
+        self.v = copy.deepcopy(iv)
 
         # set properties
         if self.params['method'] in self.old_methods:

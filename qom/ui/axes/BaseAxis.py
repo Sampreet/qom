@@ -6,9 +6,10 @@
 __name__    = 'qom.ui.axes.BaseAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-10'
-__updated__ = '2021-08-27'
+__updated__ = '2022-04-24'
 
 # dependencies
+from decimal import Decimal
 import logging
 import numpy as np
 
@@ -20,209 +21,142 @@ logger = logging.getLogger(__name__)
 class BaseAxis():
     """Class to interface axes.
 
-    Initializes ``val``, ``dim``, ``bound``, ``ticks`` and ``tick_labels`` properties. Inherited objects need to set the other properties individually.
+    Initializes ``bound``, ``dim``, ``label``, ``label_pad``, ``limits``, ``scale``, ``tick_dim``, ``tick_labels``, ``tick_pad``, ``tick_position``, ``ticks``, ``ticks_minor`` and ``val``. Inherited objects need to set the other properties individually.
 
     Parameters
     ----------
-    params : dict or list
-        Parameters for the axis supporting a list of values or a dictionary of parameters. Currently supported keys are:
+    axis : str
+        Name of the axis, "X", "Y", "Z" or "V".
+    axis_params : dict or list
+        Values for the axis supporting a list of values or a dictionary containing the range of values with keys "min", "max", "dim" and "scale" or the values themselves under key "val".
+    plotter_params : dict
+        Parameters for the plotter. Currently supported keys are:
             ==============  ====================================================
             key             value
             ==============  ====================================================
-            "bound"         (*str*) option to check user-defined bounds, assuming either of "both", "lower", "none" or "upper".
-            "colors"        (*str*) colors for plots.
-            "dim"           (*int*) dimension of the axis.
-            "label"         (*str*) label of the axis.
-            "legend"        (*list*) legend of the plots.
-            "max"           (*float*) max value of the axis.
-            "min"           (*float*) min value of the axis.
-            "name"          (*str*) display name of the axis.
-            "sizes"         (*list*) sizes of the plots.
-            "styles"        (*list*) styles of the plots.
+            "label"         (*str*) text of the axis label.
+            "label_pad"     (*int*) padding of the axis label.
+            "limits"        (*list*) minimum and maximum limits for the axis.
+            "scale"         (*str*) step scale for the values. Options are "linear" and "log".
+            "tick_dim"      (*float*) dimension of the ticks.
             "tick_labels"   (*list*) tick labels of the plots.
+            "tick_pad"      (*int*) padding of the tick labels.
+            "tick_position" (*str*) position of ticks on the plot. Options are "both", "bottom", "left", "right" or "top".
             "ticks"         (*list*) ticks of the plots.
-            "unit"          (*str*) unit of the plots.
-            "val"           (*list*) values of the plots.
-            "var"           (*str*) variable of the plots.
+            "ticks_minor"   (*list*) positions of minor ticks of the plots.
             ==============  ====================================================
     """
 
-    @property
-    def bound(self):
-        """str: Option to check user-defined bounds:
-            ==========  ====================================================
-            value       meaning
-            ==========  ====================================================
-            "both"      both upper and lower bounds.
-            "lower"     lower bound.
-            "none"      not bounded (fallback).
-            "upper"     uper bound.
-            ==========  ====================================================
-        """
+    # attributes
+    axis_defaults = {
+        'colors': list(),
+        'label': '',
+        'label_pad': 4,
+        'legend': list(),
+        'limits': None, 
+        'name': '',
+        'scale': 'linear',
+        'sizes': list(),
+        'styles': list(),
+        'tick_dim': 5,
+        'tick_labels': None,
+        'tick_pad': 8,
+        'tick_position': 'both-in',
+        'ticks': list(),
+        'ticks_minor': None,
+        'unit': ''
+    }
 
-        return self.__bound
-
-    @bound.setter
-    def bound(self, bound):
-        self.__bound = bound
-
-    @property
-    def colors(self):
-        """list: Colors for plots."""
-
-        return self.__colors
-
-    @colors.setter
-    def colors(self, colors):
-        self.__colors = colors
-
-    @property
-    def dim(self):
-        """int: Dimension of the axis."""
-
-        return self.__dim
-
-    @dim.setter
-    def dim(self, dim):
-        self.__dim = dim
-
-    @property
-    def label(self):
-        """str: Label of the axis."""
-
-        return self.__label
-
-    @label.setter
-    def label(self, label):
-        self.__label = label
-
-    @property
-    def legend(self):
-        """list: Legends of the axis."""
-
-        return self.__legend
-
-    @legend.setter
-    def legend(self, legend):
-        self.__legend = legend
-
-    @property
-    def name(self):
-        """str: Display name of the axis."""
-
-        return self.__name
-
-    @name.setter
-    def name(self, name):
-        self.__name = name
-
-    @property
-    def sizes(self):
-        """list: Sizes of the plots."""
-
-        return self.__sizes
-
-    @sizes.setter
-    def sizes(self, sizes):
-        self.__sizes = sizes
-
-    @property
-    def styles(self):
-        """list: Styles of the plots."""
-
-        return self.__styles
-
-    @styles.setter
-    def styles(self, styles):
-        self.__styles = styles
-
-    @property
-    def tick_labels(self):
-        """list: Tick labels of the axis."""
-
-        return self.__tick_labels
-
-    @tick_labels.setter
-    def tick_labels(self, tick_labels):
-        self.__tick_labels = tick_labels
-
-    @property
-    def ticks(self):
-        """list: Ticks of the axis."""
-
-        return self.__ticks
-
-    @ticks.setter
-    def ticks(self, ticks):
-        self.__ticks = ticks
-
-    @property
-    def unit(self):
-        """str: Unit of the axis."""
-
-        return self.__unit
-
-    @unit.setter
-    def unit(self, unit):
-        self.__unit = unit
-
-    @property
-    def val(self):
-        """list: Values of the axis."""
-
-        return self.__val
-
-    @val.setter
-    def val(self, val):
-        self.__val = val
-
-    @property
-    def var(self):
-        """str: Variable of the axis."""
-
-        return self.__var
-
-    @var.setter
-    def var(self, var):
-        self.__var = var
-
-    def __init__(self, params):
+    def __init__(self, axis, axis_params, plotter_params):
         """Class constructor for BaseAxis."""
 
-        # frequently used variables
-        _min = -1
-        _max = 1
-        _dim = 5
-        
-        # set val
-        _val = params.get('val', list())
-        if type(_val) is list and len(_val) > 0:
-            self.val = _val
+        # extract frequently used variables
+        _axis = axis_params.get(axis, None)
+
+        # supersede axis parameters by plotter parameters
+        params = dict()
+        for key in self.axis_defaults:
+            params[key] = plotter_params.get(axis.lower() + '_' + key, self.axis_defaults[key])
+
+        # convert to list if numpy array
+        if type(_axis) is np.ndarray:
+            _axis = _axis.tolist()
+
+        # handle list of values
+        if type(_axis) is list:
+            _axis = {
+                'val': _axis
+            }
+
+        # if values available
+        if _axis is not None:
+            # if axis values are provided
+            _val = _axis.get('val', None)
+            # convert to list if numpy array
+            if type(_val) is np.ndarray:
+                _val = _val.tolist()
+            # set values
+            if type(_val) is list:
+                # validate values
+                assert len(_val) != 0, 'Key "{}" should contain key "val" with a non-empty list'.format(axis)
+
+                self.val = _val
+            else:
+                # validate range
+                assert 'min' in _axis and 'max' in _axis, 'Key "{}" should contain keys "min" and "max" to define axis range'.format(axis)
+
+                self.val = self._init_array(np.float_(_axis['min']), np.float_(_axis['max']), int(_axis.get('dim', 101)), str(_axis.get('scale', 'linear')))
+
+            # set range
+            _min = 0 if type(self.val[0]) is str else np.min(self.val)
+            _max = len(self.val) if type(self.val[0]) is str else np.max(self.val)
+        # no values available
         else:
-            # initizlize values
-            self.val = self.init_array(params.get('min', _min), params.get('max', _max), params.get('dim', _dim))
+            self.val = self._init_array(0, params['tick_dim'], int(params['tick_dim']), params['scale'])
 
-        # reset range if not string
-        if type(self.val[0]) is not str:
-            _min = min(self.val)
-            _max = max(self.val)
+            # set range
+            _min = self.val[0]
+            _max = self.val[-1]
 
-        # set dim
+        # set dimension
         self.dim = len(self.val)
 
+        # set label
+        self.label = params['label']
+
+        # set label padding
+        self.label_pad = int(params['label_pad'])
+
+        # set scale
+        self.scale = params['scale']
+
+        # set tick dimension
+        self.tick_dim = params['tick_dim']
+
+        # set tick padding
+        self.tick_pad = int(params['tick_pad'])
+
+        # set tick padding
+        self.tick_position = params['tick_position']
+
         # set ticks
-        _ticks = params.get('ticks', list())
+        _ticks = params['ticks']
         # if ticks are defined
         if type(_ticks) is list and len(_ticks) != 0:
             self.ticks = _ticks
-            self.bound = 'both'
+            self.tick_dim = len(_ticks)
+            self.bound = True
+            self.limits = params['limits'] if params['limits'] is not None else [np.min(_ticks), np.max(_ticks)]
         # else initialize ticks
         else:
-            self.ticks = self.init_array(params.get('tick_min', _min), params.get('tick_max', _max), params.get('tick_dim', _dim))
-            self.bound = 'none'
+            self.ticks = self._init_array(_min, _max, self.tick_dim, self.scale)
+            self.bound = False
+
+        # set minor ticks
+        self.ticks_minor = params['ticks_minor']
 
         # set tick labels
-        _tick_labels = params.get('tick_labels', [])
+        _tick_labels = params['tick_labels']
         # if ticks labels are defined
         if type(_tick_labels) is list and len(_tick_labels) != 0:
             self.tick_labels = _tick_labels
@@ -230,11 +164,11 @@ class BaseAxis():
         else:
             self.tick_labels = self.ticks 
 
-        # supersede tick labels over ticks
+        # supersede ticks by tick labels
         if len(self.tick_labels) != len(self.ticks):
-            self.ticks = self.init_array(1, len(self.tick_labels), len(self.tick_labels))
+            self.ticks = self._init_array(1, len(self.tick_labels), len(self.tick_labels), self.scale)
 
-    def init_array(self, mini, maxi, num):
+    def _init_array(self, mini, maxi, dim: int, scale: str):
         """Function to initialize an array given a range and number of elements.
 
         Parameters
@@ -243,10 +177,25 @@ class BaseAxis():
             Minimum value of the range.
         maxi : int 
             Maximum value of the range.
-        num : int
+        dim : int
             Number of elements to consider.
+        scale : str
+            Step scale for the values. Options are "linear" and "log".
+
+        Returns
+        -------
+        values : list
+            Initialized array.
         """
-    
-        values = (mini + np.arange(num) * (maxi - mini) / (num - 1))
+
+        # set values
+        if scale == 'log': 
+            values = np.logspace(mini, maxi, dim)
+        else:
+            values = np.linspace(mini, maxi, dim)
+            # truncate values
+            _step_size = (Decimal(str(maxi)) - Decimal(str(mini))) / (dim - 1)
+            _decimals = - _step_size.as_tuple().exponent
+            values = np.around(values, _decimals)
 
         return values.tolist()

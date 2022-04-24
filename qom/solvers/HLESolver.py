@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.HLESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2022-01-01'
+__updated__ = '2022-04-24'
 
 # dependencies
 from decimal import Decimal
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class HLESolver():
     r"""Class to solve Heisenberg-Langevin equations for classical mode amplitudes and quantum correlations.
 
-    Initializes ``Corrs``, ``Modes``, ``results`` and ``T`` properties.
+    Initializes ``Corrs``, ``cb_update``, ``Modes``, ``params``, ``results`` and ``T``.
 
     Parameters
     ----------
@@ -60,7 +60,7 @@ class HLESolver():
     """
 
     # attributes
-    code = 'hle_solver'
+    code = 'HLESolver'
     name = 'Heisenberg-Langevin Equations Solver'
     ui_params = {
         'method': ODESolver.new_methods + ODESolver.old_methods,
@@ -125,9 +125,9 @@ class HLESolver():
         self.Corrs = None
         self.Modes = None
         self.results = None
-        self.T = self.__get_times()
+        self.T = self._get_times()
 
-    def __get_num_modes(self, dim):
+    def _get_num_modes(self, dim):
         """Method to detect number of modes of the system.
 
         Parameters
@@ -146,7 +146,7 @@ class HLESolver():
 
         return num_modes
 
-    def __get_times(self):
+    def _get_times(self):
         """Method to initialize the times at which values are calculated.
         
         Returns
@@ -170,7 +170,7 @@ class HLESolver():
         
         return T
 
-    def __set_results(self, func_ode, iv, c, func_ode_corrs, num_modes, method):
+    def _set_results(self, func_ode, iv, c, func_ode_corrs, num_modes, method):
         """Method to solve the ODEs and update the results.
 
         Parameters
@@ -289,7 +289,7 @@ class HLESolver():
 
         # detect number of modes if not given
         if num_modes is None:
-            num_modes = self.__get_num_modes(dim=len(self.results['V'][0]))
+            num_modes = self._get_num_modes(dim=len(self.results['V'][0]))
 
         # update correlations
         if len(self.results['V'][0]) > num_modes:
@@ -323,7 +323,7 @@ class HLESolver():
 
         # detect number of modes if not given
         if num_modes is None:
-            num_modes = self.__get_num_modes(dim=len(self.results['V'][0]))
+            num_modes = self._get_num_modes(dim=len(self.results['V'][0]))
 
         # update correlations
         self.Modes = [vs[:num_modes] for vs in self.results['V']]
@@ -368,7 +368,7 @@ class HLESolver():
 
         # validate parameters
         if func_ode_corrs is not None and num_modes is None:
-            num_modes = self.__get_num_modes(dim=len(iv))
+            num_modes = self._get_num_modes(dim=len(iv))
 
         # extract frequently used variables
         show_progress = self.params.get('show_progress', False)
@@ -395,7 +395,7 @@ class HLESolver():
                     self.cb_update(status='Results Loaded', progress=None, reset=True)
         else:
             # solve
-            self.__set_results(func_ode=func_ode, iv=iv, c=c, func_ode_corrs=func_ode_corrs, num_modes=num_modes, method=method)
+            self._set_results(func_ode=func_ode, iv=iv, c=c, func_ode_corrs=func_ode_corrs, num_modes=num_modes, method=method)
             # save
             if cache:
                 # create directories

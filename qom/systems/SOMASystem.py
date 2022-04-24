@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.SOMASystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-08-15'
-__updated__ = '2021-09-25'
+__updated__ = '2022-04-24'
 
 # dependencies
 from decimal import Decimal
@@ -38,7 +38,7 @@ class SOMASystem(BaseSystem):
 
     Notes
     -----
-    All the options defined in ``params`` supersede individual function arguments. Refer :class:`qom.systems.BaseSystem` for a complete list of supported options. Additionally, the following keys are supported:
+    All the options defined in ``params`` supersede individual method arguments. Refer :class:`qom.systems.BaseSystem` for a complete list of supported options. Additionally, the following keys are supported:
         ==================  ====================================================
         key                 value
         ==================  ====================================================
@@ -61,7 +61,7 @@ class SOMASystem(BaseSystem):
         """Class constructor for SOMASystem."""
 
         # initialize super class
-        super().__init__(params=params, code='soma_system', name='Array of single-optomechanical System', num_modes=4, cb_update=cb_update)
+        super().__init__(params=params, code='SOMASystem', name='Array of single-optomechanical System', num_modes=4, cb_update=cb_update)
 
         # update attributes
         self.required_funcs.update({

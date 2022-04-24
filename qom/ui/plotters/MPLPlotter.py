@@ -6,12 +6,11 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2022-01-02'
+__updated__ = '2022-04-24'
 
 # dependencies
-from matplotlib.colors import BoundaryNorm, LinearSegmentedColormap, Normalize
-from matplotlib.font_manager import FontProperties 
-from matplotlib.lines import Line2D
+from matplotlib.colors import LinearSegmentedColormap, Normalize
+from matplotlib.font_manager import FontProperties
 from typing import Union
 import logging
 import matplotlib.pyplot as plt
@@ -23,9 +22,7 @@ from .BasePlotter import BasePlotter
 # module logger
 logger = logging.getLogger(__name__)
 
-# TODO: Add annotations.
 # TODO: Options for 3D plot parameters.
-# TODO: Options for `ticklabel_format` and padding.
 # TODO: Add segmented color bar for contour plots.
 
 class MPLPlotter(BasePlotter):
@@ -44,7 +41,7 @@ class MPLPlotter(BasePlotter):
     """
 
     # attributes
-    code = 'mpl_plotter'
+    code = 'MPLPlotter'
     name = 'Matplotlib Plotter'
     cbar_positions = {
         'left': lambda gs: gs[:, 0], 
@@ -82,7 +79,7 @@ class MPLPlotter(BasePlotter):
         super().__init__(axes, params)
 
         # set attributes
-        self.plots = None
+        self.plots = list()
 
         # extract frequently used variables
         _type = self.params['type']
@@ -115,20 +112,15 @@ class MPLPlotter(BasePlotter):
         plt.ticklabel_format(axis='both', style='plain')
 
         # update x-axis
-        _mpl_axes.set_xscale(self.params['x_scale'])
-        self.__update_axis(_mpl_axes, 'x', self.axes['X'])
-
-        # update y-axis
-        _mpl_axes.set_yscale(self.params['y_scale'])
+        self._update_axis(_mpl_axes, 'x', self.axes['X'])
 
         # 1D plot
         if _type in self.types_1D:
             # update y-axis
-            self.__update_axis(_mpl_axes, 'y', self.axes['V'])
-            _mpl_axes.set_yscale(self.params['v_scale'])
+            self._update_axis(_mpl_axes, 'y', self.axes['V'])
 
             # initialize 1D plot
-            self.__init_1D()
+            self._init_1D()
 
             # values are given
             if 'V' in axes:
@@ -137,10 +129,10 @@ class MPLPlotter(BasePlotter):
         # 2D plot
         elif _type in self.types_2D:
             # update y-axis
-            self.__update_axis(_mpl_axes, 'y', self.axes['Y'])
+            self._update_axis(_mpl_axes, 'y', self.axes['Y'])
 
             # initializze 2D plot
-            self.__init_2D()
+            self._init_2D()
 
             # values are given
             if 'V' in axes:
@@ -149,18 +141,18 @@ class MPLPlotter(BasePlotter):
         # 3D plot
         else:
             # update y-axis
-            self.__update_axis(_mpl_axes, 'y', self.axes['Y'])
+            self._update_axis(_mpl_axes, 'y', self.axes['Y'])
             # update z-axis
-            self.__update_axis(_mpl_axes, 'z', self.axes['V'])
+            self._update_axis(_mpl_axes, 'z', self.axes['V'])
 
             # initializze 3D plot
-            self.__init_3D()
+            self._init_3D()
 
             # values are given
             if 'V' in axes:
                 self.update(vs=self.axes['V'].val)
 
-    def __get_font_props(self, font_dict: dict):
+    def _get_font_props(self, font_dict: dict):
         """Method to convert font dictionary to FontProperties.
          
         Parameters
@@ -187,7 +179,7 @@ class MPLPlotter(BasePlotter):
         # return
         return _font_props
 
-    def __init_1D(self, dim=1):
+    def _init_1D(self, dim=1):
         """Method to initialize 1D plots.
         
         Parameters
@@ -199,43 +191,24 @@ class MPLPlotter(BasePlotter):
         # extract frequently used variables
         _type = self.params['type']
         _mpl_axes = plt.gca()
-        _palette = self.params['palette']
-        _colors = self.axes['Y'].colors
-        _sizes = self.axes['Y'].sizes
-        _styles = self.axes['Y'].styles
-        if self.plots is None:
-            self.plots = []
         _dim = len(self.plots)
-
-        # udpate colors
-        if _colors is None or len(_colors) < dim:
-            palette_colors = self.get_colors(_palette, self.bins)
-            _colors = [[palette_colors[i % self.bins]] if 'scatter' in _type else palette_colors[i % self.bins] for i in range(dim)]
-
-        # udpate styles
-        if _styles is None or len(_styles) < dim:
-            _styles = [BasePlotter.default_linestyles[i % len(BasePlotter.default_linestyles)] if 'line' in _type else BasePlotter.default_markers[i % len(BasePlotter.default_markers)] for i in range(dim)]
-
-        # udpate sizes
-        if _sizes is None or len(_sizes) < dim:
-            _sizes = [1 for _ in range(dim)]
+        _colors, _sizes, _styles = self._get_colors_sizes_styles(dim)
 
         # line plots
         if 'line' in _type:
             # plots
-            self.plots += [Line2D([], [], color=_colors[i], linestyle=_styles[i], linewidth=_sizes[i]) for i in range(_dim, dim)]
-            [_mpl_axes.add_line(self.plots[i]) for i in range(_dim, dim)]
+            self.plots += [_mpl_axes.plot(list(), list(), color=_colors[i], linestyle=_styles[i], linewidth=_sizes[i])[0] for i in range(_dim, dim)]
 
         # scatter plots
         elif 'scatter' in _type:
-            self.plots += [_mpl_axes.scatter([], [], c=_colors[i], s=_sizes[i], marker=_styles[i]) for i in range(_dim, dim)]
+            self.plots += [_mpl_axes.scatter(list(), list(), c=_colors[i], s=_sizes[i], marker=_styles[i]) for i in range(_dim, dim)]
 
         # legend
         if self.params['legend']['show']:
             _l = plt.legend(self.axes['Y'].legend[:dim], loc=self.params['legend']['location'])  
-            plt.setp(_l.texts, fontproperties=self.__get_font_props(self.params['font_dicts']['label']))
+            plt.setp(_l.texts, fontproperties=self._get_font_props(self.params['font_dicts']['label']))
 
-    def __init_2D(self):
+    def _init_2D(self):
         """Method to initialize 2D plots."""
 
         # extract frequently used variables
@@ -264,7 +237,7 @@ class MPLPlotter(BasePlotter):
         if _type == 'pcolormesh':
             self.plots = _mpl_axes.pcolormesh(_xs, _ys, _nan, shading='gouraud', cmap=_cmap)
 
-    def __init_3D(self):
+    def _init_3D(self):
         """Method to initialize 3D plots."""
 
         # extract frequently used variables
@@ -273,13 +246,18 @@ class MPLPlotter(BasePlotter):
         _cmap = LinearSegmentedColormap.from_list(self.params['palette'], self.params['colors'])
 
         # update view
-        _mpl_axes.view_init(32, 216)
+        _mpl_axes.view_init(self.params['view']['elevation'], self.params['view']['rotation'])
+        _mpl_axes.set_box_aspect(aspect=self.params['view']['aspect'])
         _pane_color = (1.0, 1.0, 1.0, 0.0)
         _mpl_axes.xaxis.set_pane_color(_pane_color)
+        _mpl_axes.xaxis.set_rotate_label(False)
+        _mpl_axes.xaxis.label.set_rotation(0)
         _mpl_axes.yaxis.set_pane_color(_pane_color)
+        _mpl_axes.yaxis.set_rotate_label(False)
+        _mpl_axes.yaxis.label.set_rotation(0)
         _mpl_axes.zaxis.set_pane_color(_pane_color)
         _mpl_axes.zaxis.set_rotate_label(False)
-        _mpl_axes.zaxis.label.set_rotation(96)
+        _mpl_axes.zaxis.label.set_rotation(0)
         _grid_params = {
             'linewidth': 1,
             'color': (0.5, 0.5, 0.5, 0.2)
@@ -294,9 +272,44 @@ class MPLPlotter(BasePlotter):
 
         # surface plot
         if 'surface' in _type:
-            self.plots =_mpl_axes.plot_surface(_xs, _ys, _zeros, rstride=1, cstride=1, cmap=_cmap)
+            self.plots = _mpl_axes.plot_surface(_xs, _ys, _zeros, rstride=1, cstride=1, cmap=_cmap)
+        # line plot
+        else:
+            dim = self.axes['Y'].dim
+            _colors, _sizes, _styles = self._get_colors_sizes_styles(dim)
+            self.plots += [_mpl_axes.plot(_xs[i], _ys[i], _zeros[i], color=_colors[i], linestyle=_styles[i], linewidth=_sizes[i])[0] for i in range(len(self.plots), dim)]
 
-    def __resize_plot(self, width: float=5.0, height: float=5.0):
+    def _get_colors_sizes_styles(self, dim):
+        """Method to obtain the colors, sizes and styles for 1D plots.
+        
+        Parameters
+        ----------
+        dim : int
+            Dimension of the Y-axis.
+        """
+
+        # extract frequently used variables
+        _type = self.params['type']
+        _colors = self.axes['Y'].colors
+        _sizes = self.axes['Y'].sizes
+        _styles = self.axes['Y'].styles
+
+        # udpate colors
+        if _colors is None or len(_colors) < dim:
+            palette_colors = self.get_colors(self.params['palette'], self.bins)
+            _colors = [[palette_colors[i % self.bins]] if 'scatter' in _type else palette_colors[i % self.bins] for i in range(dim)]
+
+        # udpate sizes
+        if _sizes is None or len(_sizes) < dim:
+            _sizes = [1 for _ in range(dim)]
+
+        # udpate styles
+        if _styles is None or len(_styles) < dim:
+            _styles = [BasePlotter.default_linestyles[i % len(BasePlotter.default_linestyles)] if 'line' in _type else BasePlotter.default_markers[i % len(BasePlotter.default_markers)] for i in range(dim)]
+
+        return _colors, _sizes, _styles
+
+    def _resize_plot(self, width: float=5.0, height: float=5.0):
         """Method to resize the plot.
         
         Parameters
@@ -319,7 +332,7 @@ class MPLPlotter(BasePlotter):
         else:
             plt.gcf().set_size_inches(width, height)
 
-    def __update_1D(self, xs, vs, head: bool):
+    def _update_1D(self, xs, vs, head: bool):
         """Method to udpate 1D plots.
         
         Parameters
@@ -346,7 +359,7 @@ class MPLPlotter(BasePlotter):
 
         # handle non-single plots
         if len(xs) != len(self.plots):
-            self.__init_1D(dim=len(xs))
+            self._init_1D(dim=len(xs))
 
         # handle multi-data points
         for i in range(len(self.plots)):
@@ -395,23 +408,28 @@ class MPLPlotter(BasePlotter):
 
         # get limits
         _mini, _maxi = np.min(_minis), np.max(_maxis)
-        _mini, _maxi, _prec = super().get_limits(_mini, _maxi)
+        _mini, _maxi, _prec = self.get_limits(_mini, _maxi)
 
         # ticks and tick labels
         _ticks = self.axes['V'].ticks
         _tick_labels = self.axes['V'].tick_labels
-        if self.axes['V'].bound == 'none':
-            _ticks = np.around(np.linspace(_mini, _maxi, len(_mpl_axes.get_yticks())), decimals=_prec)
+        if self.axes['V'].bound:
+            _mini = self.axes['V'].limits[0]
+            _maxi = self.axes['V'].limits[-1]
+        else:
+            _ticks = np.around(np.linspace(_mini, _maxi, len(_mpl_axes.get_yticks())), decimals=_prec + 1)
             _tick_labels = _ticks
-        _mini = np.min(_ticks)
-        _maxi = np.max(_ticks)
+            _mini = np.min(_ticks)
+            _maxi = np.max(_ticks)
         _mpl_axes.set_yticks(_ticks)
+        if self.axes['V'].ticks_minor is not None:
+            _mpl_axes.set_yticks(self.axes['V'].ticks_minor, minor=True)
         _mpl_axes.set_yticklabels(_tick_labels)
 
         # update limits
         _mpl_axes.set_ylim(_mini, _maxi)
 
-    def __update_2D(self, vs):
+    def _update_2D(self, vs):
         """Method to udpate 2D plots.
         
         Parameters
@@ -426,7 +444,6 @@ class MPLPlotter(BasePlotter):
         # frequently used variables
         _type = self.params['type']
         _mpl_axes = plt.gca()
-        _cmap = LinearSegmentedColormap.from_list(self.params['palette'], self.params['colors'])
         _rave = np.ravel(vs)
 
         # initialize values
@@ -438,8 +455,14 @@ class MPLPlotter(BasePlotter):
             _mini = self.params['cbar']['ticks'][0]
             _maxi = self.params['cbar']['ticks'][-1]
             _prec = np.ceil(-np.log10(_mini))
+        # if bounded
+        elif self.axes['V'].bound:
+            _mini = self.axes['V'].limits[0]
+            _maxi = self.axes['V'].limits[-1]
+            _, _, _prec = self.get_limits(_mini, _maxi)
+        # generate limits
         else:
-            _mini, _maxi, _prec = super().get_limits(_mini, _maxi)
+            _mini, _maxi, _prec = self.get_limits(_mini, _maxi)
 
         # contour and contourf plots
         if 'contour' in _type:
@@ -450,10 +473,10 @@ class MPLPlotter(BasePlotter):
 
             # contour plot
             if _type == 'contour':
-                self.plots = _mpl_axes.contour(_xs, _ys, vs, levels=self.bins, cmap=_cmap)
+                self.plots = _mpl_axes.contour(_xs, _ys, vs, levels=self.bins, cmap=self.plots.get_cmap())
             # contourf plot
             if _type == 'contourf':
-                self.plots = _mpl_axes.contourf(_xs, _ys, vs, levels=self.bins, cmap=_cmap)
+                self.plots = _mpl_axes.contourf(_xs, _ys, vs, levels=self.bins, cmap=self.plots.get_cmap())
 
         # pcolormesh plot
         if _type == 'pcolormesh':
@@ -466,7 +489,7 @@ class MPLPlotter(BasePlotter):
         if self.params['cbar']['show']:
             self.set_cbar(_mini, _maxi, _prec)
 
-    def __update_3D(self, vs):
+    def _update_3D(self, vs):
         """Method to udpate 3D plots.
         
         Parameters
@@ -481,7 +504,6 @@ class MPLPlotter(BasePlotter):
         # frequently used variables
         _type = self.params['type']
         _mpl_axes = plt.gca()
-        _cmap = LinearSegmentedColormap.from_list(self.params['palette'], self.params['colors'])
 
         # initialize values
         _X, _Y = np.meshgrid(self.axes['X'].val, self.axes['Y'].val)
@@ -491,14 +513,20 @@ class MPLPlotter(BasePlotter):
         # update ticks and tick labels
         _ticks = self.axes['V'].ticks
         _tick_labels = self.axes['V'].tick_labels
-        if self.axes['V'].bound == 'none':
-            _ticks = np.linspace(_mini, _maxi, len(_mpl_axes.get_zticks()))
+        if self.axes['V'].bound:
+            _mini = self.axes['V'].limits[0]
+            _maxi = self.axes['V'].limits[-1]
+        else:
+            _ticks = np.around(np.linspace(_mini, _maxi, len(_mpl_axes.get_zticks())), decimals=_prec + 1)
             _tick_labels = _ticks
-        _mini = np.min(_ticks)
-        _maxi = np.max(_ticks)
+            _mini = np.min(_ticks)
+            _maxi = np.max(_ticks)
         _mpl_axes.set_zticks(_ticks)
         _mpl_axes.set_zticklabels(_tick_labels)
-        _mini, _maxi, _prec = super().get_limits(_mini, _maxi)
+        # update minor ticks
+        if self.axes['V'].ticks_minor is not None:
+            _mpl_axes.set_zticks(self.axes['V'].ticks_minor, minor=True)
+        _mini, _maxi, _prec = self.get_limits(_mini, _maxi)
 
         # surface plot
         if 'surface'in _type:
@@ -515,8 +543,14 @@ class MPLPlotter(BasePlotter):
             if self.cbar is not None:
                 self.cbar.update_normal(self.plots)
 
+            # update limits
+            self.plots.set_clim(vmin=_mini, vmax=_maxi)
+        # line plot
+        else:
+            for j in range(len(self.plots)):
+                self.plots[j].set_data_3d(_X[j], _Y[j], _Z[j])
+                
         # update limits
-        self.plots.set_clim(vmin=_mini, vmax=_maxi)
         _mpl_axes.set_zlim3d(_mini, _maxi)
 
         # color bar
@@ -524,7 +558,7 @@ class MPLPlotter(BasePlotter):
             self.set_cbar(_mini, _maxi, _prec)
             self.cbar.ax.set_autoscale_on(True)
 
-    def __update_axis(self, ax, ax_name: str, ax_data: dict):
+    def _update_axis(self, ax, ax_name: str, ax_data: dict):
         """Method to update an axis.
         
         Parameters
@@ -540,16 +574,33 @@ class MPLPlotter(BasePlotter):
         # frequently used variables
         _type = self.params['type']
         _font_dicts = self.params['font_dicts']
-        _font_props = self.__get_font_props(_font_dicts['tick'])
+        _font_props = self._get_font_props(_font_dicts['tick'])
+        _tick_position = ax_data.tick_position
 
         # labels
-        getattr(ax, 'set_' + ax_name + 'label')(ax_data.label, labelpad=12, fontdict=_font_dicts['label'])
+        getattr(ax, 'set_' + ax_name + 'label')(ax_data.label, labelpad=ax_data.label_pad, fontdict=_font_dicts['label'])
+
+        # scale
+        getattr(ax, 'set_' + ax_name + 'scale')(ax_data.scale)
 
         # ticks
         suffix = '3d' if _type in self.types_3D else ''
-        getattr(ax.axes, 'set_' + ax_name + 'lim' + suffix)(np.min(ax_data.ticks), np.max(ax_data.ticks))
         getattr(ax, 'set_' + ax_name + 'ticks')(ax_data.ticks)
-        ax.tick_params(axis=ax_name, which='major', pad=12)
+        if ax_data.bound:
+            getattr(ax.axes, 'set_' + ax_name + 'lim' + suffix)(ax_data.limits[0], ax_data.limits[1])
+
+        # tick parameters
+        _left = True if 'left' in _tick_position or 'both' in _tick_position else False
+        _right = True if 'right' in _tick_position or 'both' in _tick_position else False
+        _top = True if 'top' in _tick_position or 'both' in _tick_position else False
+        _bottom = True if 'bottom' in _tick_position or 'both' in _tick_position else False
+        _direction = 'in' if 'in' in _tick_position else 'out'
+        ax.tick_params(axis=ax_name, which='major', direction=_direction, bottom=_bottom, left=_left, right=_right, top=_top, pad=ax_data.tick_pad)
+
+        # minor ticks
+        if ax_data.ticks_minor is not None:
+            getattr(ax, 'set_' + ax_name + 'ticks')(ax_data.ticks_minor, minor=True)
+            ax.tick_params(axis=ax_name, which='minor', direction=_direction, bottom=_bottom, left=_left, right=_right, top=_top, pad=ax_data.tick_pad)
 
         # tick labels
         getattr(ax, 'set_' + ax_name + 'ticklabels')(ax_data.tick_labels)
@@ -588,7 +639,7 @@ class MPLPlotter(BasePlotter):
 
         # frequently used variables
         _font_dicts = self.params['font_dicts']
-        _font_props = self.__get_font_props(_font_dicts['tick'])
+        _font_props = self._get_font_props(_font_dicts['tick'])
 
         # initialize twin axis
         ax_twin = plt.gca().twinx()
@@ -616,7 +667,7 @@ class MPLPlotter(BasePlotter):
         """
 
         # resize plot
-        self.__resize_plot(width, height)
+        self._resize_plot(width, height)
         
         # save to file
         plt.savefig(filename, dpi=300)
@@ -663,11 +714,11 @@ class MPLPlotter(BasePlotter):
         self.cbar = plt.colorbar(_sm, cax=_cax, ax=plt.gca(), orientation=_orientation, norm=_norm)
 
         # title
-        self.cbar.ax.set_title(self.params['cbar']['title'], fontproperties=self.__get_font_props(_font_dicts['label']), pad=12)
+        self.cbar.ax.set_title(self.params['cbar']['title'], fontproperties=self._get_font_props(_font_dicts['label']), pad=12)
 
         # labels
-        self.cbar.ax.set_xlabel(self.params['cbar']['x_label'], labelpad=_font_dicts['tick']['size'] + 12, fontproperties=self.__get_font_props(_font_dicts['label']))
-        self.cbar.ax.set_ylabel(self.params['cbar']['y_label'], labelpad=_font_dicts['tick']['size'] + 12, fontproperties=self.__get_font_props(_font_dicts['label']))
+        self.cbar.ax.set_xlabel(self.params['cbar']['x_label'], labelpad=_font_dicts['tick']['size'] + 12, fontproperties=self._get_font_props(_font_dicts['label']))
+        self.cbar.ax.set_ylabel(self.params['cbar']['y_label'], labelpad=_font_dicts['tick']['size'] + 12, fontproperties=self._get_font_props(_font_dicts['label']))
         self.cbar.set_ticks(_ticks)
 
         # tick labels
@@ -675,8 +726,8 @@ class MPLPlotter(BasePlotter):
         if _tick_labels is None:
             _tick_labels = _ticks
         self.cbar.set_ticklabels(_tick_labels)
-        plt.setp(self.cbar.ax.get_yticklabels(), fontproperties=self.__get_font_props(_font_dicts['tick']))
-        plt.setp(self.cbar.ax.get_xticklabels(), fontproperties=self.__get_font_props(_font_dicts['tick']))
+        plt.setp(self.cbar.ax.get_yticklabels(), fontproperties=self._get_font_props(_font_dicts['tick']))
+        plt.setp(self.cbar.ax.get_xticklabels(), fontproperties=self._get_font_props(_font_dicts['tick']))
         self.cbar.ax.tick_params(axis='x', which='major', pad=12)
         self.cbar.ax.tick_params(axis='y', which='major', pad=12)
 
@@ -697,7 +748,7 @@ class MPLPlotter(BasePlotter):
         height = self.params['height']
         
         # resize plot
-        self.__resize_plot(width, height)
+        self._resize_plot(width, height)
 
         # draw data
         plt.draw()
@@ -741,7 +792,7 @@ class MPLPlotter(BasePlotter):
 
         # handle complex values
         if type(vs[0]) is complex or (type(vs[0]) is list and type(vs[0][0]) is complex):
-            if 'imag' in self.params['v_comp']:
+            if 'imag' in self.params['component']:
                 logger.info('Plotting only imaginary parts of the complex values\n')
                 vs = np.imag(vs).tolist()
             else: 
@@ -755,12 +806,20 @@ class MPLPlotter(BasePlotter):
             elif type(xs[0]) is not list:
                 xs = [xs]
                 vs = [vs]
-            self.__update_1D(xs, vs, head)
+            self._update_1D(xs, vs, head)
         
         # 2D plots
         if _type in self.types_2D:
-            self.__update_2D(vs)
+            self._update_2D(vs)
 
         # 3D plot
-        if 'surface' in _type:
-            self.__update_3D(vs)
+        if _type in self.types_3D:
+            self._update_3D(vs)
+
+        # annotations
+        _annotations = self.params['annotations']
+        if type(_annotations) is list and len(_annotations) != 0 and type(_annotations[0]) is dict:
+            # get current plot
+            _ax = self.get_current_axis()
+            for item in _annotations:
+                _ax.annotate(s=item.get('s', ''), xy=item.get('xy', (0, 0)), xycoords='figure fraction', color=item.get('color', 'k'), font_properties=self._get_font_props(self.params['font_dicts'].get(item.get('font_dict', 'label'), self.params['font_dicts']['label'])))

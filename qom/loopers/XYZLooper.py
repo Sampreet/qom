@@ -6,10 +6,9 @@
 __name__    = 'qom.loopers.XYZLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-28'
-__updated__ = '2022-01-09'
+__updated__ = '2022-03-19'
 
 # dependencies
-from typing import Union
 import logging
 import numpy as np
 
@@ -31,11 +30,11 @@ class XYZLooper(BaseLooper):
     cb_update : callable, optional
         Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is an integer and ``reset`` is a boolean.
 
-    .. note:: All the options defined under the "looper" dictionary in ``params`` supersede individual function arguments. Refer :class:`qom.loopers.BaseLooper` for a complete list of supported options.
+    .. note:: All the options defined under the "looper" dictionary in ``params`` supersede individual method arguments. Refer :class:`qom.loopers.BaseLooper` for a complete list of supported options.
     """
 
     # attributes
-    code = 'xyz_looper'
+    code = 'XYZLooper'
     name = '3D Looper'
     
     def __init__(self, func, params: dict, cb_update=None):
@@ -54,7 +53,7 @@ class XYZLooper(BaseLooper):
         if self.cb_update is not None:
             self.cb_update(status='Looper Initialized', progress=None)
 
-    def loop(self, grad: bool=False, grad_position='all', grad_mono_idx: int=0, mode: str='serial'):
+    def loop(self, grad: bool=False, grad_position='all', grad_mono_idx: int=0, mode: str='serial', show_progress_x: bool=False, show_progress_yz: bool=True):
         """Method to calculate the output of a given function for each X-axis Y-axis and Z-axis point.
         
         Parameters
@@ -83,6 +82,10 @@ class XYZLooper(BaseLooper):
                 "multithread"       multi-thread execution.
                 "serial"            single-thread execution (fallback).
                 ==================  ====================================================
+        show_progress_x : bool, optional
+            Option to display the progress for the calculation of results in X-axis. Default is `False`.
+        show_progress_yz : bool, optional
+            Option to display the progress for the calculation of results in YZ-axis. Default is `True`.
 
         Returns
         -------
@@ -94,10 +97,9 @@ class XYZLooper(BaseLooper):
         grad = self.params['looper'].get('grad', grad)
         grad_position = self.params['looper'].get('grad_position', grad_position)
         grad_mono_idx = self.params['looper'].get('grad_mono_idx', grad_mono_idx)
-
-        # validate parameters
-        supported_types = Union[str, int, float, np.float32, np.float64].__args__
-        assert isinstance(grad_position, supported_types), 'Parameter ``grad_position`` should be either of the types: {}'.format(supported_types)
+        mode = self.params['looper'].get('mode', mode)
+        show_progress_x = self.params['looper'].get('show_progress_x', show_progress_x)
+        show_progress_yz = self.params['looper'].get('show_progress_yz', show_progress_yz)
 
         # extract frequently used variables
         system_params = self.params['system']
@@ -118,7 +120,8 @@ class XYZLooper(BaseLooper):
         # iterate Y-axis and Z-axis values
         for k in range(dim):
             # update progress
-            self.update_progress(pos=k, dim=dim)
+            if show_progress_yz:
+                self._update_progress(pos=k, dim=dim)
 
             # get values
             _y = y_val[int(k % len(y_val))]
@@ -141,7 +144,7 @@ class XYZLooper(BaseLooper):
                 system_params[z_var] = _z
 
             # get X-axis values
-            _temp_xs, _temp_vs = self.get_X_results(grad=grad, mode=mode)
+            _temp_xs, _temp_vs = self._get_X_results(grad=grad, mode=mode, show_progress_x=show_progress_x)
 
             # upate lists
             _xs.append(_temp_xs)
@@ -168,7 +171,7 @@ class XYZLooper(BaseLooper):
                 _temp_ys = list()
                 _temp_vs = list()
                 for j in range(len(_xs[i])):
-                    idx = self.get_index(_xs[i][j])
+                    idx = self._get_grad_index(axis_values=_xs[i][j], grad_position=grad_position, grad_mono_index=grad_mono_idx)
                     _temp_xs.append(_ys[i][j][idx])
                     _temp_ys.append(_zs[i][j][idx])
                     _temp_vs.append(_vs[i][j][idx])

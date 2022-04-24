@@ -11,7 +11,7 @@ import numpy as np
 __name__    = 'qom.utils.looper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-05-25'
-__updated__ = '2022-01-06'
+__updated__ = '2022-03-19'
 
 # qom modules
 from ..ui import init_log
@@ -118,7 +118,7 @@ def get_looper_func(SystemClass, solver_params: dict, func_code: str):
 
     return func
 
-def wrap_looper(SystemClass, params: dict, func, looper, file_path: str=None, plot: bool=False, hold: bool=True, width: float=5.0, height: float=5.0):
+def wrap_looper(SystemClass, params: dict, func, looper, file_path_prefix: str=None, plot: bool=False, hold: bool=True, width: float=5.0, height: float=5.0):
     """Function to wrap loopers.
 
     Requires already defined callables ``func_ode``, ``get_mode_rates``, ``get_ivc``, ``get_A`` and ``get_oss_args`` inside the system class.
@@ -150,12 +150,12 @@ def wrap_looper(SystemClass, params: dict, func, looper, file_path: str=None, pl
             ==============  ================================================
             value           meaning
             ==============  ================================================
-            "x_looper"       1D looper (:class:`qom.loopers.XLooper`) (fallback).
-            "xy_looper"      2D looper (:class:`qom.loopers.XYLooper`).
-            "xyz_looper"     3D looper (:class:`qom.loopers.XYZLooper`).
+            "XLooper"       1D looper (:class:`qom.loopers.XLooper`) (fallback).
+            "XYLooper"      2D looper (:class:`qom.loopers.XYLooper`).
+            "XYZLooper"     3D looper (:class:`qom.loopers.XYZLooper`).
             ==============  ================================================
-    file_path : str, optional
-        Path and prefix of the .npz file.
+    file_path_prefix : str, optional
+        Prefix of the file path.
     plot: bool, optional
         Option to plot the results.
     hold : bool, optional
@@ -180,15 +180,15 @@ def wrap_looper(SystemClass, params: dict, func, looper, file_path: str=None, pl
 
     # select looper
     if type(looper) is str:
-        if looper == 'xy_looper':
+        if looper == 'XYLooper':
             looper = XYLooper(func, copy.deepcopy(params))
-        elif looper == 'xyz_looper':
+        elif looper == 'XYZLooper':
             looper = XYZLooper(func, copy.deepcopy(params))
         else:
             looper = XLooper(func, copy.deepcopy(params))
 
     # wrap looper
-    looper.wrap(file_path=file_path, plot=plot, hold=hold, width=width, height=height)
+    looper.wrap(file_path_prefix=file_path_prefix, plot=plot, hold=hold, width=width, height=height)
 
     return looper
 
@@ -226,9 +226,9 @@ def merge_xy_loopers(y_ss, SystemClass, params: dict, func, looper, file_path: s
             ==============  ================================================
             value           meaning
             ==============  ================================================
-            "x_looper"       1D looper (:class:`qom.loopers.XLooper`) (fallback).
-            "xy_looper"      2D looper (:class:`qom.loopers.XYLooper`).
-            "xyz_looper"     3D looper (:class:`qom.loopers.XYZLooper`).
+            "XLooper"       1D looper (:class:`qom.loopers.XLooper`) (fallback).
+            "XYLooper"      2D looper (:class:`qom.loopers.XYLooper`).
+            "XYZLooper"     3D looper (:class:`qom.loopers.XYZLooper`).
             ==============  ================================================
     file_path : str, optional
         Path and prefix of the .npz file.
@@ -288,9 +288,9 @@ def merge_xy_loopers(y_ss, SystemClass, params: dict, func, looper, file_path: s
 
     # select looper
     if type(looper) is str:
-        if looper == 'xy_looper':
+        if looper == 'XYLooper':
             looper = XYLooper(func, params)
-        elif looper == 'xyz_looper':
+        elif looper == 'XYZLooper':
             looper = XYZLooper(func, params)
         else:
             looper = XLooper(func, params)

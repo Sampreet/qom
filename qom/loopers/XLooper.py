@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.XLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2021-08-26'
+__updated__ = '2022-03-19'
 
 # dependencies
 import logging
@@ -29,11 +29,11 @@ class XLooper(BaseLooper):
     cb_update : callable, optional
         Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is an integer and ``reset`` is a boolean.
     
-    .. note:: All the options defined under the "looper" dictionary in ``params`` supersede individual function arguments. Refer :class:`qom.loopers.BaseLooper` for a complete list of supported options.
+    .. note:: All the options defined under the "looper" dictionary in ``params`` supersede individual method arguments. Refer :class:`qom.loopers.BaseLooper` for a complete list of supported options.
     """
 
     # attributes
-    code = 'x_looper'
+    code = 'XLooper'
     name = '1D Looper'
     
     def __init__(self, func, params: dict, cb_update=None):
@@ -50,15 +50,15 @@ class XLooper(BaseLooper):
         if self.cb_update is not None:
             self.cb_update(status='Looper Initialized', progress=None)
 
-    def loop(self, grad: bool=False, mode: str='serial'):
+    def loop(self, grad: bool=False, mode: str='serial', show_progress_x: bool=True):
         """Method to calculate the output of a given function for each X-axis point.
         
         Parameters
         ----------
         grad : bool, optional
-            Option to calculate gradients.
+            Option to calculate gradients with respect to the X-axis.
         mode : str, optional
-            Mode of computation. Available modes are:
+            Mode of computation. Options are:
                 ==================  ====================================================
                 value               meaning
                 ==================  ====================================================
@@ -66,6 +66,8 @@ class XLooper(BaseLooper):
                 "multithread"       multi-thread execution.
                 "serial"            single-thread execution (fallback).
                 ==================  ====================================================
+        show_progress_x : bool, optional
+            Option to display the progress for the calculation of results in X-axis. Default is `True`.
 
         Returns
         -------
@@ -73,11 +75,13 @@ class XLooper(BaseLooper):
             Axes and calculated values containing the keys "X" and "V".
         """
 
-        # supersede looper parameters
+        # supersede arguments by looper parameters
         grad = self.params['looper'].get('grad', grad)
+        mode = self.params['looper'].get('mode', mode)
+        show_progress_x = self.params['looper'].get('show_progress_x', show_progress_x)
 
         # get X-axis values
-        _xs, _vs = self.get_X_results(grad=grad, mode=mode)
+        _xs, _vs = self._get_X_results(grad=grad, mode=mode, show_progress_x=show_progress_x)
 
         # update attributes
         self.results = {}

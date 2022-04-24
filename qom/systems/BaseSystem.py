@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2021-11-25'
+__updated__ = '2022-04-24'
 
 # dependencies
 from typing import Union
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class BaseSystem():
     r"""Class to interface QOM systems.
 
-    Initializes `params` property.
+    Initializes ``code``, ``cb_update``, ``name``, ``num_modes`` and ``params``.
 
     Parameters
     ----------
@@ -180,13 +180,13 @@ class BaseSystem():
         """Class constructor for BaseSystem."""
 
         # set attributes
-        self.params = params
         self.code = code
+        self.cb_update = cb_update
         self.name = name
         self.num_modes = num_modes
-        self.cb_update = cb_update
+        self.params = params
 
-    def __get_cache_options(self, solver_params):
+    def _get_cache_options(self, solver_params):
         """Method to return updated options to cache dynamics.
         
         Parameters
@@ -224,7 +224,7 @@ class BaseSystem():
 
         return cache, cache_dir, cache_file
 
-    def __get_func_real(self, func):
+    def _get_func_real(self, func):
         """Method to return a real-valued function from a complex-valued one.
         
         Parameters
@@ -271,7 +271,7 @@ class BaseSystem():
     
         return func_real
 
-    def __get_measure(self, solver_params: dict, modes: list, corrs: list):
+    def _get_measure(self, solver_params: dict, modes: list, corrs: list):
         """Method to calculate the measure.
         
         Parameters
@@ -314,7 +314,7 @@ class BaseSystem():
 
         return measure
 
-    def __validate_params_measure(self, solver_params: dict, count: int=None):
+    def _validate_params_measure(self, solver_params: dict, count: int=None):
         """Method to validate parameters for 1D list indices.
 
         Parameters
@@ -477,7 +477,7 @@ class BaseSystem():
 
         # validate parameters
         solver_params['measure_type'] = 'mode_amp'
-        self.__validate_params_measure(solver_params=solver_params, count=2)
+        self._validate_params_measure(solver_params=solver_params, count=2)
 
         # get measures at all times
         M, _ = self.get_measure_dynamics(solver_params=solver_params)
@@ -512,7 +512,7 @@ class BaseSystem():
 
         # validate parameters
         solver_params['measure_type'] = 'mode_amp'
-        self.__validate_params_measure(solver_params=solver_params, count=2)
+        self._validate_params_measure(solver_params=solver_params, count=2)
 
         # get measures at all times
         M, _ = self.get_measure_dynamics(solver_params=solver_params)
@@ -664,7 +664,7 @@ class BaseSystem():
         # basic method
         if method == 'basic':
             alpha_s = [A_l / (kappa / 2 - 1j * Delta)]
-            roots = [np.real(np.conjugate(a) * a) for a in alpha_s]
+            roots = [np.real(np.conjugate(alpha_s[0]) * alpha_s[0])]
         # cubic method
         else:
             # get mean optical occupancies and roots of the cubic equation
@@ -721,7 +721,7 @@ class BaseSystem():
         # basic method
         if method == 'basic':
             # get mean optical amplitudea
-            _, N_os = self.get_mean_optical_amplitude()
+            _, N_os = self.get_mean_optical_amplitudes(method=method)
             roots = [N_o for N_o in N_os]
 
         # cubic method
@@ -798,7 +798,7 @@ class BaseSystem():
         assert self.validate_required_funcs(func_name='get_measure_dynamics', mode='verbose') is True, 'Missing required predefined callables'
 
         # validate parameters
-        self.__validate_params_measure(solver_params=solver_params)
+        self._validate_params_measure(solver_params=solver_params)
 
         # get mode and correlation dynamics
         Modes, Corrs, T = self.get_modes_corrs_dynamics(solver_params=solver_params)
@@ -852,7 +852,7 @@ class BaseSystem():
                     measure.append(eigs[idx])
             # elif correlation matrix element or mode amplitude
             else:
-                measure = self.__get_measure(solver_params=solver_params, modes=Modes[i], corrs=Corrs[i] if Corrs is not None else None)
+                measure = self._get_measure(solver_params=solver_params, modes=Modes[i], corrs=Corrs[i] if Corrs is not None else None)
 
             # update list
             M.append(measure)
@@ -889,7 +889,7 @@ class BaseSystem():
         assert self.validate_required_funcs(func_name='get_measure_stationary', mode='verbose') is True, 'Missing required predefined callables'
 
         # validate parameters
-        self.__validate_params_measure(solver_params=solver_params)
+        self._validate_params_measure(solver_params=solver_params)
 
         # get stationary values of mode and correlation
         modes, corrs = self.get_modes_corrs_stationary(solver_params=solver_params)
@@ -917,7 +917,7 @@ class BaseSystem():
                 measure.append(eigs[idx])
         # elif correlation matrix element or mode amplitude
         else:
-            measure = self.__get_measure(solver_params=solver_params, modes=modes, corrs=corrs)
+            measure = self._get_measure(solver_params=solver_params, modes=modes, corrs=corrs)
 
         # display completion
         if _show_progress:
@@ -952,7 +952,7 @@ class BaseSystem():
 
         # extract frequently used variables
         _method = solver_params.get('method', 'RK45')
-        _cache, _cache_dir, _cache_file = self.__get_cache_options(solver_params=solver_params)
+        _cache, _cache_dir, _cache_file = self._get_cache_options(solver_params=solver_params)
 
         # update solver params
         _solver_params = copy.deepcopy(solver_params)
@@ -1038,7 +1038,7 @@ class BaseSystem():
                 iv_real = iv
             else:
                 # get real-valued function
-                get_mode_rates_real = self.__get_func_real(func=self.get_mode_rates)
+                get_mode_rates_real = self._get_func_real(func=self.get_mode_rates)
 
                 # real-valued initial values
                 iv_real = list()
@@ -1188,7 +1188,7 @@ class BaseSystem():
         _measure_type = solver_params['measure_type']
 
         # validate parameters
-        self.__validate_params_measure(solver_params=solver_params, count=3 if _measure_type == 'corr_ele' else 2)
+        self._validate_params_measure(solver_params=solver_params, count=3 if _measure_type == 'corr_ele' else 2)
 
         # get measures at all times
         M, _ = self.get_measure_dynamics(solver_params=solver_params)

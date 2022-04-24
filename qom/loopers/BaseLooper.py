@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2022-01-09'
+__updated__ = '2022-04-20'
 
 # dependencies
 from decimal import Decimal
@@ -17,6 +17,7 @@ import multiprocessing
 import numpy as np
 import os
 import threading
+import time
 
 # qom dependencies
 from ..ui.plotters import MPLPlotter
@@ -24,16 +25,15 @@ from ..ui.plotters import MPLPlotter
 # module logger
 logger = logging.getLogger(__name__)
 
+# TODO: Add monotonic modes in `_get_grad_index`.
 # TODO: Fix `get_multiprocessed_results`.
 # TODO: Handle multi-valued points for gradients in `get_X_results`.
-# TODO: Handle monotonic modes in `get_index`.
 # TODO: Support gradients in `wrap`.
-# TODO: Fix `update_progress`.
 
 class BaseLooper():
     """Class to interface loopers.
 
-    Initializes ``axes``, ``func`` and ``params`` properties.
+    Initializes ``axes``, ``cb_update``, ``code``, ``func``, ``name``, ``params``, ``results`` and ``time``.
 
     Parameters
     ----------
@@ -54,27 +54,31 @@ class BaseLooper():
         ==================  ====================================================
         key                 value
         ==================  ====================================================
+        "file_path_prefix"  (*str*) prefix for the file path to save the looper results.
         "grad"              (*bool*) option to calculate gradients with respect to the X-axis.
-        "grad_position"     (*str*) a value denoting the position or a mode to calculate the position. For a position other than "all" and "mean", the ``grad_mono_idx`` parameter should be filled. The different positions can be "mean" for the mean of the axis values, "mono_mean" for the mean of the monotonic patches in calculated values, "mono_min" for the local minima of the monotonic patches, "mono_max" for the local maxima of the monotonic patches and "all" to output all positions (default).
+        "grad_position"     (*str*) a value denoting the position or a mode to calculate the position. For a position other than "all" and "mean", the ``grad_mono_idx`` parameter should be filled. The different positions can be "mean" for the mean of the axis values, "mono_mean" for the mean of the monotonic patches in calculated values, "mono_min" for the local minima of the monotonic patches, "mono_max" for the local maxima of the monotonic patches and "all" to output all positions.
         "grad_mono_idx"     (*int*) index of the monotonic patch.
-        "mode"              (*str*) mode of computation. Options are "multiprocess" for multi-processor execution, "multithread" for multi-threaded execution and "serial" for single-threaded execution (fallback).
-        "show_progress"     (*bool*) option to display the progress for the calculation of results in the first dimension.
+        "mode"              (*str*) mode of computation. Options are "multiprocess" for multi-processor execution, "multithread" for multi-threaded execution and "serial" for single-threaded execution.
+        "show_progress_x"   (*bool*) option to display the progress for the calculation of results in X-axis.
+        "show_progress_y"   (*bool*) option to display the progress for the calculation of results in Y-axis.
+        "show_progress_yz"  (*bool*) option to display the progress for the calculation of results in YZ-axis.
+        "thres_mode"        (*str*) Mode of calculation of threshold values. Options are "minmax" for minimum value at which maximum is reached and "minmin" for minimmum value at which minimum is reached.
         ==================  ====================================================
 
     Each axis dictionary ("X", "Y" or "Z") inside the "looper" dictionary can contain the following keys in the descending order of their priorities:
         ==========  ====================================================
         key         value
         ==========  ====================================================
-        "var"       (*str*) name of the parameter to loop. Its value defaults to "x" if the axis is a list of values and not a dictionary.
-        "idx"       (*int*) index of the parameter if the parameter is a list of values.
-        "val"       (*list*) values of the parameter. The remaining keys are not checked if its value is given. Otherwise, the "min", "max", "dim" and "scale" values are used to obtain "val".
+        "var"       (*str*) name of the parameter to loop. Its value defaults to the axis name in lower case if the axis is a sequence of values and not a dictionary.
+        "idx"       (*int*) index of the parameter if the parameter is a sequence of values.
+        "val"       (*list* or *np.ndarray*) values of the parameter. The remaining keys are not checked if its value is given. Otherwise, the "min", "max", "dim" and "scale" values are used to obtain "val".
         "min"       (*float*) minimum value of the parameter.
         "max"       (*float*) maximum value of the parameter.
-        "dim"       (*int*) number of values from "min" to "max", both inclusive.
-        "scale"     (*str*) step scale of the values. Available scales are "log" and "linear" (fallback). If this value is "log", the "min" and "max" values should be the exponents of 10.
+        "dim"       (*int*) number of values from "min" to "max", both inclusive. Default is 101.
+        "scale"     (*str*) step scale of the values. Available scales are "log" for logarithmic and "linear" for linear. If this value is "log", the "min" and "max" values should be the exponents of 10. Default is "linear"
         ==========  ====================================================
 
-    .. note:: All the options defined under "looper" supersede individual function arguments.
+    .. note:: All the options defined under "looper" supersede individual method arguments. If "looper" defines a list of axes values, then the individual axes are set automatically.
     """
 
     @property
@@ -106,85 +110,65 @@ class BaseLooper():
             params['system'] = {}
 
         # set attributes
-        self.func = func
-        self.params = params
-        self.code = code
-        self.name = name
         self.cb_update = cb_update
+        self.code = code
+        self.func = func
+        self.name = name
+        self.params = params
+        self.time = time.time()
 
         # set properties
         self.axes = dict()
         self.results = None
 
-    def _set_axis(self, axis: str):
-        """Method to set the list of axis values.
-        
-        Parameters
-        ----------
-        axis : str
-            Name of the axis ("X", "Y" or "Z").
-        """
-
         # validate parameters
-        assert axis in self.params['looper'], 'Key "looper" should contain key "{}" for axis parameters'.format(axis)
+        assert 'looper' in self.params, 'Dictionary `params` should contain key "looper" for looper parameters'
 
-        # extract frequently used variables
-        _axis = self.params['looper'][axis]
+        # reformat parameters
+        if type(self.params['looper']) is list:
+            # validate parameters
+            supported_types = Union[int, float, np.float_, np.float16, np.float32, np.float64, np.float128].__args__
+            assert isinstance(self.params['looper'][0], supported_types), 'Lists of axes values for "looper" should be one of the types: {}'.format(supported_types)
+            
+            # initialize
+            _looper_params = dict()
 
-        # if axis is a list of values
-        if type(_axis) is list:
-            _axis = {
-                'var': 'x',
-                'val': _axis
-            }
+            # get axis values
+            _axes = ['X', 'Y', 'Z']
+            for i in range(np.shape(self.params['looper'])[0]):
+                _looper_params[_axes[i]] = self.params['looper'][i]
 
-        # initialize dict
-        self.axes[axis] = dict()
+            # update looper parameters
+            self.params['looper'] = _looper_params
 
-        # validate variable
-        assert 'var' in _axis, 'Key "{}" should contain key "var" for the name of the variable'.format(axis)
-        self.axes[axis]['var'] = _axis['var']
-
-        # check index of variable
-        self.axes[axis]['idx'] = _axis.get('idx', None)
-
-        # if axis values are provided
-        _val = _axis.get('val', None)
-        if _val is not None and type(_val) is list:
-            # set values
-            self.axes[axis]['val'] = _val
-        # generate values
-        else:
-            # validate range
-            assert 'min' in _axis and 'max' in _axis, 'Key "{}" should contain keys "min" and "max" to define axis range'.format(axis)
-
-            # extract dimension
-            _min = np.float_(_axis['min'])
-            _max = np.float_(_axis['max'])
-            _dim = int(_axis.get('dim', 101))
-            _scale = _axis.get('scale', 'linear')
-
-            # set values
-            if _scale == 'log':
-                _val = np.logspace(_min, _max, _dim)
-            elif _scale == 'linear':
-                _val = np.linspace(_min, _max, _dim)
-                # truncate values
-                _step_size = (Decimal(str(_max)) - Decimal(str(_min))) / (_dim - 1)
-                _decimals = - _step_size.as_tuple().exponent
-                _val = np.around(_val, _decimals)
-            # convert to list
-            _val = _val.tolist()
-            # update axis
-            self.axes[axis]['val'] = _val
-
-    def get_full_file_path(self, file_path: str):
-        """Method to obtain the complete file path.
+    def _check_directories(self, file_path: str):
+        """Method to check for data directory.
         
         Parameters
         ----------
         file_path : str
-            Original file path.
+            Full file path.
+        """
+
+        # get directory
+        file_dir = file_path[:len(file_path) - len(file_path.split('/')[-1])]
+        # try to create
+        try:
+            os.makedirs(file_dir)
+            # update log
+            logger.debug('Directory {dir_name} created\n'.format(dir_name=file_dir))  
+        # if already exists
+        except FileExistsError:
+            # update log
+            logger.debug('Directory {dir_name} already exists\n'.format(dir_name=file_dir))   
+
+    def _get_full_file_path(self, file_path_prefix: str):
+        """Method to obtain the full file path.
+        
+        Parameters
+        ----------
+        file_path_prefix : str
+            Prefix of the file path.
             
         Returns
         -------
@@ -192,45 +176,42 @@ class BaseLooper():
             Full file path.
         """
 
-        # complete filename with system parameters
-        for key in self.params['system']:
-            file_path += '_' + str(self.params['system'][key])
+        # supersede arguments by looper parameters
+        file_path = file_path_prefix
+
+        # # complete filename with system parameters
+        # for key in self.params['system']:
+        #     file_path += '_' + str(self.params['system'][key])
+
         # update for XLooper variable
-        for key in self.params['looper']['X']:
-            file_path += '_' + str(self.params['looper']['X'][key])
+        file_path += self._get_params_str('X')
+
         # update for XYLooper variable
-        if 'xy' in self.code:
-            Y = self.axes['Y']
-            for key in self.params['looper']['Y']:
-                file_path += '_' + str(self.params['looper']['Y'][key])
+        if 'XY' in self.code:
+            file_path += self._get_params_str('Y')
+
         # update for XYZLooper variable
-        if 'xyz' in self.code:
-            Z = self.axes['Z']
-            for key in self.params['looper']['Z']:
-                file_path += '_' + str(self.params['looper']['Z'][key])
+        if 'XYZ' in self.code:
+            file_path += self._get_params_str('Z')
 
         return file_path
 
-    def get_grad_index(self, axis_values: list, calc_values: list=None, grad_position='mean', grad_mono_idx: int=0):
+    def _get_grad_index(self, axis_values: list, grad_position, grad_mono_idx: int):
         """Function to calculate the index of a particular position in a list to calculate the gradients.
         
         Parameters
         ----------
         axis_values : list
             Values of the axis.
-        calc_values : list, optional
-            Values of the calculation.
-        grad_position: str or float, optional
+        grad_position: str or float
             A value denoting the position or a mode to calculate the position. For a position other than "all" and "mean", the ``grad_mono_idx`` parameter should be filled. The different positions can be:
                 ==============  ====================================================
                 value           meaning
                 ==============  ====================================================
+                "all"           all values.
                 "mean"          mean of the axis values.
-                "mono_mean"     mean of the monotonic patches in calculated values.
-                "mono_min"      local minima of the monotonic patches.
-                "mono_max"      local maxima of the monotonic patches.
                 ==============  ====================================================
-        grad_mono_idx: int, optional
+        grad_mono_idx: int
             Index of the monotonic patch.
 
         Returns
@@ -239,13 +220,9 @@ class BaseLooper():
             Indices of the required positions.
         """
 
-        # supersede looper parameters
-        grad_position = self.params['looper'].get('grad_position', grad_position)
-        grad_mono_idx = self.params['looper'].get('grad_mono_idx', grad_mono_idx)
-
         # validate parameters
-        supported_types = Union[str, int, float, np.float32, np.float64].__args__
-        assert isinstance(grad_position, supported_types), 'Parameter ``grad_position`` should be either of the types: {}'.format(supported_types)
+        supported_types = Union[str, int, float, np.float_, np.float16, np.float32, np.float64, np.float128].__args__
+        assert isinstance(grad_position, supported_types), 'Parameter ``grad_position`` should be one of the types: {}'.format(supported_types)
 
         # handle inherited exceptions
         if grad_position == 'all':
@@ -259,11 +236,12 @@ class BaseLooper():
             idx = abs(np.asarray(axis_values) - np.mean(axis_values)).argmin()
         # monotonic modes
         else:
+            logger.info('---------------------Under Construction-----------------\t\n')
             idx = 0
 
         return idx
 
-    def get_multiprocessed_results(self, var, idx, val):
+    def _get_multiprocessed_results(self, var, idx, val):
         """Method to obtain results of multiprocessed execution of a given function. (*Under construction.*)
 
         Parameters
@@ -296,7 +274,7 @@ class BaseLooper():
 
         return results
 
-    def get_multithreaded_results(self, var, idx, val):
+    def _get_multithreaded_results(self, var, idx, val):
         """Method to obtain results of multithreaded execution of a given function.
 
         Parameters
@@ -338,59 +316,39 @@ class BaseLooper():
 
         return results
 
-    def get_thresholds(self, thres_mode='minmax'):
-        """Method to calculate the threshold values for the results.
-
+    def _get_params_str(self, axis: str):
+        """Method to obtain a strings of parameters used in a looper.
+        
         Parameters
         ----------
-        thres_mode : str
-            Mode of calculation of threshold values. Options are:
-                ==========  ====================================================
-                value       meaning
-                ==========  ====================================================
-                "minmax"    minimum value at which maximum is reached.
-                "minmin"    minimum value at which minimum is reached.
-                ==========  ====================================================
-        
+        axis : str
+            Name of the axis ("X", "Y" or "Z").
+
         Returns
         -------
-        thres : dict
-            Threshold values.
+        params_str: str
+            String containing the parameters used in the looper.
         """
 
-        # mode selector
-        _selector = {
-            'minmax': np.argmax,
-            'minmin': np.argmin
-        }
-
         # initialize
-        thres = {}
+        params_str = ''
 
-        # XLooper
-        if self.code == 'x_looper':
-            _index = _selector[thres_mode](self.results['V'])
-            thres['X'] = self.axes['X']['val'][_index]
-            thres['V'] = self.results['V'][_index]
-        # XYLooper
-        if self.code == 'xy_looper':
-            _x_dim = len(self.axes['X']['val'])
-            _index = _selector[thres_mode](self.results['V'])
-            thres['X'] = self.axes['X']['val'][_index % _x_dim]
-            thres['Y'] = self.axes['Y']['val'][int(_index / _x_dim)]
-            thres['V'] = self.results['V'][int(_index / _x_dim)][_index % _x_dim]
+        # concatenate
+        _axis = self.params['looper'][axis] if axis in self.params['looper'] else self.params['looper'][axis.lower()]
+        for key in _axis:
+            params_str += ('_' + axis.lower() + '=' if key == 'var' else '_') + str(_axis[key])
 
-        return thres
-    
-    def get_X_results(self, grad: bool=False, mode: str='serial'):
+        return params_str
+
+    def _get_X_results(self, grad: bool, mode: str, show_progress_x: bool):
         """Method to obtain results for variation in X-axis.
         
         Parameters
         ----------
-        grad : bool, optional
-            Option to calculate gradients.
-        mode : str, optional
-            Mode of computation. Available modes are:
+        grad : bool
+            Option to calculate gradients with respect to the X-axis.
+        mode : str
+            Mode of computation. Options are:
                 ==================  ====================================================
                 value               meaning
                 ==================  ====================================================
@@ -398,6 +356,8 @@ class BaseLooper():
                 "multithread"       multi-thread execution.
                 "serial"            single-thread execution (fallback).
                 ==================  ====================================================
+        show_progress_x : bool
+            Option to display the progress for the calculation of results in X-axis.
 
         Returns
         -------
@@ -407,36 +367,31 @@ class BaseLooper():
             Calculated values.
         """
 
-        # supersede looper parameters
-        grad = self.params['looper'].get('grad', grad)
-        mode = self.params['looper'].get('mode', mode)
-        show_progress = self.params['looper'].get('show_progress', False)
-
         # extract frequently used variables
         x_var = self.axes['X']['var']
         x_idx = self.axes['X']['idx']
         x_val = self.axes['X']['val']
         x_dim = len(x_val)
 
-        # initialize axes
+        # initialize
+        results = list()
         xs = list()
         vs = list()
-        results = list()
 
         # if multithreading is opted
         if mode == 'multiprocess':
             # obtain sorted results
-            results = self.get_multiprocessed_results(x_var, x_idx, x_val)
+            results = self._get_multiprocessed_results(x_var, x_idx, x_val)
         # if multithreading is opted
         elif mode == 'multithread':
             # obtain sorted results
-            results = self.get_multithreaded_results(x_var, x_idx, x_val)
+            results = self._get_multithreaded_results(x_var, x_idx, x_val)
         else:
             # iterate
             for i in range(x_dim):
                 # update progress
-                if show_progress :
-                    self.update_progress(pos=i, dim=x_dim)
+                if show_progress_x:
+                    self._update_progress(pos=i, dim=x_dim)
                 # update a deep copy
                 system_params = copy.deepcopy(self.params['system'])
                 if x_idx is not None:
@@ -449,32 +404,251 @@ class BaseLooper():
                 # calculate value
                 self.func(system_params, x_val[i], logger, results)
 
-        # structure results
+        # structure results and update lists
         for i in range(x_dim):
-            _x = results[i][0]
-            _v = results[i][1]
+            xs.append(results[i][0])
+            vs.append(results[i][1])
 
-            # update lists
-            xs.append(_x)
-            vs.append(_v)
-
-        # if opted for gradient calculation
+        # calculate gradients
         if grad:
             vs = np.gradient(vs, xs)
 
         return xs, vs
 
+    def _set_axis(self, axis: str):
+        """Method to set the list of axis values. The values for the axis are numpy floats.
+        
+        Parameters
+        ----------
+        axis : str
+            Name of the axis ("X", "Y" or "Z").
+        """
+
+        # validate parameters
+        assert axis in self.params['looper'], 'Key "looper" should contain key "{}" for axis parameters'.format(axis)
+
+        # initialize axis
+        self.axes[axis] = dict()
+
+        # extract frequently used variables
+        _axis = self.params['looper'][axis]
+
+        # convert to list if numpy array
+        if type(_axis) is np.ndarray:
+            _axis = _axis.tolist()
+
+        # handle list of values
+        if type(_axis) is list:
+            _axis = {
+                'var': axis,
+                'val': _axis
+            }
+
+        # if axis values are provided
+        _val = _axis.get('val', None)
+        # convert to list if numpy array
+        if type(_val) is np.ndarray:
+            _val = _val.tolist()
+        # update values
+        if type(_val) is list:
+            # validate values
+            assert len(_val) != 0, 'Key "{}" should contain key "val" with a non-empty list'.format(axis)
+
+            # set values
+            self.axes[axis]['val'] = _val
+        # update values
+        else:
+            # validate range
+            assert 'min' in _axis and 'max' in _axis, 'Key "{}" should contain keys "min" and "max" to define axis range'.format(axis)
+
+            # extract dimension
+            _min = np.float_(_axis['min'])
+            _max = np.float_(_axis['max'])
+            _dim = int(_axis.get('dim', 101))
+            _scale = str(_axis.get('scale', 'linear'))
+
+            # set values
+            if _scale == 'log':
+                _val = np.logspace(_min, _max, _dim)
+            else:
+                _val = np.linspace(_min, _max, _dim)
+                # truncate values
+                _step_size = (Decimal(str(_max)) - Decimal(str(_min))) / (_dim - 1)
+                _decimals = - _step_size.as_tuple().exponent
+                _val = np.around(_val, _decimals)
+            # update axis
+            self.axes[axis]['val'] = _val.tolist()
+
+        # validate variable
+        assert 'var' in _axis, 'Key "{}" should contain key "var" for the name of the variable'.format(axis)
+        self.axes[axis]['var'] = _axis['var']
+
+        # check index of variable
+        _idx = _axis.get('idx', None)
+        self.axes[axis]['idx'] = int(_idx) if _idx is not None else None
+
+    def _update_progress(self, pos: int, dim: int):
+        """Method to update the progress of the calculation.
+        
+        Parameters
+        ----------
+        pos : int
+            Index of current iteration.
+        dim : int 
+            Total number of iterations.
+        """
+        
+        # calculate progress
+        progress = pos / (dim - 1) * 100
+        # current time
+        _time = time.time()
+
+        # display progress
+        if _time - self.time > 0.5:
+            logger.info('Calculating the values: Progress = {progress:3.2f}'.format(progress=progress))
+            if self.cb_update is not None:
+                self.cb_update(status='Calculating the values...', progress=progress)
+
+            # update time
+            self.time = _time
+            
+    def get_thresholds(self, thres_mode: str='minmax'):
+        """Method to calculate the threshold values for the results.
+
+        Parameters
+        ----------
+        thres_mode : str
+            Mode of calculation of threshold values. Default is "minmax". Options are:
+                ==========  ====================================================
+                value       meaning
+                ==========  ====================================================
+                "minmax"    minimum value at which maximum is reached.
+                "minmin"    minimum value at which minimum is reached.
+                ==========  ====================================================
+        
+        Returns
+        -------
+        thres : dict
+            Threshold values. Keys are "X", "Y", "Z" and "V".
+        """
+
+        # supersede arguments by looper parameters
+        thres_mode = self.params['looper'].get('thres_mode', thres_mode)
+
+        # mode selector
+        _selector = {
+            'minmax': np.argmax,
+            'minmin': np.argmin
+        }
+
+        # initialize
+        thres = dict()
+
+        # get index
+        _index = _selector[thres_mode](self.results['V'])
+
+        # 3D looper
+        if self.code == 'XYZLooper':
+            _x_dim = len(self.axes['X']['val'])
+            _xy_dim = len(self.axes['Y']['val']) * _x_dim
+            thres['X'] = self.results['X'][int(_index / _xy_dim)][int((_index % (_xy_dim)) / _x_dim)][_index % _x_dim]
+            thres['Y'] = self.results['Y'][int(_index / _xy_dim)][int((_index % (_xy_dim)) / _x_dim)][_index % _x_dim]
+            thres['Z'] = self.results['Z'][int(_index / _xy_dim)][int((_index % (_xy_dim)) / _x_dim)][_index % _x_dim]
+            thres['V'] = self.results['V'][int(_index / _xy_dim)][int((_index % (_xy_dim)) / _x_dim)][_index % _x_dim]
+        # 2D looper
+        elif self.code == 'XYLooper':
+            _x_dim = len(self.axes['X']['val'])
+            thres['X'] = self.results['X'][int(_index / _x_dim)][_index % _x_dim]
+            thres['Y'] = self.results['Y'][int(_index / _x_dim)][_index % _x_dim]
+            thres['V'] = self.results['V'][int(_index / _x_dim)][_index % _x_dim]
+        # 1D looper
+        else:
+            thres['X'] = self.results['X'][_index]
+            thres['V'] = self.results['V'][_index]
+
+        return thres
+    
+    def load_results(self, file_path_prefix: str='data/V'):
+        """Method to load the results from a .npz file.
+        
+        Parameters
+        ----------
+        file_path_prefix : str, optional
+            Prefix of the file path. Default is "data/V".
+
+        Returns
+        -------
+        loaded : bool
+            Boolean denoting whether results were successfully loaded.
+        """
+
+        # initialize
+        loaded = False
+
+        # supersede arguments by looper parameters
+        file_path_prefix = self.params['looper'].get('file_path_prefix', file_path_prefix)
+
+        # get full file path
+        file_path = self._get_full_file_path(file_path_prefix=file_path_prefix)
+
+        # check directories
+        self._check_directories(file_path=file_path)
+
+        # attempt to load results if exists
+        if os.path.isfile(file_path + '.npz'):
+            # load results
+            V = np.load(file_path + '.npz')['arr_0'].tolist()
+
+            # initialize variables
+            _x_axis = self.axes.get('X', None)
+            _y_axis = self.axes.get('Y', None)
+            _z_axis = self.axes.get('Z', None)
+            _dim = np.shape(V)
+
+            # XYLooper
+            if len(_dim) == 2:
+                X = [_x_axis['val']] * _dim[0]
+                Y = [[_y_axis['val'][i]] * _dim[1] for i in range(_dim[0])]
+                Z = None
+            # XYZLooper
+            if len(_dim) == 3:
+                X = [[_x_axis['val']] * _dim[1]] * _dim[0]
+                Y = [[_y_axis['val'][i]] * _dim[2] for i in range(_dim[1])] * _dim[0]
+                Z = [[[_z_axis['val'][i]] * _dim[2]] * _dim[1] for i in range(_dim[0])]
+            # XLooper
+            else:
+                X = _x_axis['val']
+                Y = None
+                Z = None
+
+            # update results
+            self.results = {
+                'X': X,
+                'Y': Y,
+                'Z': Z,
+                'V': V
+            }
+            
+            # display completion
+            logger.info('------------------Results Loaded---------------------\t\n')
+            if self.cb_update is not None:
+                self.cb_update(status='Results Loaded', progress=None, reset=True)
+
+            loaded = True
+
+        return loaded
+            
     def plot_results(self, hold: bool=True, width: float=5.0, height: float=5.0):
         """Method to plot the results.
         
         Parameters
         ----------
         hold : bool, optional
-            Option to hold the plot.
+            Option to hold the plot. Default is `True`.
         width : float, optional
-            Width of the figure.
+            Width of the figure. Default is `5.0`.
         height : float, optional 
-            Height of the figure.
+            Height of the figure. Default is `5.0`.
 
         Returns
         -------
@@ -485,12 +659,14 @@ class BaseLooper():
         # handle undefined plotter parameters
         if 'plotter' not in self.params:
             self.params['plotter'] = {}
-        # supersede plotter parameters
+
+        # supersede arguments by plotter parameters
         self.params['plotter']['type'] = self.params['plotter'].get('type', {
-            'x_looper': 'line',
-            'xy_looper': 'pcolormesh',
-            'xyz_looper': 'surface'
+            'XLooper': 'line',
+            'XYLooper': 'pcolormesh',
+            'XYZLooper': 'surface'
         }[self.code])
+        self.params['plotter']['hold'] = self.params['plotter'].get('hold', hold)
         self.params['plotter']['width'] = self.params['plotter'].get('width', width)
         self.params['plotter']['height'] = self.params['plotter'].get('height', height)
 
@@ -509,22 +685,23 @@ class BaseLooper():
 
         return plotter
 
-    def save_results(self, file_path):
-        """Method to obtain the complete file path.
+    def save_results(self, file_path_prefix: str='data/V'):
+        """Method to save the results to a .npz file.
         
         Parameters
         ----------
-        file_path : str
-            Original file path.
+        file_path_prefix : str
+            Prefix of the file path. Default is "data/V".
         """
 
-        # create directories
-        file_dir = file_path[:len(file_path) - len(file_path.split('/')[-1])]
-        try:
-            os.makedirs(file_dir)
-        except FileExistsError:
-            # update log
-            logger.debug('Directory {dir_name} already exists\n'.format(dir_name=file_dir))
+        # supersede arguments by looper parameters
+        file_path_prefix = self.params['looper'].get('file_path_prefix', file_path_prefix)
+
+        # get full file path
+        file_path = self._get_full_file_path(file_path_prefix=file_path_prefix)
+
+        # check directories
+        self._check_directories(file_path=file_path)
 
         # save data
         np.savez_compressed(file_path, np.array(self.results['V']))
@@ -534,40 +711,21 @@ class BaseLooper():
         if self.cb_update is not None:
             self.cb_update(status='Results Saved', progress=None, reset=True)
 
-    def update_progress(self, pos, dim):
-        """Method to update the progress of the calculation.
-        
-        Parameters
-        ----------
-        pos : int
-            Index of current iteration.
-        dim : int 
-            Total number of iterations.
-        """
-        
-        # calculate progress
-        progress = float(pos) / float(dim - 1) * 100
-        # display progress
-        if int(progress * 1000) % 10 == 0:
-            logger.info('Calculating the values: Progress = {progress:3.2f}'.format(progress=progress))
-            if self.cb_update is not None:
-                self.cb_update(status='Calculating the values...', progress=progress)
-
-    def wrap(self, file_path: str=None, plot: bool=False, hold: bool=True, width: float=5.0, height: float=5.0):
+    def wrap(self, file_path_prefix: str=None, plot: bool=False, hold: bool=True, width: float=5.0, height: float=5.0):
         """Method to wrap the looper.
 
         Parameters
         ----------
-        file_path : str, optional
-            Path to the data file.
+        file_path_prefix : str, optional
+            Path of the file path. Default is `None` (doesn't save to file).
         plot: bool, optional
-            Option to plot the results.
+            Option to plot the results. Default is `False`.
         hold : bool, optional
-            Option to hold the plot.
+            Option to hold the plot. Default is `True`.
         width : float, optional
-            Width of the figure.
+            Width of the figure. Default is `5.0`.
         height : float, optional
-            Height of the figure.
+            Height of the figure. Default is `5.0`.
 
         Returns
         -------
@@ -575,34 +733,17 @@ class BaseLooper():
             Instance of the looper.
         """
 
-        # initialize variables
-        X = self.axes['X']
-        Y = None
-        Z = None
-        if file_path is not None:
-            # get full file path
-            file_path = self.get_full_file_path(file_path=file_path)
-
-            # attempt to load results if exists
-            if os.path.isfile(file_path + '.npz'):
-                self.results = {
-                    'X': X['val'],
-                    'Y': Y['val'] if Y is not None else None,
-                    'Z': Z['val'] if Z is not None else None,
-                    'V': np.load(file_path + '.npz')['arr_0'].tolist()
-                }
-                
-                # display completion
-                logger.info('------------------Results Loaded---------------------\t\n')
-                if self.cb_update is not None:
-                    self.cb_update(status='Results Loaded', progress=None, reset=True)
+        # if save/load opted
+        if file_path_prefix is not None:
+            # load saved results
+            loaded = self.load_results(file_path_prefix=file_path_prefix)
                 
             # loop and save results
-            else:
+            if not loaded:
                 self.loop()
 
                 # save data
-                self.save_results(file_path=file_path)
+                self.save_results(file_path_prefix=file_path_prefix)
         
         # loop
         else:

@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.8.3 - 2022/04/24 - 00 - Revamped Loopers and UI
+* Updated `qom.loopers` package:
+    * Updated structure and updated public methods to supersede looper parameters.
+    * Added function to check directories and save/load results.
+    * Fixed progress and threshold function.
+    * Updated documentation.
+* Minor updates to `qom.solver` package methods.
+* Minor changes in `qom.systems.BaseSystem` module for optical steady state method.
+* Revamped `qom.ui.axes` package with more options for labels and ticks.
+* Updated `qom.ui.plotters` package:
+    * Removed axes formatting from `BasePlotter` module.
+    * Added option for minor ticks, tick position and tick limits  in `MPLPlotter` module.
+    * Added option to add annotations and change view for 3D plots.
+* Minor fixes to `qom.ui.log` and `qom.utils.looper` modules.
+* Updated `README` and `requirements` and `setup`.
+
 ## v0.8.2 - 2022/01/09 - 00 - Updated Loopers and Bugfixes
 * Added support for custom parameters in `qom.loopers` modules.
 * Added default time parameters in `qom.solvers.HLESover` module.

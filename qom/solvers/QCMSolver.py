@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.QCMSolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2021-07-31'
+__updated__ = '2022-04-24'
 
 # dependencies
 import logging
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class QCMSolver():
     r"""Class to handle quantum correlation measure solver.
 
-    Initializes ``corrs`` and ``modes`` properties.
+    Initializes ``corrs`` and ``modes``.
 
     Parameters
     ----------
@@ -42,7 +42,7 @@ class QCMSolver():
     """
 
     # attributes
-    code = 'qcm_solver'
+    code = 'QCMSolver'
     name = 'Quantum Correlations Measure Solver'
 
     def __init__(self, modes, corrs):
@@ -52,7 +52,7 @@ class QCMSolver():
         self.modes = modes
         self.corrs = corrs
 
-    def __get_invariants(self, pos_i: int, pos_j: int):
+    def _get_invariants(self, pos_i: int, pos_j: int):
         """Helper function to calculate symplectic invariants for two modes given the correlation matrix of their quadratures.
 
         Parameters
@@ -86,7 +86,7 @@ class QCMSolver():
         # symplectic invariants
         return [np.linalg.det(A), np.linalg.det(B), np.linalg.det(C), np.linalg.det(self.corrs_modes)]
 
-    def __get_W(self, I_1, I_2, I_3, I_4):
+    def _get_W(self, I_1, I_2, I_3, I_4):
         """Helper function for quantum discord calculation."""
 
         try: 
@@ -114,7 +114,7 @@ class QCMSolver():
         """
 
         # symplectic invariants
-        I_1, I_2, I_3, I_4 = self.__get_invariants(pos_i=pos_i, pos_j=pos_j)
+        I_1, I_2, I_3, I_4 = self._get_invariants(pos_i=pos_i, pos_j=pos_j)
 
         try:
             # sum of symplectic invariants
@@ -130,7 +130,7 @@ class QCMSolver():
         f_func = lambda x: (x + 1 / 2) * np.log10(x + 1 / 2) - (x - 1 / 2) * np.log10(x - 1 / 2)
         # function values
         f_vals = list()
-        for ele in [np.sqrt(I_2), mu_plus, mu_minus, np.sqrt(self.__get_W(I_1, I_2, I_3, I_4))]:
+        for ele in [np.sqrt(I_2), mu_plus, mu_minus, np.sqrt(self._get_W(I_1, I_2, I_3, I_4))]:
             f_vals.append(f_func(ele))
             
         # quantum discord value
@@ -158,7 +158,7 @@ class QCMSolver():
         """
 
         # symplectic invariants
-        I_1, I_2, I_3, I_4 = self.__get_invariants(pos_i=pos_i, pos_j=pos_j)
+        I_1, I_2, I_3, I_4 = self._get_invariants(pos_i=pos_i, pos_j=pos_j)
         
         try:
             # sum of symplectic invariants after positive partial transpose

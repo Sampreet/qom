@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.RHCSolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-03'
-__updated__ = '2021-07-31'
+__updated__ = '2022-04-24'
 
 # dependencies
 from typing import Union
@@ -23,7 +23,7 @@ t_array = Union[list, np.matrix, np.ndarray]
 class RHCSolver():
     r"""Class to handle Routh-Hurwitz criterion solver.
 
-    Initializes ``coeffs``, ``n`` and ``seq`` properties. 
+    Initializes ``coeffs``, ``n`` and ``seq``. 
 
     An eigenvalue equation in :math:`\lambda` is obtained by equating :math:`\det(\lambda I_{n} - A_{n \times n})` to zero.
 
@@ -43,7 +43,7 @@ class RHCSolver():
     """
 
     # attribute
-    code = 'rhc_solver'
+    code = 'RHCSolver'
     name = 'Routh Hurwitz Criterion Solver'
 
     @property
@@ -104,20 +104,20 @@ class RHCSolver():
             _shape = np.shape(A)
             assert _shape[0] == _shape[1], 'A should be a square matrix.'
 
-            # set order
-            self.n = _shape[0]
             # set coeffs
             self._set_coeffs(A)
+            # set order
+            self.n = _shape[0]
 
         # if coefficients is not null
         else:
-            # set order
-            self.n = len(coeffs) - 1
             # set coefficients
             self.coeffs = coeffs
+            # set order
+            self.n = len(coeffs) - 1
 
         # set Ts
-        self._set_Ts()
+        self._set_seq()
 
     def _set_coeffs(self, A):
         """Method to set the coefficients of the characteristic equation."""
@@ -142,7 +142,7 @@ class RHCSolver():
         for i in range(len(self.coeffs)):
             self.coeffs[i] = np.complex(sp.re(self.coeffs[i]), sp.im(self.coeffs[i]))
 
-    def _set_Ts(self):
+    def _set_seq(self):
         """Method to set the determinants of the sub-matrices."""
 
         # get M

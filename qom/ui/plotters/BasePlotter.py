@@ -6,10 +6,9 @@
 __name__    = 'qom.ui.plotters.BasePlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-06'
-__updated__ = '2022-01-02'
+__updated__ = '2022-04-23'
 
 # dependencies
-from typing import Union
 import logging
 import numpy as np
 import seaborn as sns
@@ -20,16 +19,14 @@ from ..axes import *
 # module logger
 logger = logging.getLogger(__name__)
 
-# data types
-t_axis = Union[DynamicAxis, MultiAxis, StaticAxis]
-
+# TODO: Validate parameters.
 # TODO: Refine `get_colors`.
 # TODO: Verify `get_limits`.
 
 class BasePlotter():
     """Class to interface plotters.
 
-    Initializes ``axes`` and ``params`` properties.
+    Initializes ``axes``, ``bins`` and ``params`` properties.
     
     Parameters
     ----------
@@ -40,13 +37,15 @@ class BasePlotter():
             ======================  ====================================================
             key                     value
             ======================  ====================================================
+            "annotations"           (*list*) annotation dictionaries for the plot containing keys "s" for the text, "xy" for the tuple of positions of the text on the figure in fractions, "color" for the color of the text, and "font_dict" for the type of font dictionary to copy. Options are "label" or "tick".
             "bins"                  (*int*) number of colors for the plot.
-            "cbar_position"         (*str*) position of the color bar. Currently supported values are "top", "right" (default), "bottom" and "left".
+            "cbar_position"         (*str*) position of the color bar. Options are are "top", "right" (default), "bottom" and "left".
             "cbar_tick_labels"      (*list*) tick labels of the color bar.
             "cbar_ticks"            (*list*) ticks of the color bar.
             "cbar_title"            (*str*) title of the color bar.
             "cbar_x_label"          (*str*) X-axis label of the color bar.
             "cbar_y_label"          (*str*) Y-axis label of the color bar.
+            "component"             (*str*) component of complex value. Options are "real" or "imag".
             "font_math"             (*str*) math renderer for fonts. 
             "height"                (*float*) height of the plot.
             "label_font_family"     (*str*) font family for the label.
@@ -67,45 +66,57 @@ class BasePlotter():
             "tick_font_weight"      (*int*) font weightt for the tick.
             "title"                 (*str*) title of the plot.
             "type"                  (*str*) type of the plot (refer notes).
-            "v_bound"               (*str*) option to check user-defined bounds.
-            "v_comp"                (*str*) component of complex value. Options are "real" or "imag".
             "v_label"               (*str*) label of the V-axis.
+            "v_label_pad"           (*int*) label padding of the V-axis.
             "v_name"                (*str*) display name of the V-axis.
-            "v_scale"               (*str*) scale of the V-axis.
-            "v_sizes"               (*list*) sizes of the V-axis.
-            "v_styles"              (*list*) styles of the V-axis.
+            "v_scale"               (*str*) scale of the V-axis. Options are "linear" and "log".
+            "v_tick_dim"            (*int*) tick dimension of the V-axis.
             "v_tick_labels"         (*list*) tick labels of the V-axis.
+            "v_tick_pad"            (*int*) tick padding of the V-axis.
+            "v_tick_position"       (*str*) tick position of the V-axis. Options are "both" (default), "bottom", "left", "right" or "top".
             "v_ticks"               (*list*) ticks of the V-axis.
+            "v_ticks_minor"         (*list*) positions of minor ticks of the V-axis.
             "v_unit"                (*str*) unit of the V-axis.
+            "view_aspect"           (*list*) aspect ratios of the 3D axes.
+            "view_elevation"        (*float*) elevation for 3D view on Z-axis.
+            "view_rotation"         (*float*) rotation for 3D view about Z-axis.
             "width"                 (*float*) width of the plot.
-            "x_bound"               (*str*) bounds of the X-axis.
             "x_label"               (*str*) label of the X-axis.
+            "x_label_pad"           (*int*) label padding of the X-axis.
             "x_name"                (*str*) display name of the X-axis.
-            "x_scale"               (*str*) scale of the X-axis.
-            "x_sizes"               (*list*) sizes of the X-axis.
-            "x_styles"              (*list*) styles of the X-axis.
+            "x_scale"               (*str*) scale of the X-axis. Options are "linear" and "log".
+            "x_tick_dim"            (*int*) tick dimension of the X-axis.
             "x_tick_labels"         (*list*) tick labels of the X-axis.
+            "x_tick_pad"            (*int*) tick padding of the X-axis.
+            "x_tick_position"       (*str*) tick position of the X-axis. Options are "both" (default), "bottom", "left", "right" or "top".
             "x_ticks"               (*list*) ticks of the X-axis.
+            "x_ticks_minor"         (*list*) positions of minor ticks of the X-axis.
             "x_unit"                (*str*) unit of the X-axis.
-            "y_bound"               (*str*) bounds of the Y-axis.
             "y_colors"              (*str*) colors for plots.
             "y_label"               (*str*) label of the Y-axis.
+            "y_label_pad"           (*int*) label padding of the Y-axis.
             "y_legend"              (*list*) legend of the plots.
             "y_name"                (*str*) display name of the Y-axis.
-            "y_scale"               (*str*) scale of the Y-axis.
+            "y_scale"               (*str*) scale of the Y-axis. Options are "linear" and "log".
             "y_sizes"               (*list*) sizes of the Y-axis.
             "y_styles"              (*list*) styles of the Y-axis.
+            "y_tick_dim"            (*int*) tick dimension of the Y-axis.
             "y_tick_labels"         (*list*) tick labels of the Y-axis.
+            "y_tick_pad"            (*int*) tick padding of the Y-axis.
+            "y_tick_position"       (*str*) tick position of the Y-axis. Options are "both" (default), "bottom", "left", "right" or "top".
             "y_ticks"               (*list*) ticks of the Y-axis.
+            "y_ticks_minor"         (*list*) positions of minor ticks of the Y-axis.
             "y_unit"                (*str*) unit of the Y-axis.
-            "z_bound"               (*str*) bounds of the Z-axis.
             "z_label"               (*str*) label of the Z-axis.
+            "z_label_pad"           (*int*) label padding of the Z-axis.
             "z_name"                (*str*) display name of the Z-axis.
-            "z_scale"               (*str*) scale of the Z-axis.
-            "z_sizes"               (*list*) sizes of the Z-axis.
-            "z_styles"              (*list*) styles of the Z-axis.
+            "z_scale"               (*str*) scale of the Z-axis. Options are "linear" and "log".
+            "z_tick_dim"            (*int*) tick dimension of the Z-axis.
             "z_tick_labels"         (*list*) tick labels of the Z-axis.
+            "z_tick_pad"            (*int*) tick padding of the Z-axis.
+            "z_tick_position"       (*str*) tick position of the Z-axis. Options are "both" (default), "bottom", "left", "right" or "top".
             "z_ticks"               (*list*) ticks of the Z-axis.
+            "z_ticks_minor"         (*list*) positions of minor ticks of the Z-axis.
             "z_unit"                (*str*) unit of the Z-axis.
             ======================  ====================================================
 
@@ -132,7 +143,6 @@ class BasePlotter():
     """
 
     # attributes
-    bins = 11
     custom_palettes = {
         'blr': ['Blues_r', 'Reds'],
         'glr': ['Greens_r', 'Reds'],
@@ -156,46 +166,44 @@ class BasePlotter():
     }
     types_1D = ['line', 'lines', 'scatter', 'scatters']
     types_2D = ['contour', 'contourf', 'pcolormesh']
-    types_3D = ['surface', 'surface_cx', 'surface_cy', 'surface_cz']
+    types_3D = ['line_3d', 'lines_3d', 'surface', 'surface_cx', 'surface_cy', 'surface_cz']
     ui_defaults = {
+        'annotations': list(),
         'bins': 11,
         'cbar_position': 'right',
+        'cbar_tick_labels': None,
+        'cbar_ticks': None,
         'cbar_title': '',
-        'height': 5.0,
+        'cbar_x_label': '',
+        'cbar_y_label': '',
+        'component': 'real',
+        'font_math': 'cm',
+        'height': 4.8,
         'legend_location': 'best',
         'palette': 'RdBu_r',
         'show_cbar': False,
         'show_legend': False,
         'title': '',
         'type': 'contourf',
-        'v_comp': 'real',
-        'v_label': '$value$',
-        'v_scale': 'linear',
-        'width': 5.0,
-        'x_label': '$x$',
-        'x_scale': 'linear',
-        'y_label': '$y$',
-        'y_legend': [0, 1, 2, 3, 4],
-        'y_scale': 'linear',
-        'z_label': '$z$',
-        'z_scale': 'linear',
+        'view_aspect': [1, 1, 1],
+        'view_elevation': 32.0,
+        'view_rotation': 215.0,
+        'width': 4.8
     }
 
     def __init__(self, axes: dict, params: dict):
-        """Class constructor for MPLPlotter."""
+        """Class constructor for BasePlotter."""
 
         # frequently used variables
-        _type = params.get('type', 'line')
-        _axes_params = self.__get_axes_params(axes, params)
-        _palette = params.get('palette', 'RdBu_r')
-        _bins = params.get('bins', self.bins)
+        _palette = params.get('palette', self.ui_defaults['palette'])
+        _bins = params.get('bins', self.ui_defaults['bins'])
 
         # se;ect axes
         self.axes = {
-            'X': StaticAxis(_axes_params['X']),
-            'Y': MultiAxis(_axes_params['Y']) if _type in self.types_1D else StaticAxis(_axes_params['Y']),
-            'Z': StaticAxis(_axes_params['Z']),
-            'V': DynamicAxis(_axes_params['V'])
+            'X': StaticAxis('X', axes, params),
+            'Y': MultiAxis('Y', axes, params),
+            'Z': StaticAxis('Z', axes, params),
+            'V': DynamicAxis('V', axes, params)
         }
 
         # update bins
@@ -203,111 +211,40 @@ class BasePlotter():
 
         # set params
         self.params = {
-            'type': _type,
-            'title': params.get('title', ''),
+            'type': params.get('type', self.ui_defaults['type']),
+            'title': params.get('title', self.ui_defaults['title']),
             'colors': self.get_colors(_palette, _bins),
             'palette': _palette,
             'font_dicts': {
-                'label': self.__get_font_dict(params, 'label'), 
-                'tick': self.__get_font_dict(params, 'tick'),
-                'math': params.get('font_math', 'cm')
+                'label': self._get_font_dict(params, 'label'), 
+                'tick': self._get_font_dict(params, 'tick'),
+                'math': params.get('font_math', self.ui_defaults['font_math'])
             },
             'legend': {
-                'show': params.get('show_legend', False),
-                'location': params.get('legend_location', 'best')
+                'show': params.get('show_legend', self.ui_defaults['show_legend']),
+                'location': params.get('legend_location', self.ui_defaults['legend_location']),
             },
             'cbar': {
-                'show': params.get('show_cbar', True),
-                'title': params.get('cbar_title', ''),
-                'position': params.get('cbar_position', 'right'),
-                'x_label': params.get('cbar_x_label', ''),
-                'y_label': params.get('cbar_y_label', ''),
-                'ticks': params.get('cbar_ticks', None),
-                'tick_labels': params.get('cbar_tick_labels', None),
+                'show': params.get('show_cbar', self.ui_defaults['show_cbar']),
+                'title': params.get('cbar_title', self.ui_defaults['cbar_title']),
+                'position': params.get('cbar_position', self.ui_defaults['cbar_position']),
+                'x_label': params.get('cbar_x_label', self.ui_defaults['cbar_x_label']),
+                'y_label': params.get('cbar_y_label', self.ui_defaults['cbar_y_label']),
+                'ticks': params.get('cbar_ticks', self.ui_defaults['cbar_ticks']),
+                'tick_labels': params.get('cbar_tick_labels', self.ui_defaults['cbar_tick_labels'])
             },
-            'v_comp': params.get('v_comp', 'real'),
-            'v_scale': params.get('v_scale', 'linear'),
-            'x_scale': params.get('x_scale', 'linear'),
-            'y_scale': params.get('y_scale', 'linear'),
-            'z_scale': params.get('z_scale', 'linear'),
-            'width': params.get('width', 5.0),
-            'height': params.get('height', 5.0)
+            'component': params.get('component', self.ui_defaults['component']),
+            'annotations': params.get('annotations', self.ui_defaults['annotations']),
+            'height': params.get('height', self.ui_defaults['height']),
+            'width': params.get('width', self.ui_defaults['width']),
+            'view': {
+                'aspect': params.get('view_aspect', self.ui_defaults['view_aspect']),
+                'elevation': params.get('view_elevation', self.ui_defaults['view_elevation']),
+                'rotation': params.get('view_rotation', self.ui_defaults['view_rotation'])
+            }
         }
 
-    def __get_axes_params(self, axes: dict, params: dict):
-        """Method to set parameters for the axes.
-
-        Parameters
-        ----------
-        axes : dict
-            Data for the axes.
-
-        Returns
-        -------
-        axes_params : dict
-            Parameters for the axes.
-        """
-
-        # frequently used variables
-        _min = -1
-        _max = 1
-
-        # initialize
-        axes_params = dict()
-
-        # for each axis
-        for axis in ['X', 'Y', 'Z', 'V']:
-            _dim = 5
-            # extract axis
-            _axis = axes.get(axis, {
-                'dim': _dim,
-                'max': _max,
-                'min': _min
-            })
-
-            # conver list to dict
-            if type(_axis) is list:
-                _axis = {
-                    'val': _axis
-                }
-                
-            # validate axis data
-            _valid = True
-            if type(_axis) is dict:
-                for key in ['dim', 'max', 'min']:
-                    if not key in _axis:
-                        _valid = False
-                        break
-                _val = _axis.get('val', list())
-                if len(_val) > 0:
-                    _valid = True
-            else:
-                _valid = False
-            assert _valid, 'Axis data should either be a `list` of values, or a dictionary containing "min", "max" and `dim` keys or a single `val` key with a non-empty list.'
-
-            # update dimension
-            _dim = _axis.get('dim', None)
-            if _dim is None:
-                _dim = len(_axis['val'])
-                
-            # update parameters
-            _axis['bound'] = params.get(axis.lower() + '_bound', 'none')
-            _axis['colors'] = params.get(axis.lower() + '_colors', None)
-            _axis['label'] = params.get(axis.lower() + '_label', '')
-            _axis['legend'] = params.get(axis.lower() + '_legend', '')
-            _axis['name'] = params.get(axis.lower() + '_name', '')
-            _axis['sizes'] = params.get(axis.lower() + '_sizes', None)
-            _axis['styles'] = params.get(axis.lower() + '_styles', None)
-            _axis['tick_labels'] = params.get(axis.lower() + '_tick_labels', None)
-            _axis['ticks'] = params.get(axis.lower() + '_ticks', None)
-            _axis['unit'] = params.get(axis.lower() + '_unit', '')
-                
-            # update axis
-            axes_params[axis] = _axis
-        
-        return axes_params
-
-    def __get_font_dict(self, params: dict, text_type: str): 
+    def _get_font_dict(self, params: dict, text_type: str): 
         """Method to generate a dictionary of font properties for a given type of text.
 
         Parameters

@@ -6,12 +6,10 @@
 __name__    = 'qom.loopers.XYLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2022-01-09'
+__updated__ = '2022-03-19'
 
 # dependencies
-from typing import Union
 import logging
-import numpy as np
 
 # qom modules
 from .BaseLooper import BaseLooper
@@ -31,11 +29,11 @@ class XYLooper(BaseLooper):
     cb_update : callable, optional
         Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is an integer and ``reset`` is a boolean.
 
-    .. note:: All the options defined under the "looper" dictionary in ``params`` supersede individual function arguments. Refer :class:`qom.loopers.BaseLooper` for a complete list of supported options.
+    .. note:: All the options defined under the "looper" dictionary in ``params`` supersede individual method arguments. Refer :class:`qom.loopers.BaseLooper` for a complete list of supported options.
     """
 
     # attributes
-    code = 'xy_looper'
+    code = 'XYLooper'
     name = '2D Looper'
     
     def __init__(self, func, params: dict, cb_update=None):
@@ -53,7 +51,7 @@ class XYLooper(BaseLooper):
         if self.cb_update is not None:
             self.cb_update(status='Looper Initialized', progress=None)
 
-    def loop(self, grad: bool=False, grad_position='all', grad_mono_idx: int=0, mode: str='serial'):
+    def loop(self, grad: bool=False, grad_position='all', grad_mono_idx: int=0, mode: str='serial', show_progress_x: bool=False, show_progress_y: bool=True):
         """Method to calculate the output of a given function for each X-axis and Y-axis point.
         
         Parameters
@@ -65,7 +63,7 @@ class XYLooper(BaseLooper):
                 ==============  ====================================================
                 value           meaning
                 ==============  ====================================================
-                "all"           consider all values.
+                "all"           all values.
                 "mean"          mean of the axis values.
                 "mono_mean"     mean of the monotonic patches in calculated values.
                 "mono_min"      local minima of the monotonic patches.
@@ -74,7 +72,7 @@ class XYLooper(BaseLooper):
         grad_mono_idx: int, optional
             Index of the monotonic patch.
         mode : str, optional
-            Mode of computation. Available modes are:
+            Mode of computation. Options are:
                 ==================  ====================================================
                 value               meaning
                 ==================  ====================================================
@@ -82,6 +80,10 @@ class XYLooper(BaseLooper):
                 "multithread"       multi-thread execution.
                 "serial"            single-thread execution (fallback).
                 ==================  ====================================================
+        show_progress_x : bool, optional
+            Option to display the progress for the calculation of results in X-axis. Default is `False`.
+        show_progress_y : bool, optional
+            Option to display the progress for the calculation of results in Y-axis. Default is `True`.
 
         Returns
         -------
@@ -89,14 +91,13 @@ class XYLooper(BaseLooper):
             Axes and calculated values containing the keys "X", "Y" and "V". If ``grad`` is ``True`` and ``grad_position`` is not "all", key "Y" is not returned.
         """
 
-        # supersede looper parameters
+        # supersede arguments by looper parameters
         grad = self.params['looper'].get('grad', grad)
         grad_position = self.params['looper'].get('grad_position', grad_position)
         grad_mono_idx = self.params['looper'].get('grad_mono_idx', grad_mono_idx)
-
-        # validate parameters
-        supported_types = Union[str, int, float, np.float32, np.float64].__args__
-        assert isinstance(grad_position, supported_types), 'Parameter ``grad_position`` should be either of the types: {}'.format(supported_types)
+        mode = self.params['looper'].get('mode', mode)
+        show_progress_x = self.params['looper'].get('show_progress_x', show_progress_x)
+        show_progress_y = self.params['looper'].get('show_progress_y', show_progress_y)
 
         # extract frequently used variables
         system_params = self.params['system']
@@ -112,7 +113,8 @@ class XYLooper(BaseLooper):
         # iterate Y-axis values
         for k in range(len(y_val)):
             # update progress
-            self.update_progress(pos=k, dim=len(y_val))
+            if show_progress_y:
+                self._update_progress(pos=k, dim=len(y_val))
 
             # update system parameter
             _val = y_val[k]
@@ -125,7 +127,7 @@ class XYLooper(BaseLooper):
                 system_params[y_var] = _val
 
             # get X-axis values
-            _temp_xs, _temp_vs = self.get_X_results(grad=grad, mode=mode)
+            _temp_xs, _temp_vs = self._get_X_results(grad=grad, mode=mode, show_progress_x=show_progress_x)
 
             # upate lists
             _xs.append(_temp_xs)
@@ -139,7 +141,7 @@ class XYLooper(BaseLooper):
             self.results['X'] = list()
             self.results['V'] = list()
             for i in range(len(_xs)):
-                idx = self.get_grad_index(axis_values=_xs[i])
+                idx = self._get_grad_index(axis_values=_xs[i], grad_position=grad_position, grad_mono_index=grad_mono_idx)
                 self.results['X'].append(_ys[i][idx])
                 self.results['V'].append(_vs[i][idx])
         # no gradient calculation or gradients at all positions

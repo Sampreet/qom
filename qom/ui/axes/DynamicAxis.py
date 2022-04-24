@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.axes.DynamicAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-17'
-__updated__ = '2021-08-27'
+__updated__ = '2022-04-24'
 
 # dependencies
 import logging
@@ -22,28 +22,28 @@ class DynamicAxis(BaseAxis):
 
     Parameters
     ----------
-    params : dict or list
-        Parameters for the axis supporting a list of values or a dictionary of parameters. Refer :class:`qom.ui.axes.BaseAxis` for currently supported keys.
+    axis : str
+        Name of the axis, "X", "Y", "Z" or "V".
+    axis_params : dict or list
+        Values for the axis supporting a list of values or a dictionary containing the range of values with keys "min", "max", "dim" and "scale" or the values themselves under key "val".
+    plotter_params : dict
+        Parameters for the plotter. Along with the keys defined in :class:`qom.ui.axes.BaseAxis`, additionally supported keys are:
+            ==============  ====================================================
+            key             value
+            ==============  ====================================================
+            "name"          (*str*) display name of the axis.
+            "unit"          (*str*) unit of the plots.
+            ==============  ====================================================
     """
 
-    def __init__(self, params={}):
+    def __init__(self, axis, axis_params, plotter_params):
         """Class constructor for DynamicAxis."""
 
         # initialize super class
-        super().__init__(params)
-
-        # set var 
-        self.var = params.get('var', 'dynamic_axis')
+        super().__init__(axis, axis_params, plotter_params)
 
         # set name
-        self.name = params.get('name', '')
+        self.name = plotter_params.get(axis.lower() + '_name', 'DynamicAxis')
 
         # set unit
-        self.unit = params.get('unit', '')
-
-        # set label
-        if params.get('label', '') == '':
-            self.label = self.name + ' (' + self.unit + ')' if self.unit != '' else self.name
-        # supersede axis_data
-        else:
-            self.label = params['label']
+        self.unit = plotter_params.get(axis.lower() + '_unit', self.axis_defaults['unit'])
