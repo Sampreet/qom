@@ -104,17 +104,17 @@ class RHCSolver():
             _shape = np.shape(A)
             assert _shape[0] == _shape[1], 'A should be a square matrix.'
 
-            # set coeffs
-            self._set_coeffs(A)
             # set order
             self.n = _shape[0]
+            # set coeffs
+            self._set_coeffs(A)
 
         # if coefficients is not null
         else:
-            # set coefficients
-            self.coeffs = coeffs
             # set order
             self.n = len(coeffs) - 1
+            # set coefficients
+            self.coeffs = coeffs
 
         # set Ts
         self._set_seq()

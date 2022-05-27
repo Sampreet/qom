@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.4 - 2022/05/27 - 00 - Updated 3D Plots
+* Minor fixes to `qom.loopers.BaseLooper` and `qom.solvers.RHCSolver` modules.
+* Updated `qom.ui.plotters` package:
+    * Added 3D line, scatter and density plots with support for unit sphere.
+    * Updated color selection to support extreme colors for dual plots.
+    * Added support for multi-line annotations.
+* Updated `README` and `setup`.
+
 ## v0.8.3 - 2022/04/24 - 00 - Revamped Loopers and UI
 * Updated `qom.loopers` package:
     * Updated structure and updated public methods to supersede looper parameters.

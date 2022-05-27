@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2022-04-24'
+__updated__ = '2022-05-22'
 
 # dependencies
 from matplotlib.colors import LinearSegmentedColormap, Normalize
@@ -143,7 +143,7 @@ class MPLPlotter(BasePlotter):
             # update y-axis
             self._update_axis(_mpl_axes, 'y', self.axes['Y'])
             # update z-axis
-            self._update_axis(_mpl_axes, 'z', self.axes['V'])
+            self._update_axis(_mpl_axes, 'z', self.axes['Z'] if 'density' in _type else self.axes['V'])
 
             # initializze 3D plot
             self._init_3D()
@@ -270,14 +270,32 @@ class MPLPlotter(BasePlotter):
         _xs, _ys = np.meshgrid(self.axes['X'].val, self.axes['Y'].val)
         _zeros = np.zeros((self.axes['Y'].dim, self.axes['X'].dim))
 
-        # surface plot
-        if 'surface' in _type:
-            self.plots = _mpl_axes.plot_surface(_xs, _ys, _zeros, rstride=1, cstride=1, cmap=_cmap)
+        # density plot
+        if 'density' in _type:
+            # if unit sphere opted
+            if 'unit' in _type:
+                _line = np.linspace(-1, 1, self.axes['X'].dim)
+                _thetas = np.linspace(-np.pi, np.pi, self.axes['X'].dim)
+                _zeros = np.zeros(self.axes['X'].dim)
+                self.plots = [_mpl_axes.plot(_line, _zeros, _zeros, color='k', linestyle='-', linewidth=0.5, alpha=0.5)[0]]
+                self.plots += [_mpl_axes.plot(_zeros, _line, _zeros, color='k', linestyle='-', linewidth=0.5, alpha=0.5)[0]]
+                self.plots += [_mpl_axes.plot(_zeros, _zeros, _line, color='k', linestyle='-', linewidth=0.5, alpha=0.5)[0]]
+                self.plots += [_mpl_axes.plot(np.cos(_thetas), np.sin(_thetas), _zeros, color='k', linestyle='-', linewidth=0.75, alpha=0.75)[0]]
+                self.plots += [_mpl_axes.plot(_zeros, np.cos(_thetas), np.sin(_thetas), color='k', linestyle='-', linewidth=0.75, alpha=0.75)[0]]
+                self.plots += [_mpl_axes.plot(np.sin(_thetas), _zeros, np.cos(_thetas), color='k', linestyle='-', linewidth=0.75, alpha=0.75)[0]]
         # line plot
-        else:
+        if 'line' in _type:
             dim = self.axes['Y'].dim
             _colors, _sizes, _styles = self._get_colors_sizes_styles(dim)
             self.plots += [_mpl_axes.plot(_xs[i], _ys[i], _zeros[i], color=_colors[i], linestyle=_styles[i], linewidth=_sizes[i])[0] for i in range(len(self.plots), dim)]
+        # scatter plot
+        if 'scatter' in _type:
+            dim = self.axes['Y'].dim
+            _colors, _sizes, _styles = self._get_colors_sizes_styles(dim)
+            self.plots += [_mpl_axes.scatter(_xs[i], _ys[i], _zeros[i], c=_colors[i], s=_sizes[i], marker=_styles[i]) for i in range(len(self.plots), dim)]
+        # surface plot
+        if 'surface' in _type:
+            self.plots = _mpl_axes.plot_surface(_xs, _ys, _zeros, rstride=1, cstride=1, cmap=_cmap)
 
     def _get_colors_sizes_styles(self, dim):
         """Method to obtain the colors, sizes and styles for 1D plots.
@@ -297,7 +315,12 @@ class MPLPlotter(BasePlotter):
         # udpate colors
         if _colors is None or len(_colors) < dim:
             palette_colors = self.get_colors(self.params['palette'], self.bins)
-            _colors = [[palette_colors[i % self.bins]] if 'scatter' in _type else palette_colors[i % self.bins] for i in range(dim)]
+            # select extreme colors if two plots
+            if dim == 2:
+                _colors = [[palette_colors[0]], [palette_colors[-1]]] if 'scatter' in _type else [palette_colors[0], palette_colors[-1]]
+            # else select colors serially
+            else:
+                _colors = [[palette_colors[i % self.bins]] if 'scatter' in _type else palette_colors[i % self.bins] for i in range(dim)]
 
         # udpate sizes
         if _sizes is None or len(_sizes) < dim:
@@ -340,7 +363,7 @@ class MPLPlotter(BasePlotter):
         xs : list or numpy.ndarray
             X-axis values.
         vs : list or numpy.ndarray
-            Y-axis values.
+            V-axis values.
         head : boolean
             Option to display the head for line-type plots.
         """
@@ -489,13 +512,19 @@ class MPLPlotter(BasePlotter):
         if self.params['cbar']['show']:
             self.set_cbar(_mini, _maxi, _prec)
 
-    def _update_3D(self, vs):
+    def _update_3D(self, xs, ys, zs, vs):
         """Method to udpate 3D plots.
         
         Parameters
         ----------
+        xs : list or numpy.ndarray
+            X-axis data.
+        ys : list or numpy.ndarray
+            Y-axis data.
+        zs : list or numpy.ndarray
+            Z-axis data.
         vs : list or numpy.ndarray
-            Z-axis or V-axis values.
+            V-axis values.
         """
 
         # validate parameters
@@ -506,11 +535,13 @@ class MPLPlotter(BasePlotter):
         _mpl_axes = plt.gca()
 
         # initialize values
-        _X, _Y = np.meshgrid(self.axes['X'].val, self.axes['Y'].val)
-        _Z = np.array(vs) if type(vs) is list else vs
-        _mini, _maxi = np.min(_Z.ravel()), np.max(_Z.ravel())
+        _V = np.array(vs) if type(vs) is list else vs
+        if 'density' in _type:
+            _mini, _maxi, _prec = 0, 1, 1
+        else:
+            _mini, _maxi, _prec = self.get_limits(np.min(_V.ravel()), np.max(_V.ravel()))
 
-        # update ticks and tick labels
+        # get ticks and tick labels
         _ticks = self.axes['V'].ticks
         _tick_labels = self.axes['V'].tick_labels
         if self.axes['V'].bound:
@@ -521,37 +552,49 @@ class MPLPlotter(BasePlotter):
             _tick_labels = _ticks
             _mini = np.min(_ticks)
             _maxi = np.max(_ticks)
-        _mpl_axes.set_zticks(_ticks)
-        _mpl_axes.set_zticklabels(_tick_labels)
-        # update minor ticks
-        if self.axes['V'].ticks_minor is not None:
-            _mpl_axes.set_zticks(self.axes['V'].ticks_minor, minor=True)
-        _mini, _maxi, _prec = self.get_limits(_mini, _maxi)
 
-        # surface plot
-        if 'surface'in _type:
-            _cmap = self.plots.get_cmap()
-            self.plots.remove()
-            self.plots = _mpl_axes.plot_surface(_X, _Y, _Z, rstride=1, cstride=1, cmap=_cmap, antialiased=False)
-
-            # projections
-            if _type == 'surface_cz':
-                _offset = _maxi  + 0.2 * (_maxi - _mini)
-                _proj_z = _mpl_axes.contour(_X, _Y, _Z, zdir='z', levels=self.bins, offset=_offset, cmap=_cmap, vmin=_mini, vmax=_maxi)
-
-            # update colorbar
-            if self.cbar is not None:
-                self.cbar.update_normal(self.plots)
-
-            # update limits
-            self.plots.set_clim(vmin=_mini, vmax=_maxi)
-        # line plot
+        # density plot
+        if 'density' in _type:
+            _cmap = LinearSegmentedColormap.from_list(self.params['palette'], self.params['colors'])
+            _, _sizes, _styles = self._get_colors_sizes_styles(1)
+            self.plots += [_mpl_axes.scatter(xs, ys, zs, c=vs, cmap=_cmap, s=_sizes[0], marker=_styles[0], alpha=0.5)]
         else:
-            for j in range(len(self.plots)):
-                self.plots[j].set_data_3d(_X[j], _Y[j], _Z[j])
-                
-        # update limits
-        _mpl_axes.set_zlim3d(_mini, _maxi)
+            # update ticks and ticklabels
+            _mpl_axes.set_zticks(_ticks)
+            _mpl_axes.set_zticklabels(_tick_labels)
+            # update minor ticks
+            if self.axes['V'].ticks_minor is not None:
+                _mpl_axes.set_zticks(self.axes['V'].ticks_minor, minor=True)
+            # update limits
+            _mpl_axes.set_zlim3d(_mini, _maxi)
+
+            # line plot
+            if 'line' in _type:
+                for j in range(len(self.plots)):
+                    _xs, _ys, _ = self.plots[j].get_data_3d()
+                    self.plots[j].set_data_3d(_xs, _ys, _V[j])
+            # scatter plot
+            if 'scatter' in _type:
+                for j in range(len(self.plots)):
+                    self.plots[j].set_3d_properties(_V[j], 'z')
+            # surface plot
+            if 'surface' in _type:
+                _cmap = self.plots.get_cmap()
+                self.plots.remove()
+                _X, _Y = np.meshgrid(self.axes['X'].val, self.axes['Y'].val)
+                self.plots = _mpl_axes.plot_surface(_X, _Y, _V, rstride=1, cstride=1, cmap=_cmap, antialiased=False)
+
+                # projections
+                if _type == 'surface_cz':
+                    _offset = _maxi  + 0.2 * (_maxi - _mini)
+                    _proj_z = _mpl_axes.contour(_X, _Y, _V, zdir='z', levels=self.bins, offset=_offset, cmap=_cmap, vmin=_mini, vmax=_maxi)
+
+                # update colorbar
+                if self.cbar is not None:
+                    self.cbar.update_normal(self.plots)
+
+                # update limits
+                self.plots.set_clim(vmin=_mini, vmax=_maxi)
 
         # color bar
         if self.params['cbar']['show']:
@@ -599,8 +642,11 @@ class MPLPlotter(BasePlotter):
 
         # minor ticks
         if ax_data.ticks_minor is not None:
+            print(ax_data)
             getattr(ax, 'set_' + ax_name + 'ticks')(ax_data.ticks_minor, minor=True)
             ax.tick_params(axis=ax_name, which='minor', direction=_direction, bottom=_bottom, left=_left, right=_right, top=_top, pad=ax_data.tick_pad)
+        else:
+            ax.minorticks_off()
 
         # tick labels
         getattr(ax, 'set_' + ax_name + 'ticklabels')(ax_data.tick_labels)
@@ -686,6 +732,7 @@ class MPLPlotter(BasePlotter):
         """
 
         # extract frequently used variables
+        _type = self.params['type']
         _cbar_position = self.params['cbar']['position']
         _orientation = 'vertical' if _cbar_position == 'right' or _cbar_position == 'left' else 'horizontal'
         _font_dicts = self.params['font_dicts']
@@ -704,7 +751,7 @@ class MPLPlotter(BasePlotter):
             _cax = plt.gcf().add_subplot(self.cbar_positions[_cbar_position](self.mpl_spec))
 
         # set scalar mappable 
-        if 'contour' in self.params['type']:
+        if 'contour' in _type or 'density' in _type:
             _sm = plt.cm.ScalarMappable(cmap=_cmap, norm=_norm)
             _sm.set_array([])
         else:
@@ -806,15 +853,19 @@ class MPLPlotter(BasePlotter):
             elif type(xs[0]) is not list:
                 xs = [xs]
                 vs = [vs]
-            self._update_1D(xs, vs, head)
+            self._update_1D(xs=xs, vs=vs, head=head)
         
         # 2D plots
         if _type in self.types_2D:
-            self._update_2D(vs)
+            self._update_2D(vs=vs)
 
         # 3D plot
         if _type in self.types_3D:
-            self._update_3D(vs)
+            if xs is None or ys is None:
+                xs, ys = np.meshgrid(self.axes['X'].val, self.axes['Y'].val)
+            if zs is None:
+                zs = np.zeros((self.axes['Y'].dim, self.axes['X'].dim))
+            self._update_3D(xs=xs, ys=ys, zs=zs, vs=vs)
 
         # annotations
         _annotations = self.params['annotations']
@@ -822,4 +873,4 @@ class MPLPlotter(BasePlotter):
             # get current plot
             _ax = self.get_current_axis()
             for item in _annotations:
-                _ax.annotate(s=item.get('s', ''), xy=item.get('xy', (0, 0)), xycoords='figure fraction', color=item.get('color', 'k'), font_properties=self._get_font_props(self.params['font_dicts'].get(item.get('font_dict', 'label'), self.params['font_dicts']['label'])))
+                _ax.annotate(s=item.get('s', ''), xy=item.get('xy', (0, 0)), xycoords='figure fraction', color=item.get('color', 'k'), font_properties=self._get_font_props(self.params['font_dicts'].get(item.get('font_dict', 'label'), self.params['font_dicts']['label'])), rotation=item.get('rotation', 'horizontal'), multialignment='center')

@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2022-04-20'
+__updated__ = '2022-05-27'
 
 # dependencies
 from decimal import Decimal
@@ -600,24 +600,23 @@ class BaseLooper():
             V = np.load(file_path + '.npz')['arr_0'].tolist()
 
             # initialize variables
-            _x_axis = self.axes.get('X', None)
-            _y_axis = self.axes.get('Y', None)
-            _z_axis = self.axes.get('Z', None)
+            _axes = [self.axes.get('X', None), self.axes.get('Y', None), self.axes.get('Z', None)]
+            _len = sum([1 if _axes[i] is not None else 0 for i in range(3)])
             _dim = np.shape(V)
 
             # XYLooper
-            if len(_dim) == 2:
-                X = [_x_axis['val']] * _dim[0]
-                Y = [[_y_axis['val'][i]] * _dim[1] for i in range(_dim[0])]
+            if _len == 2:
+                X = [_axes[0]['val']] * _dim[0]
+                Y = [[_axes[1]['val'][i]] * _dim[1] for i in range(_dim[0])]
                 Z = None
             # XYZLooper
-            if len(_dim) == 3:
-                X = [[_x_axis['val']] * _dim[1]] * _dim[0]
-                Y = [[_y_axis['val'][i]] * _dim[2] for i in range(_dim[1])] * _dim[0]
-                Z = [[[_z_axis['val'][i]] * _dim[2]] * _dim[1] for i in range(_dim[0])]
+            if _len == 3:
+                X = [[_axes[0]['val']] * _dim[1]] * _dim[0]
+                Y = [[_axes[1]['val'][i]] * _dim[2] for i in range(_dim[1])] * _dim[0]
+                Z = [[[_axes[2]['val'][i]] * _dim[2]] * _dim[1] for i in range(_dim[0])]
             # XLooper
             else:
-                X = _x_axis['val']
+                X = _axes[0]['val']
                 Y = None
                 Z = None
 

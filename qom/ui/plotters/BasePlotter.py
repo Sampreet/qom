@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.BasePlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-06'
-__updated__ = '2022-04-23'
+__updated__ = '2022-05-27'
 
 # dependencies
 import logging
@@ -20,7 +20,6 @@ from ..axes import *
 logger = logging.getLogger(__name__)
 
 # TODO: Validate parameters.
-# TODO: Refine `get_colors`.
 # TODO: Verify `get_limits`.
 
 class BasePlotter():
@@ -123,21 +122,27 @@ class BasePlotter():
     Notes
     -----
     Values for the keys with font paramters are currently backed by :class:`matplotlib`. Currently supported values of "\*_bound" are "both", "lower", "none" (default) and "upper". Currently supported values of "\*_scale" are "linear" (default) and "log". Currently supported values of "type" are:
-        ==============  ====================================================
-        value           meaning
-        ==============  ====================================================
-        "contour"       contour plot.
-        "contourf"      filled contour plot.
-        "line"          single-line plot.
-        "lines"         multi-line plot.
-        "pcolormesh"    mesh color plot.
-        "scatter"       single-scatter plot.
-        "scatters"      multi-scatter plot.
-        "surface"       surface plot.
-        "surface_cx"    surface plot with projection on X-axis.
-        "surface_cy"    surface plot with projection on Y-axis.
-        "surface_cz"    surface plot with projection on Z-axis.
-        ==============  ====================================================
+        ==================  ====================================================
+        value               meaning
+        ==================  ====================================================
+        "contour"           contour plot.
+        "contourf"          filled contour plot.
+        "density"           density plot.
+        "density_unit"      density plot with unit sphere.
+        "line"              single-line plot.
+        "line_3d"           single-line plot in 3D.
+        "lines"             multi-line plot.
+        "lines_3d"          multi-line plot in 3D.
+        "pcolormesh"        mesh color plot.
+        "scatter"           single-scatter plot.
+        "scatter_3d"        single-scatter plot in 3D.
+        "scatters"          multi-scatter plot.
+        "scatters_3d"       multi-scatter plot in 3D.
+        "surface"           surface plot.
+        "surface_cx"        surface plot with projection on X-axis.
+        "surface_cy"        surface plot with projection on Y-axis.
+        "surface_cz"        surface plot with projection on Z-axis.
+        ==================  ====================================================
 
     .. note:: All the options defined in ``params`` supersede individual function arguments.
     """
@@ -166,7 +171,7 @@ class BasePlotter():
     }
     types_1D = ['line', 'lines', 'scatter', 'scatters']
     types_2D = ['contour', 'contourf', 'pcolormesh']
-    types_3D = ['line_3d', 'lines_3d', 'surface', 'surface_cx', 'surface_cy', 'surface_cz']
+    types_3D = ['density', 'density_unit', 'line_3d', 'lines_3d', 'scatter_3d', 'scatters_3d', 'surface', 'surface_cx', 'surface_cy', 'surface_cz']
     ui_defaults = {
         'annotations': list(),
         'bins': 11,
@@ -293,7 +298,7 @@ class BasePlotter():
 
         Parameters
         ----------
-        palette : str
+        palette : str or list
             Default or diverging color palette.
         bins : int
             Number of bins.
@@ -304,21 +309,30 @@ class BasePlotter():
             Colors in the palette.
         """
 
-        # default color palettes
-        if not palette in self.custom_palettes:
-            colors = sns.color_palette(palette, n_colors=bins, as_cmap=False)
+        # validate parameters
+        assert type(palette) is str or type(palette) is list, 'Parameter ``palette`` should be either a string or a list'
 
-        # custom color palettes
+        # if named color palette
+        if type(palette) is str:
+            # default color palettes
+            if not palette in self.custom_palettes:
+                colors = sns.color_palette(palette, n_colors=bins, as_cmap=False)
+
+            # custom color palettes
+            else:
+                # frequently used variables
+                _palettes = self.custom_palettes[palette]
+                _dim = len(_palettes)
+                _bins = int(bins / _dim) + bins % _dim
+                
+                # list of colors
+                colors = sns.color_palette(_palettes[0], n_colors=_bins, as_cmap=False)
+                for i in range(1, _dim):
+                    colors += sns.color_palette(_palettes[i], n_colors=_bins, as_cmap=False)
+        
+        # if list
         else:
-            # frequently used variables
-            _palettes = self.custom_palettes[palette]
-            _dim = len(_palettes)
-            _bins = int(bins / _dim) + bins % _dim
-            
-            # list of colors
-            colors = sns.color_palette(_palettes[0], n_colors=_bins, as_cmap=False)
-            for i in range(1, _dim):
-                colors += sns.color_palette(_palettes[i], n_colors=_bins, as_cmap=False)
+            colors = palette
 
         return colors
 
@@ -370,5 +384,3 @@ class BasePlotter():
 
         # return
         return _mini, _maxi, _prec
-
-
