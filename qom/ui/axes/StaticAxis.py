@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.axes.StaticAxis'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-09-17'
-__updated__ = '2022-04-24'
+__updated__ = '2022-06-11'
 
 # dependencies
 import logging
@@ -33,7 +33,7 @@ class StaticAxis(BaseAxis):
             ==============  ====================================================
             key             value
             ==============  ====================================================
-            "name"          (*str*) display name of the axis.
+            "name"          (*str*) display name of the axis. Default is 'StaticAxis'.
             "unit"          (*str*) unit of the plots.
             ==============  ====================================================
     """
@@ -49,3 +49,7 @@ class StaticAxis(BaseAxis):
 
         # set unit
         self.unit = plotter_params.get(axis.lower() + '_unit', self.axis_defaults['unit'])
+
+        # update label
+        if self.label == '' and not 'StaticAxis' in self.name:
+            self.label = self.name if self.unit == '' else '{name} ({unit})'.format(name=self.name, unit=self.unit)

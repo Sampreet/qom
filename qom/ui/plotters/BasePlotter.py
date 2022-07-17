@@ -208,7 +208,8 @@ class BasePlotter():
             'X': StaticAxis('X', axes, params),
             'Y': MultiAxis('Y', axes, params),
             'Z': StaticAxis('Z', axes, params),
-            'V': DynamicAxis('V', axes, params)
+            'V': DynamicAxis('V', axes, params),
+            'V_twin': DynamicAxis('V_twin', axes, params)
         }
 
         # update bins
@@ -223,6 +224,7 @@ class BasePlotter():
             'font_dicts': {
                 'label': self._get_font_dict(params, 'label'), 
                 'tick': self._get_font_dict(params, 'tick'),
+                'legend': self._get_font_dict(params, 'legend'),
                 'math': params.get('font_math', self.ui_defaults['font_math'])
             },
             'legend': {

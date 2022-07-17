@@ -179,7 +179,7 @@ class MPLPlotter(BasePlotter):
         # return
         return _font_props
 
-    def _init_1D(self, dim=1):
+    def _init_1D(self, dim=0, ax_twin=None):
         """Method to initialize 1D plots.
         
         Parameters
@@ -190,7 +190,7 @@ class MPLPlotter(BasePlotter):
 
         # extract frequently used variables
         _type = self.params['type']
-        _mpl_axes = plt.gca()
+        _mpl_axes = plt.gca() if ax_twin is None else ax_twin
         _dim = len(self.plots)
         _colors, _sizes, _styles = self._get_colors_sizes_styles(dim)
 
@@ -205,8 +205,8 @@ class MPLPlotter(BasePlotter):
 
         # legend
         if self.params['legend']['show']:
-            _l = plt.legend(self.axes['Y'].legend[:dim], loc=self.params['legend']['location'])  
-            plt.setp(_l.texts, fontproperties=self._get_font_props(self.params['font_dicts']['label']))
+            _l = plt.legend(self.axes['Y'].legend[:dim], loc=self.params['legend']['location'], frameon=False)  
+            plt.setp(_l.texts, fontproperties=self._get_font_props(self.params['font_dicts']['legend']))
 
     def _init_2D(self):
         """Method to initialize 2D plots."""
@@ -355,7 +355,7 @@ class MPLPlotter(BasePlotter):
         else:
             plt.gcf().set_size_inches(width, height)
 
-    def _update_1D(self, xs, vs, head: bool):
+    def _update_1D(self, xs, vs, head: bool, ax_twin=None):
         """Method to udpate 1D plots.
         
         Parameters
@@ -378,14 +378,15 @@ class MPLPlotter(BasePlotter):
 
         # frequently used variables
         _type = self.params['type']
-        _mpl_axes = plt.gca()
+        _mpl_axes = plt.gca() if ax_twin is None else ax_twin
+        _offset = 0 if ax_twin is None else len(self.plots)
 
         # handle non-single plots
-        if len(xs) != len(self.plots):
-            self._init_1D(dim=len(xs))
+        if _offset + len(xs) != len(self.plots):
+            self._init_1D(dim=_offset + len(xs), ax_twin=ax_twin)
 
         # handle multi-data points
-        for i in range(len(self.plots)):
+        for i in range(len(self.plots) - _offset):
             _xs = list()
             _vs = list()
             # iterate each point
@@ -406,15 +407,15 @@ class MPLPlotter(BasePlotter):
         
         # line plots
         if 'line' in _type:
-            for j in range(len(self.plots)):
-                self.plots[j].set_xdata(xs[j])
-                self.plots[j].set_ydata(vs[j])
+            for j in range(len(self.plots) - _offset):
+                self.plots[j + _offset].set_xdata(xs[j])
+                self.plots[j + _offset].set_ydata(vs[j])
 
         # scatter plots
         if 'scatter' in _type:
-            for j in range(len(self.plots)):
+            for j in range(len(self.plots) - _offset):
                 XY = np.c_[xs[j], vs[j]]
-                self.plots[j].set_offsets(XY)
+                self.plots[j + _offset].set_offsets(XY)
                 
         # handle nan values for limits
         _minis = []
@@ -433,24 +434,29 @@ class MPLPlotter(BasePlotter):
         _mini, _maxi = np.min(_minis), np.max(_maxis)
         _mini, _maxi, _prec = self.get_limits(_mini, _maxi)
 
+        # axis name
+        ax_name = 'V' if ax_twin is None else 'V_twin'
+
         # ticks and tick labels
-        _ticks = self.axes['V'].ticks
-        _tick_labels = self.axes['V'].tick_labels
-        if self.axes['V'].bound:
-            _mini = self.axes['V'].limits[0]
-            _maxi = self.axes['V'].limits[-1]
+        _ticks = self.axes[ax_name].ticks
+        _tick_labels = self.axes[ax_name].tick_labels
+        if self.axes[ax_name].bound:
+            _mini = self.axes[ax_name].limits[0]
+            _maxi = self.axes[ax_name].limits[-1]
         else:
             _ticks = np.around(np.linspace(_mini, _maxi, len(_mpl_axes.get_yticks())), decimals=_prec + 1)
             _tick_labels = _ticks
             _mini = np.min(_ticks)
             _maxi = np.max(_ticks)
         _mpl_axes.set_yticks(_ticks)
-        if self.axes['V'].ticks_minor is not None:
-            _mpl_axes.set_yticks(self.axes['V'].ticks_minor, minor=True)
+        if self.axes[ax_name].ticks_minor is not None:
+            _mpl_axes.set_yticks(self.axes[ax_name].ticks_minor, minor=True)
         _mpl_axes.set_yticklabels(_tick_labels)
 
         # update limits
         _mpl_axes.set_ylim(_mini, _maxi)
+
+        return _mpl_axes
 
     def _update_2D(self, vs):
         """Method to udpate 2D plots.
@@ -511,6 +517,8 @@ class MPLPlotter(BasePlotter):
         # color bar
         if self.params['cbar']['show']:
             self.set_cbar(_mini, _maxi, _prec)
+
+        return _mpl_axes
 
     def _update_3D(self, xs, ys, zs, vs):
         """Method to udpate 3D plots.
@@ -601,6 +609,8 @@ class MPLPlotter(BasePlotter):
             self.set_cbar(_mini, _maxi, _prec)
             self.cbar.ax.set_autoscale_on(True)
 
+        return _mpl_axes
+
     def _update_axis(self, ax, ax_name: str, ax_data: dict):
         """Method to update an axis.
         
@@ -621,7 +631,7 @@ class MPLPlotter(BasePlotter):
         _tick_position = ax_data.tick_position
 
         # labels
-        getattr(ax, 'set_' + ax_name + 'label')(ax_data.label, labelpad=ax_data.label_pad, fontdict=_font_dicts['label'])
+        getattr(ax, 'set_' + ax_name + 'label')(ax_data.label, color=ax_data.label_color, labelpad=ax_data.label_pad, fontdict=_font_dicts['label'])
 
         # scale
         getattr(ax, 'set_' + ax_name + 'scale')(ax_data.scale)
@@ -642,7 +652,6 @@ class MPLPlotter(BasePlotter):
 
         # minor ticks
         if ax_data.ticks_minor is not None:
-            print(ax_data)
             getattr(ax, 'set_' + ax_name + 'ticks')(ax_data.ticks_minor, minor=True)
             ax.tick_params(axis=ax_name, which='minor', direction=_direction, bottom=_bottom, left=_left, right=_right, top=_top, pad=ax_data.tick_pad)
         else:
@@ -650,7 +659,7 @@ class MPLPlotter(BasePlotter):
 
         # tick labels
         getattr(ax, 'set_' + ax_name + 'ticklabels')(ax_data.tick_labels)
-        plt.setp(getattr(ax, 'get_' + ax_name + 'ticklabels')(), fontproperties=_font_props)
+        plt.setp(getattr(ax, 'get_' + ax_name + 'ticklabels')(), color=ax_data.label_color, fontproperties=_font_props)
 
     def get_current_axis(self):
         """Method to obtain the axes of the figure.
@@ -673,31 +682,6 @@ class MPLPlotter(BasePlotter):
         """
         
         return plt.gcf()
-
-    def get_twin_axis(self):
-        """Method to obtain a twin axes of the figure.
-        
-        Returns
-        ----------
-        ax_twin : :class:`matplotlib.axes.Axes`
-            The twin axis.
-        """
-
-        # frequently used variables
-        _font_dicts = self.params['font_dicts']
-        _font_props = self._get_font_props(_font_dicts['tick'])
-
-        # initialize twin axis
-        ax_twin = plt.gca().twinx()
-
-        # labels
-        ax_twin.set_ylabel('a', labelpad=12, fontdict=_font_dicts['label'])
-
-        # ticks
-        plt.setp(ax_twin.get_yticklabels(), fontproperties=_font_props)
-        ax_twin.tick_params(axis='y', which='major', pad=12)
-
-        return ax_twin
 
     def save(self, filename: str, width: float=5.0, height: float=5.0):
         """Method to save the figure.
@@ -836,9 +820,11 @@ class MPLPlotter(BasePlotter):
 
         # extract frequently used variables
         _type = self.params['type']
+        _dtypes_arrays = [list, np.ndarray]
+        _dtypes_complex = [complex, np.complex64, np.complex128, np.complex_]
 
         # handle complex values
-        if type(vs[0]) is complex or (type(vs[0]) is list and type(vs[0][0]) is complex):
+        if type(vs[0]) in _dtypes_complex or (type(vs[0]) in _dtypes_arrays and type(vs[0][0]) in _dtypes_complex):
             if 'imag' in self.params['component']:
                 logger.info('Plotting only imaginary parts of the complex values\n')
                 vs = np.imag(vs).tolist()
@@ -853,11 +839,11 @@ class MPLPlotter(BasePlotter):
             elif type(xs[0]) is not list:
                 xs = [xs]
                 vs = [vs]
-            self._update_1D(xs=xs, vs=vs, head=head)
+            ax = self._update_1D(xs=xs, vs=vs, head=head)
         
         # 2D plots
         if _type in self.types_2D:
-            self._update_2D(vs=vs)
+            ax = self._update_2D(vs=vs)
 
         # 3D plot
         if _type in self.types_3D:
@@ -865,12 +851,68 @@ class MPLPlotter(BasePlotter):
                 xs, ys = np.meshgrid(self.axes['X'].val, self.axes['Y'].val)
             if zs is None:
                 zs = np.zeros((self.axes['Y'].dim, self.axes['X'].dim))
-            self._update_3D(xs=xs, ys=ys, zs=zs, vs=vs)
+            ax = self._update_3D(xs=xs, ys=ys, zs=zs, vs=vs)
 
         # annotations
         _annotations = self.params['annotations']
         if type(_annotations) is list and len(_annotations) != 0 and type(_annotations[0]) is dict:
             # get current plot
-            _ax = self.get_current_axis()
             for item in _annotations:
-                _ax.annotate(s=item.get('s', ''), xy=item.get('xy', (0, 0)), xycoords='figure fraction', color=item.get('color', 'k'), font_properties=self._get_font_props(self.params['font_dicts'].get(item.get('font_dict', 'label'), self.params['font_dicts']['label'])), rotation=item.get('rotation', 'horizontal'), multialignment='center')
+                ax.annotate(s=item.get('s', ''), xy=item.get('xy', (0, 0)), xycoords='figure fraction', color=item.get('color', 'k'), font_properties=self._get_font_props(self.params['font_dicts'].get(item.get('font_dict', 'label'), self.params['font_dicts']['label'])), rotation=item.get('rotation', 'horizontal'), multialignment='center')
+
+        return ax
+
+    def update_twin_axis(self, xs=None, vs=None):
+        """Method to create and update a twin axes of the figure.
+        
+        Returns
+        ----------
+        ax_twin : :class:`matplotlib.axes.Axes`
+            The twin axis.
+        """
+
+        # frequently used variables
+        ax_data = self.axes['V_twin']
+        _font_dicts = self.params['font_dicts']
+        _font_props = self._get_font_props(_font_dicts['tick'])
+        _tick_position = ax_data.tick_position
+
+        # initialize twin axis
+        ax_twin = plt.gca().twinx()
+
+        # labels
+        ax_twin.set_ylabel(ax_data.label, color=ax_data.label_color, labelpad=ax_data.label_pad, fontdict=_font_dicts['label'])
+
+        # scale
+        ax_twin.set_yscale(ax_data.scale)
+
+        # tick parameters
+        _left = True if 'left' in _tick_position or 'both' in _tick_position else False
+        _right = True if 'right' in _tick_position or 'both' in _tick_position else False
+        _top = True if 'top' in _tick_position or 'both' in _tick_position else False
+        _bottom = True if 'bottom' in _tick_position or 'both' in _tick_position else False
+        _direction = 'in' if 'in' in _tick_position else 'out'
+        ax_twin.tick_params(axis='y', which='major', direction=_direction, bottom=_bottom, left=_left, right=_right, top=_top, pad=ax_data.tick_pad)
+
+        # minor ticks
+        if ax_data.ticks_minor is not None:
+            ax_twin.set_yticks(ax_data.ticks_minor, minor=True)
+            ax_twin.tick_params(axis='y', which='minor', direction=_direction, bottom=_bottom, left=_left, right=_right, top=_top, pad=ax_data.tick_pad)
+        else:
+            ax_twin.minorticks_off()
+
+        # tick labels
+        ax_twin.set_yticklabels(ax_data.tick_labels)
+        plt.setp(ax_twin.get_yticklabels(), color=ax_data.label_color, fontproperties=_font_props)
+
+        # reshape data points
+        if len(xs) != len(vs): 
+            xs = [xs for _ in range(len(vs))]
+        elif type(xs[0]) is not list:
+            xs = [xs]
+            vs = [vs]
+        
+        # plot
+        ax = self._update_1D(xs, vs, head=False, ax_twin=ax_twin)
+
+        return ax

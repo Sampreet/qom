@@ -35,6 +35,7 @@ class BaseAxis():
             key             value
             ==============  ====================================================
             "label"         (*str*) text of the axis label.
+            "label_color"   (*str*) color of the axis label.
             "label_pad"     (*int*) padding of the axis label.
             "limits"        (*list*) minimum and maximum limits for the axis.
             "scale"         (*str*) step scale for the values. Options are "linear" and "log".
@@ -51,6 +52,7 @@ class BaseAxis():
     axis_defaults = {
         'colors': list(),
         'label': '',
+        'label_color': 'k',
         'label_pad': 4,
         'legend': list(),
         'limits': None, 
@@ -123,6 +125,9 @@ class BaseAxis():
 
         # set label
         self.label = params['label']
+
+        # set label
+        self.label_color = params['label_color']
 
         # set label padding
         self.label_pad = int(params['label_pad'])

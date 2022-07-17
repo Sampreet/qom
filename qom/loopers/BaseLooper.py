@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2022-05-27'
+__updated__ = '2022-07-01'
 
 # dependencies
 from decimal import Decimal
@@ -499,7 +499,7 @@ class BaseLooper():
         """
         
         # calculate progress
-        progress = pos / (dim - 1) * 100
+        progress = float(pos) / float(dim - 1) * 100
         # current time
         _time = time.time()
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.5 - 2022/05/17 - 00 - Twin Axis Support
+* Minor fixes to progress methods in `qom.loopers`, `qom.solvers` and `qom.systems`.
+* Added option for label and tick color in `qom.ui.axes`.
+* Added support for twin axis in `qom.ui.plotters`.
+* Updated `README` and `setup`.
+
 ## v0.8.4 - 2022/05/27 - 00 - Updated 3D Plots
 * Minor fixes to `qom.loopers.BaseLooper` and `qom.solvers.RHCSolver` modules.
 * Updated `qom.ui.plotters` package:

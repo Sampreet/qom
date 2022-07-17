@@ -15,6 +15,7 @@ import logging
 import numpy as np
 import scipy.linalg as sl
 import scipy.optimize as so
+import time
 
 # qom modules
 from ..solvers import HLESolver, ODESolver, QCMSolver, RHCSolver
@@ -186,6 +187,12 @@ class BaseSystem():
         self.num_modes = num_modes
         self.params = params
 
+        # initialize properties
+        self.Modes = None
+        self.Corrs = None
+        self.T = None
+        self.time = time.time()
+
     def _get_cache_options(self, solver_params):
         """Method to return updated options to cache dynamics.
         
@@ -313,6 +320,33 @@ class BaseSystem():
             measure = getattr(solver, _qcm_func)(pos_i=2 * _idx_e[0][0], pos_j=2 * _idx_e[0][1])
 
         return measure
+
+    def _update_progress(self, module_name: str, pos: int, dim: int):
+        """Method to update the progress of the calculation.
+        
+        Parameters
+        ----------
+        module_name : str
+            Name of the calculating module.
+        pos : int
+            Index of current iteration.
+        dim : int 
+            Total number of iterations.
+        """
+        
+        # calculate progress
+        progress = float(pos) / float(dim - 1) * 100
+        # current time
+        _time = time.time()
+
+        # display progress
+        if _time - self.time > 0.5:
+            logger.info('Computing ({module_name}): Progress = {progress:3.2f}'.format(module_name=module_name, progress=progress))
+            if self.cb_update is not None:
+                self.cb_update(status='Computing... ({module_name})'.format(module_name=module_name), progress=progress)
+
+            # update time
+            self.time = _time
 
     def _validate_params_measure(self, solver_params: dict, count: int=None):
         """Method to validate parameters for 1D list indices.
@@ -829,12 +863,8 @@ class BaseSystem():
         # iterate for all times in given range
         for i in range(_range_min, _range_max):
             # update progress
-            progress = float(i - _range_min)/float(_range_max - _range_min - 1) * 100
-            # display progress
-            if _show_progress and int(progress * 1000) % 10 == 0:
-                logger.info('Computing ({module_name}): Progress = {progress:3.2f}'.format(module_name=_module_name, progress=progress))
-                if self.cb_update is not None:
-                    self.cb_update(status='Computing ({module_name})...'.format(module_name=_module_name), progress=progress)
+            if _show_progress:
+                self._update_progress(module_name=_module_name, pos=i - _range_min, dim=_range_max - _range_min)
 
             # eigenvalues of drift matrix
             if _measure_type == 'eigen_dm':
@@ -947,6 +977,10 @@ class BaseSystem():
             Times at which values are calculated.
         """
 
+        # if already calculated
+        if (self.Modes is not None or self.Corrs is not None) and self.T is not None:
+            return self.Modes, self.Corrs, self.T
+
         # validate required functions
         assert self.validate_required_funcs(func_name='get_modes_corrs_dynamics', mode='verbose') is True, 'Missing required predefined callables'
 
@@ -978,11 +1012,11 @@ class BaseSystem():
         solver.solve(func_ode=self.func_ode, iv=iv, c=c, func_ode_corrs=self.func_ode_corrs if getattr(self, 'func_ode_corrs', None) is not None else None, num_modes=self.num_modes)
 
         # get modes, correlations and times
-        Modes = solver.get_Modes(num_modes=self.num_modes)
-        Corrs = solver.get_Corrs(num_modes=self.num_modes)
-        T = solver.T
+        self.Modes = solver.get_Modes(num_modes=self.num_modes)
+        self.Corrs = solver.get_Corrs(num_modes=self.num_modes)
+        self.T = solver.T
         
-        return Modes, Corrs, T
+        return self.Modes, self.Corrs, self.T
 
     def get_modes_corrs_stationary(self, solver_params: dict):
         """Method to obtain the steady states of the classical mode amplitudes and quantum correlations from the Heisenberg and Lyapunov equations.
@@ -1262,12 +1296,8 @@ class BaseSystem():
         # iterate for all times in given range
         for i in range(_range_min, _range_max):
             # update progress
-            progress = float(i - _range_min)/float(_range_max - _range_min - 1) * 100
-            # display progress
-            if _show_progress and int(progress * 1000) % 10 == 0:
-                logger.info('Computing ({module_name}): Progress = {progress:3.2f}'.format(module_name=__name__, progress=progress))
-                if self.cb_update is not None:
-                    self.cb_update(status='Computing ({module_name})...'.format(module_name=__name__), progress=progress)
+            if _show_progress:
+                self._update_progress(module_name=__name__, pos=i - _range_min, dim=_range_max - _range_min)
                     
             # if coefficients is given
             if getattr(self, 'get_coeffs', None) is not None:

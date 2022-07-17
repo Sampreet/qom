@@ -6,12 +6,13 @@
 __name__    = 'qom.solvers.ODESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2022-04-24'
+__updated__ = '2022-07-01'
 
 # dependencies
 import copy
 import logging
 import scipy.integrate as si
+import time
 
 # module logger
 logger = logging.getLogger(__name__)
@@ -121,6 +122,37 @@ class ODESolver():
             # get integrator
             self.integrator = si.ode(self.func)
         self.T = None
+        self.time = time.time()
+
+    def _update_progress(self, pos: int, dim: int):
+        """Method to update the progress of the calculation.
+        
+        Parameters
+        ----------
+        pos : int
+            Index of current iteration.
+        dim : int 
+            Total number of iterations.
+        """
+
+        # extract frequently used variables
+        method = self.params['method']
+        
+        # calculate progress
+        progress = float(pos) / float(dim - 1) * 100
+        # current time
+        _time = time.time()
+
+        # display progress
+        if _time - self.time > 0.5:
+            logger.info('Integrating (scipy.integrate.{method}): Progress = {progress:3.2f}'.format(method=method if method in self.new_methods else 'ode', progress=progress))
+            if self.cb_update is not None:
+                self.cb_update(status='Integrating (scipy.integrate.{method})...'.format(method=method if method in self.new_methods else 'ode'), progress=progress)
+            if self.cb_update is not None:
+                self.cb_update(status='Calculating the values...', progress=progress)
+
+            # update time
+            self.time = _time
 
     def solve(self, T: list, func_c=None):
         """Method to solve a complete integration.
@@ -168,10 +200,8 @@ class ODESolver():
             # update progress
             progress = float(i - 1)/float(_dim - 1) * 100
             # display progress
-            if show_progress and int(progress * 1000) % 10 == 0:
-                logger.info('Integrating (scipy.integrate.{method}): Progress = {progress:3.2f}'.format(method=method if method in self.new_methods else 'ode', progress=progress))
-                if self.cb_update is not None:
-                    self.cb_update(status='Integrating (scipy.integrate.{method})...'.format(method=method if method in self.new_methods else 'ode'), progress=progress)
+            if show_progress:
+                self._update_progress(pos=i, dim=_dim)
 
             # update constants
             if func_c is not None:
