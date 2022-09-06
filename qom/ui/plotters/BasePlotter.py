@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.BasePlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-06'
-__updated__ = '2022-05-27'
+__updated__ = '2022-08-20'
 
 # dependencies
 import logging
@@ -79,6 +79,7 @@ class BasePlotter():
             "view_aspect"           (*list*) aspect ratios of the 3D axes.
             "view_elevation"        (*float*) elevation for 3D view on Z-axis.
             "view_rotation"         (*float*) rotation for 3D view about Z-axis.
+            "vspan"                 (*list*) vertical background spanning dictionaries for the plot containing keys "xmin" for the minimum X-axis value, "xmax" for the maximum X-axis value, "color_idx" for the index of the color, and "alpha" for opacity value.
             "width"                 (*float*) width of the plot.
             "x_label"               (*str*) label of the X-axis.
             "x_label_pad"           (*int*) label padding of the X-axis.
@@ -183,6 +184,8 @@ class BasePlotter():
         'cbar_y_label': '',
         'component': 'real',
         'font_math': 'cm',
+        'font_size_large': 20.0,
+        'font_size_small': 16.0,
         'height': 4.8,
         'legend_location': 'best',
         'palette': 'RdBu_r',
@@ -190,9 +193,10 @@ class BasePlotter():
         'show_legend': False,
         'title': '',
         'type': 'contourf',
-        'view_aspect': [1, 1, 1],
+        'view_aspect': [1.0, 1.0, 1.0],
         'view_elevation': 32.0,
         'view_rotation': 215.0,
+        'vspan': list(),
         'width': 4.8
     }
 
@@ -243,12 +247,13 @@ class BasePlotter():
             'component': params.get('component', self.ui_defaults['component']),
             'annotations': params.get('annotations', self.ui_defaults['annotations']),
             'height': params.get('height', self.ui_defaults['height']),
-            'width': params.get('width', self.ui_defaults['width']),
             'view': {
                 'aspect': params.get('view_aspect', self.ui_defaults['view_aspect']),
                 'elevation': params.get('view_elevation', self.ui_defaults['view_elevation']),
                 'rotation': params.get('view_rotation', self.ui_defaults['view_rotation'])
-            }
+            },
+            'vspan': params.get('vspan', self.ui_defaults['vspan']),
+            'width': params.get('width', self.ui_defaults['width'])
         }
 
     def _get_font_dict(self, params: dict, text_type: str): 
@@ -279,7 +284,7 @@ class BasePlotter():
         _variant = params.get(text_type + '_font_variant', 'normal')
         _weight = params.get(text_type + '_font_weight', 500)
         _stretch = params.get(text_type + '_font_stretch', 500)
-        _size = 20.0 if text_type == 'label' else 16.0
+        _size = self.ui_defaults['font_size_large'] if text_type == 'label' else self.ui_defaults['font_size_small']
         _size = params.get(text_type + '_font_size', _size)
 
         # font dictionary

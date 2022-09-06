@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2022-05-22'
+__updated__ = '2022-08-20'
 
 # dependencies
 from matplotlib.colors import LinearSegmentedColormap, Normalize
@@ -332,7 +332,7 @@ class MPLPlotter(BasePlotter):
 
         return _colors, _sizes, _styles
 
-    def _resize_plot(self, width: float=5.0, height: float=5.0):
+    def _resize_plot(self, width: float=4.8, height: float=4.8):
         """Method to resize the plot.
         
         Parameters
@@ -345,15 +345,28 @@ class MPLPlotter(BasePlotter):
 
         # extractfrequently used variables
         _cbar_position = self.params['cbar']['position']
+        _min = min(width, height)
+        
+        # update all axes
+        for _ax in plt.gcf().get_axes():
+            # update spines
+            for spine in ['top', 'bottom', 'left', 'right']:
+                _ax.spines[spine].set_linewidth(_min / 5)
+
+            # update tick lines
+            _ax.tick_params(length=_min, width=_min / 5, which='major')
+            _ax.tick_params(length=_min / 2, width=_min / 5, which='minor')
 
         # resize figure
         if self.cbar is not None:
-            if _cbar_position == 'top' or _cbar_position == 'bottom':
-                plt.gcf().set_size_inches(width, height + 0.5)
-            else:
-                plt.gcf().set_size_inches(width + 0.5, height)
-        else:
-            plt.gcf().set_size_inches(width, height)
+            # if _cbar_position == 'top' or _cbar_position == 'bottom':
+            #     plt.gcf().set_size_inches(width, height + 0.5)
+            # else:
+            #     plt.gcf().set_size_inches(width + 0.5, height)
+            # update cbar axes
+            self.cbar.outline.set_linewidth(_min / 5)
+        
+        plt.gcf().set_size_inches(width, height)
 
     def _update_1D(self, xs, vs, head: bool, ax_twin=None):
         """Method to udpate 1D plots.
@@ -479,19 +492,23 @@ class MPLPlotter(BasePlotter):
         _no_nan = [0 if np.isnan(z) or np.isinf(z) else z for z in _rave]
         _mini, _maxi = np.min(_no_nan), np.max(_no_nan)
 
-        # handle color bar limits
-        if self.params['cbar']['show'] and self.params['cbar']['ticks'] is not None:
-            _mini = self.params['cbar']['ticks'][0]
-            _maxi = self.params['cbar']['ticks'][-1]
-            _prec = np.ceil(-np.log10(_mini))
         # if bounded
-        elif self.axes['V'].bound:
+        if self.axes['V'].bound:
             _mini = self.axes['V'].limits[0]
             _maxi = self.axes['V'].limits[-1]
             _, _, _prec = self.get_limits(_mini, _maxi)
         # generate limits
         else:
             _mini, _maxi, _prec = self.get_limits(_mini, _maxi)
+        
+        # get cbar ticks
+        _cbar_ticks = self.params['cbar']['ticks']
+        if _cbar_ticks is not None and type(_cbar_ticks[0]) is not str:
+            _cbar_mini = np.min(_cbar_ticks)
+            _cbar_maxi = np.max(_cbar_ticks)
+        else:
+            _cbar_mini = None
+            _cbar_maxi = None
 
         # contour and contourf plots
         if 'contour' in _type:
@@ -512,7 +529,7 @@ class MPLPlotter(BasePlotter):
             self.plots.set_array(_rave)
 
         # set limits
-        self.plots.set_clim(vmin=_mini, vmax=_maxi)
+        self.plots.set_clim(vmin=_mini if _cbar_mini is None else _cbar_mini, vmax=_maxi if _cbar_maxi is None else _cbar_maxi)
 
         # color bar
         if self.params['cbar']['show']:
@@ -560,6 +577,15 @@ class MPLPlotter(BasePlotter):
             _tick_labels = _ticks
             _mini = np.min(_ticks)
             _maxi = np.max(_ticks)
+        
+        # get cbar ticks
+        _cbar_ticks = self.params['cbar']['ticks']
+        if _cbar_ticks is not None and type(_cbar_ticks[0]) is not str:
+            _cbar_mini = np.min(_cbar_ticks)
+            _cbar_maxi = np.max(_cbar_ticks)
+        else:
+            _cbar_mini = None
+            _cbar_maxi = None
 
         # density plot
         if 'density' in _type:
@@ -573,6 +599,7 @@ class MPLPlotter(BasePlotter):
             # update minor ticks
             if self.axes['V'].ticks_minor is not None:
                 _mpl_axes.set_zticks(self.axes['V'].ticks_minor, minor=True)
+                _mpl_axes.set_zticklabels(['' for _ in self.axes['V'].ticks_minor], minor=True)
             # update limits
             _mpl_axes.set_zlim3d(_mini, _maxi)
 
@@ -595,14 +622,14 @@ class MPLPlotter(BasePlotter):
                 # projections
                 if _type == 'surface_cz':
                     _offset = _maxi  + 0.2 * (_maxi - _mini)
-                    _proj_z = _mpl_axes.contour(_X, _Y, _V, zdir='z', levels=self.bins, offset=_offset, cmap=_cmap, vmin=_mini, vmax=_maxi)
+                    _proj_z = _mpl_axes.contour(_X, _Y, _V, zdir='z', levels=self.bins, offset=_offset, cmap=_cmap, vmin=_mini if _cbar_mini is None else _cbar_mini, vmax=_maxi if _cbar_maxi is None else _cbar_maxi)
 
                 # update colorbar
                 if self.cbar is not None:
                     self.cbar.update_normal(self.plots)
 
                 # update limits
-                self.plots.set_clim(vmin=_mini, vmax=_maxi)
+                self.plots.set_clim(vmin=_mini if _cbar_mini is None else _cbar_mini, vmax=_maxi if _cbar_maxi is None else _cbar_maxi)
 
         # color bar
         if self.params['cbar']['show']:
@@ -653,6 +680,7 @@ class MPLPlotter(BasePlotter):
         # minor ticks
         if ax_data.ticks_minor is not None:
             getattr(ax, 'set_' + ax_name + 'ticks')(ax_data.ticks_minor, minor=True)
+            getattr(ax, 'set_' + ax_name + 'ticklabels')(['' for _ in ax_data.ticks_minor], minor=True)
             ax.tick_params(axis=ax_name, which='minor', direction=_direction, bottom=_bottom, left=_left, right=_right, top=_top, pad=ax_data.tick_pad)
         else:
             ax.minorticks_off()
@@ -683,7 +711,7 @@ class MPLPlotter(BasePlotter):
         
         return plt.gcf()
 
-    def save(self, filename: str, width: float=5.0, height: float=5.0):
+    def save(self, filename: str, width: float=4.8, height: float=4.8):
         """Method to save the figure.
 
         Parameters
@@ -721,9 +749,11 @@ class MPLPlotter(BasePlotter):
         _orientation = 'vertical' if _cbar_position == 'right' or _cbar_position == 'left' else 'horizontal'
         _font_dicts = self.params['font_dicts']
         _ticks = self.params['cbar']['ticks']
-        _norm = Normalize(vmin=mini, vmax=maxi)
-        if _ticks is None:
+        if _ticks is not None:
+            _norm = Normalize(vmin=np.min(_ticks), vmax=np.max(_ticks))
+        else:
             _ticks = np.around(np.linspace(mini, maxi, self.bins), decimals=prec)
+            _norm = Normalize(vmin=mini, vmax=maxi)
         _cmap = LinearSegmentedColormap.from_list(self.params['palette'], self.params['colors'])
 
         # clear if existed
@@ -856,9 +886,17 @@ class MPLPlotter(BasePlotter):
         # annotations
         _annotations = self.params['annotations']
         if type(_annotations) is list and len(_annotations) != 0 and type(_annotations[0]) is dict:
-            # get current plot
+            # add each annotation
             for item in _annotations:
                 ax.annotate(s=item.get('s', ''), xy=item.get('xy', (0, 0)), xycoords='figure fraction', color=item.get('color', 'k'), font_properties=self._get_font_props(self.params['font_dicts'].get(item.get('font_dict', 'label'), self.params['font_dicts']['label'])), rotation=item.get('rotation', 'horizontal'), multialignment='center')
+
+        # vertical background span
+        _colors = self.get_colors(palette=self.params['palette'], bins=self.bins)
+        _vspan = self.params['vspan']
+        if type(_vspan) is list and len(_vspan) != 0 and type(_vspan[0]) is dict:
+            # add each span
+            for item in _vspan:
+                ax.axvspan(xmin=item.get('xmin', 0.0), xmax=item.get('xmax', 0.0), color=_colors[item.get('color_idx', 0)], alpha=item.get('alpha', 0.25))
 
         return ax
 
@@ -897,6 +935,7 @@ class MPLPlotter(BasePlotter):
         # minor ticks
         if ax_data.ticks_minor is not None:
             ax_twin.set_yticks(ax_data.ticks_minor, minor=True)
+            ax_twin.set_yticklabels(['' for _ in ax_data.ticks_minor], minor=True)
             ax_twin.tick_params(axis='y', which='minor', direction=_direction, bottom=_bottom, left=_left, right=_right, top=_top, pad=ax_data.tick_pad)
         else:
             ax_twin.minorticks_off()

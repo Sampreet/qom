@@ -192,7 +192,7 @@ def wrap_looper(SystemClass, params: dict, func, looper, file_path_prefix: str=N
 
     return looper
 
-def merge_xy_loopers(y_ss, SystemClass, params: dict, func, looper, file_path: str, plot: bool=False, hold: bool=True, width: float=5.0, height: float=5.0):
+def merge_xy_loopers(y_ss, SystemClass, params: dict, func, looper, file_path_prefix: str, plot: bool=False, hold: bool=True, width: float=5.0, height: float=5.0):
     """Function to wrap loopers.
 
     Requires already defined callables ``func_ode``, ``get_mode_rates``, ``get_ivc``, ``get_A`` and ``get_oss_args`` inside the system class.
@@ -230,7 +230,7 @@ def merge_xy_loopers(y_ss, SystemClass, params: dict, func, looper, file_path: s
             "XYLooper"      2D looper (:class:`qom.loopers.XYLooper`).
             "XYZLooper"     3D looper (:class:`qom.loopers.XYZLooper`).
             ==============  ================================================
-    file_path : str, optional
+    file_path_prefix : str, optional
         Path and prefix of the .npz file.
     plot: bool, optional
         Option to plot the results.
@@ -248,7 +248,7 @@ def merge_xy_loopers(y_ss, SystemClass, params: dict, func, looper, file_path: s
     """
 
     # validate parameters
-    assert file_path is not None, 'Parameter ``file_path`` should be defined'
+    assert file_path_prefix is not None, 'Parameter ``file_path`` should be defined'
 
     # extract frequenty used variables
     Y = copy.deepcopy(params['looper']['Y'])
@@ -275,13 +275,14 @@ def merge_xy_loopers(y_ss, SystemClass, params: dict, func, looper, file_path: s
         params['looper']['Y']['dim'] = int((y_dim - 1) / _num + 1)
 
         # get looper results
-        looper = wrap_looper(SystemClass=SystemClass, params=params, func=func, looper=looper, file_path=file_path)
+        _looper = wrap_looper(SystemClass=SystemClass, params=params, func=func, looper=looper, file_path_prefix=file_path_prefix)
 
         # update lists
-        V += looper.results['V'][:-1]
+        V += _looper.results['V'][:-1]
 
     # update lists
-    V += [looper.results['V'][-1]]
+    if _looper is not None:
+        V += [_looper.results['V'][-1]]
 
     # reset looper parameters
     params['looper']['Y'] = Y
@@ -303,7 +304,7 @@ def merge_xy_loopers(y_ss, SystemClass, params: dict, func, looper, file_path: s
     }
 
     # save results
-    looper.save_results(looper.get_full_file_path(file_path=file_path))
+    looper.save_results(file_path_prefix=file_path_prefix)
 
     # plot results
     if plot:

@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2022-04-24'
+__updated__ = '2022-09-03'
 
 # dependencies
 from typing import Union
@@ -92,6 +92,7 @@ class BaseSystem():
         "mode_amp"          complex-valued classical mode amplitudes. The corresponding "idx_e" key is an integer or a list of integers of the mode indices.
         "sync_c"            complete quantum synchronization. The corresponding "idx_e" key is a tuple or a list of tuples of the two mode indices.
         "sync_p"            quantum phase synchronization. The corresponding "idx_e" key is a tuple or a list of tuples of the two mode indices.
+        "wigner_s"          single-mode wigner function. The corresponding "idx_e" key is an integer or a list of integers of the mode indices.
         ==================  ====================================================
 
     .. note:: All the options defined in ``params`` supersede individual function arguments.
@@ -121,7 +122,7 @@ class BaseSystem():
     """
 
     # attributes
-    types_measures = ['corr_ele', 'eigen_dm', 'mode_amp']
+    types_measures = ['corr_ele', 'eigen_dm', 'mode_amp', 'wigner_s']
     types_qcm = ['discord_G', 'entan_ln', 'sync_c', 'sync_p']
     types_plots = getattr(MPLPlotter, 'types_1D') + getattr(MPLPlotter, 'types_2D') + getattr(MPLPlotter, 'types_3D')
     required_funcs = {
@@ -317,7 +318,7 @@ class BaseSystem():
                 'sync_p': 'get_synchronization_phase'
             }[_measure_type]
             # calculate measure
-            measure = getattr(solver, _qcm_func)(pos_i=2 * _idx_e[0][0], pos_j=2 * _idx_e[0][1])
+            measure = [getattr(solver, _qcm_func)(pos_i=2 * idx[0] if type(idx) is list or type(idx) is tuple else idx, pos_j=2 * idx[1] if type(idx) is list or type(idx) is tuple else None) for idx in _idx_e]
 
         return measure
 
@@ -355,6 +356,8 @@ class BaseSystem():
         ----------
         solver_params : dict
             Parameters for the solver.
+        count: int
+            Minimum required number of modes.
         """
 
         # validate parameters
@@ -376,6 +379,9 @@ class BaseSystem():
         # convert to list
         if type(_idx_e) is int or type(_idx_e) is tuple:
             solver_params['idx_e'] = [_idx_e]
+            _idx_e = [_idx_e]
+        # if list used for tuple
+        if _measure_type in self.types_qcm and type(_idx_e[0]) is int and len(_idx_e) == 2:
             _idx_e = [_idx_e]
         # handle fixed count
         assert len(_idx_e) == count if count is not None else True, 'Key "idx_e" should contain exactly {} entries'.format(count)
@@ -442,7 +448,7 @@ class BaseSystem():
         return rates
 
     def get_averaged_eigenvalues(self, solver_params: dict):
-        """Function to obtain the averaged eigenvalues of the drift matrix.
+        """Method to obtain the averaged eigenvalues of the drift matrix.
 
         Requires predefined callables ``get_A``, ``get_ivc`` and ``get_mode_rates``.
 
@@ -846,6 +852,7 @@ class BaseSystem():
             'corr_ele': __name__,
             'eigen_dm': __name__,
             'mode_amp': __name__,
+            'wigner_s': __name__,
         }.get(_measure_type, 'qom.solvers.QCMSolver')
 
         # validate required function
@@ -880,6 +887,9 @@ class BaseSystem():
                 measure = list()
                 for idx in solver_params['idx_e']:
                     measure.append(eigs[idx])
+            # single-mode wigner distributions
+            elif _measure_type == 'wigner_s':
+                measure = self.get_wigner_single_mode(solver_params=solver_params, corrs=Corrs[i] if Corrs is not None else None, plot=plot, plotter_params=plotter_params)
             # elif correlation matrix element or mode amplitude
             else:
                 measure = self._get_measure(solver_params=solver_params, modes=Modes[i], corrs=Corrs[i] if Corrs is not None else None)
@@ -894,12 +904,12 @@ class BaseSystem():
                 self.cb_update(status='Measures Obtained', progress=None, reset=True)
 
         # if plot opted
-        if plot:
+        if plot and 'wigner' not in _measure_type:
             self.plot_dynamics(plotter_params=plotter_params, V=np.transpose(M).tolist() if _measure_type in self.types_qcm else M, T=T[_range_min:_range_max])
 
         return M, T[_range_min:_range_max]
     
-    def get_measure_stationary(self, solver_params: dict):
+    def get_measure_stationary(self, solver_params: dict, plot: bool=False, plotter_params: dict=dict()):
         """Method to obtain the stationary value of a measure.
 
         Requires predefined callables ``get_ivc`` and ``get_mode_rates``. Additionally, ``get_A`` should be defined if the type of measure is a quantum correlation measure or "eigen_dm".
@@ -908,6 +918,10 @@ class BaseSystem():
         ----------
         solver_params : dict
             Parameters for the solver.
+        plot : bool
+            Option to plot the dynamics.
+        plotter_params : dict
+            Parameters for the plotter.
 
         Returns
         -------
@@ -945,6 +959,9 @@ class BaseSystem():
             measure = list()
             for idx in solver_params['idx_e']:
                 measure.append(eigs[idx])
+        # single-mode wigner distributions
+        elif _measure_type == 'wigner_s':
+            measure = self.get_wigner_single_mode(solver_params=solver_params, corrs=corrs, plot=plot, plotter_params=plotter_params)
         # elif correlation matrix element or mode amplitude
         else:
             measure = self._get_measure(solver_params=solver_params, modes=modes, corrs=corrs)
@@ -1021,7 +1038,7 @@ class BaseSystem():
     def get_modes_corrs_stationary(self, solver_params: dict):
         """Method to obtain the steady states of the classical mode amplitudes and quantum correlations from the Heisenberg and Lyapunov equations.
 
-        Requires predefined callable ``get_ivc``. Also, either one of the functions ``get_A`` and ``get_mode_rates`` should be defined.
+        Requires predefined callable ``get_ivc``. Also, either one of the functions ``get_A`` and ``get_mode_rates`` should be defined. Optionally, ``get_oss_modes`` can be defined.
 
         Parameters
         ----------
@@ -1083,7 +1100,10 @@ class BaseSystem():
             # solve for modes
             roots_real = so.fsolve(get_mode_rates_real, iv_real, (params, None, ))
             modes = [roots_real[2 * i] + 1j * roots_real[2 * i + 1] for i in range(int(len(roots_real) / 2))] 
-        # modes not required
+        # steady states expressions are given
+        elif getattr(self, 'get_oss_modes', None) is not None:
+            modes = self.get_oss_modes(params)
+        # modes not required  
         else:
             modes = None
 
@@ -1106,7 +1126,7 @@ class BaseSystem():
         return modes, corrs
 
     def get_optical_stability_zone(self, solver_params: dict):
-        """Function to obtain the stability zone using the optical steady state mode amplitudes and the Routh-Hurwitz criterion.
+        """Method to obtain the stability zone using the optical steady state mode amplitudes and the Routh-Hurwitz criterion.
 
         Requires predefined callables ``get_ivc`` and ``get_oss_modes``. Also, either one of the functions ``get_A`` and ``get_coeffs`` should be defined.
 
@@ -1245,7 +1265,7 @@ class BaseSystem():
         return pcc
 
     def get_rhc_count_dynamics(self, solver_params: dict, plot: bool=False, plotter_params: dict=dict()):
-        """Function to obtain the number of positive real roots of the drift matrix using the Routh-Hurwitz criterion.
+        """Method to obtain the number of positive real roots of the drift matrix using the Routh-Hurwitz criterion.
 
         Requires predefined callables ``get_A``, ``get_ivc`` and ``get_mode_rates``.
 
@@ -1326,7 +1346,7 @@ class BaseSystem():
         return Counts, T[_range_min:_range_max]
 
     def get_rhc_count_stationary(self, solver_params: dict):
-        """Function to obtain the number of positive real roots of the drift matrix from the stationary state using the Routh-Hurwitz criterion.
+        """Method to obtain the number of positive real roots of the drift matrix from the stationary state using the Routh-Hurwitz criterion.
 
         Requires predefined callables ``get_ivc`` and ``get_mode_rates``. Also, either one of the functions ``get_A`` and ``get_coeffs`` should be defined.
 
@@ -1376,6 +1396,76 @@ class BaseSystem():
         count = len(idxs)
 
         return count, idxs
+
+    def get_wigner_single_mode(self, solver_params: dict, corrs: list, plot: bool=False, plotter_params: dict=dict()):
+        """Method to obtain single-mode Wigner distribitions.
+        
+        Parameters
+        ----------
+        solver_params : dict
+            Parameters for the solver.
+        corrs : list
+            Matrix of quantum correlations.
+        modes : list
+            Values of classical mode amplitudes.
+        plot : bool
+            Option to plot the dynamics.
+        plotter_params : dict
+            Parameters for the plotter.
+        
+        Returns
+        -------
+        Wigner : list
+            Wigner distributions at each point of time.
+        """
+
+        # extract frequently used variables
+        _xs = solver_params.get('xs', np.linspace(-5, 5, 101))
+        _ys = solver_params.get('ys', np.linspace(-5, 5, 101))
+        _idx_e = solver_params.get('idx_e', [0])
+
+        # validate axes and modes
+        for val in [_xs, _ys]:
+            assert (type(val) is list or type(val) is np.ndarray), 'Solver parameters "xs" and "ys" should be either NumPy arrays or lists'
+
+        # initialize measure
+        measure = list()
+
+        # iterate over indices
+        for idx in _idx_e:
+            pos_i = 2 * idx
+            # reduced vector
+            V = [   [   corrs[pos_i][pos_i],    corrs[pos_i][pos_i + 1]     ],
+                    [   corrs[pos_i + 1][pos_i],corrs[pos_i + 1][pos_i + 1]  ]   ]
+
+            # calculate wigner function
+            W = list()
+            for y in _ys:
+                W_temp = []
+                for x in _xs:
+                    # column vector of quadratures
+                    X = np.array([[x], [y]])
+                    # wigner function
+                    w = np.exp(-0.5 * np.transpose(X).dot(np.linalg.pinv(V)).dot(X)) / (2 * np.pi * np.sqrt(np.linalg.det(V)))
+                    W_temp.append(w[0][0])
+                # update list
+                W.append(W_temp)
+            
+            # update measures
+            measure.append(W)
+
+            # if plot opted
+            if plot:
+                # initialize plotter
+                plotter = MPLPlotter(axes={
+                    'X': _xs,
+                    'Y': _ys
+                }, params=plotter_params)
+                # update plotter
+                plotter.update(vs=W)
+                plotter.show(True)
+
+        return measure
 
     def plot_dynamics(self, plotter_params: dict, V: list, T: list, N: list=None, hold: bool=True, width: float=5.0, height: float=5.0):
         """Method to plot the dynamics.

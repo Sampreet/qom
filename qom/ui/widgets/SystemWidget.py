@@ -6,14 +6,13 @@
 __name__    = 'qom.ui.widgets.SystemWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-10-28'
+__updated__ = '2022-07-26'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
 import importlib
 import inspect
 import logging
-import numpy as np
 import os
 import re
 
@@ -213,18 +212,18 @@ class SystemWidget(BaseWidget):
         
         Returns
         -------
-        codes : list
-            Codenames of the systems.
+        items : list
+            Names of the systems.
         """
 
         # initialize lists
-        codes = list()
+        items = list()
 
         # iterate through available systems
         for system in self.systems:
-            codes.append(system(params={}, cb_update=None).code)
+            items.append(system(params={}, cb_update=None).__class__.__name__)
 
-        return codes
+        return items
 
     def set_curr_func(self, value):
         """Method to update the widget when combo box selection changes.

@@ -1,6 +1,6 @@
 # The Quantum Optomechanics Toolbox
 
-[![Version](https://img.shields.io/badge/version-0.8.5-red?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/version-0.8.6-red?style=for-the-badge)](#)
 [![Milestone](https://img.shields.io/github/milestones/progress/sampreet/qom/2?style=for-the-badge)](https://github.com/Sampreet/qom/milestones)
 [![Last Commit](https://img.shields.io/github/last-commit/sampreet/qom?style=for-the-badge)](#)
 
@@ -25,15 +25,16 @@ Backed by numerical libraries like NumPy and SciPy, and featuring the highly cus
 ### What's New in v0.8!
 
 - GUI module to run loopers and solvers
-- Support for Lyapunov exponents
+- Support for Lyapunov exponents and LLE equation
+- Annotatable plots with twin axis support
 - Multithreaded looping
-- Annotatable plots
 - Project website
 
 ### Up Next!
 
 - [ ] Support for Delay Differential Equations
 - [ ] Multiprocessing Support
+- [ ] Quantum Trajectories
 
 ## Installation
 

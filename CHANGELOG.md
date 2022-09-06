@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.8.6 - 2022/09/06 - 00 - Wigner and LLE Support
+* Minor fixes to `qom.solvers.ODESolver` module.
+* Added single-mode Wigner function in `qom.systems.BaseSystem` module.
+* Added LLE dynamics solver function in `qom.system.SOMASystem` module.
+* Updated `qom.ui.plotters` package:
+    * Fixed limits and ticks for plots and colorbar.
+    * Updated outline size with figure size.
+    * Added option for vertical patches with `vspan` key.
+* Minor fixes to `qom.ui.widgets.SystemWidget` and `qom.utils.looper` modules.
+* Updated `README` and `setup`.
+
 ## v0.8.5 - 2022/05/17 - 00 - Twin Axis Support
 * Minor fixes to progress methods in `qom.loopers`, `qom.solvers` and `qom.systems`.
 * Added option for label and tick color in `qom.ui.axes`.

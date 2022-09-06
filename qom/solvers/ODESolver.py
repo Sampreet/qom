@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.ODESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2022-07-01'
+__updated__ = '2022-07-26'
 
 # dependencies
 import copy
@@ -197,8 +197,6 @@ class ODESolver():
 
         # for each time step, calculate the integration values
         for i in range(1, _dim):
-            # update progress
-            progress = float(i - 1)/float(_dim - 1) * 100
             # display progress
             if show_progress:
                 self._update_progress(pos=i, dim=_dim)
