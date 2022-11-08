@@ -6,14 +6,13 @@
 __name__    = 'qom.loopers.BaseLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-21'
-__updated__ = '2022-07-01'
+__updated__ = '2022-09-18'
 
 # dependencies
 from decimal import Decimal
 from typing import Union
 import copy
 import logging
-import multiprocessing
 import numpy as np
 import os
 import threading
@@ -26,7 +25,6 @@ from ..ui.plotters import MPLPlotter
 logger = logging.getLogger(__name__)
 
 # TODO: Add monotonic modes in `_get_grad_index`.
-# TODO: Fix `get_multiprocessed_results`.
 # TODO: Handle multi-valued points for gradients in `get_X_results`.
 # TODO: Support gradients in `wrap`.
 
@@ -47,6 +45,12 @@ class BaseLooper():
         Full name of the interfaced looper.
     cb_update : callable, optional
         Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is an integer and ``reset`` is a boolean.
+    parallel : bool, optional
+        Option to format outputs when the looper is run in parallel.
+    p_start : float, optional
+        Time at which the process was started. If `None`, the value is initialized to current time.
+    p_index : int, optional
+        Index of the process.
 
     Notes
     -----
@@ -101,7 +105,7 @@ class BaseLooper():
     def results(self, results):
         self.__results = results
 
-    def __init__(self, func, params: dict, code: str, name: str, cb_update=None):
+    def __init__(self, func, params: dict, code: str, name: str, cb_update=None, parallel: bool=False, p_start: float=None, p_index: int=0):
         """Class constructor for BaseLooper."""
 
         # validate parameters
@@ -110,11 +114,14 @@ class BaseLooper():
             params['system'] = {}
 
         # set attributes
-        self.cb_update = cb_update
-        self.code = code
         self.func = func
-        self.name = name
         self.params = params
+        self.code = code
+        self.name = name
+        self.cb_update = cb_update
+        self.parallel = parallel
+        self.p_start = p_start if p_start is not None else time.time()
+        self.p_index = p_index
         self.time = time.time()
 
         # set properties
@@ -140,6 +147,10 @@ class BaseLooper():
 
             # update looper parameters
             self.params['looper'] = _looper_params
+
+        # display initialization if parallel
+        if self.parallel:
+            logger.info('0.000s\t\t' + '\t\t'*self.p_index + '0.00%')
 
     def _check_directories(self, file_path: str):
         """Method to check for data directory.
@@ -236,43 +247,10 @@ class BaseLooper():
             idx = abs(np.asarray(axis_values) - np.mean(axis_values)).argmin()
         # monotonic modes
         else:
-            logger.info('---------------------Under Construction-----------------\t\n')
+            logger.info('----------------------------------------Under Construction\t\n')
             idx = 0
 
         return idx
-
-    def _get_multiprocessed_results(self, var, idx, val):
-        """Method to obtain results of multiprocessed execution of a given function. (*Under construction.*)
-
-        Parameters
-        ----------
-        var : str
-            Name of the variable.
-        idx : int
-            Index of the variable.
-        val : list
-            Values of the variable.
-        """
-
-        # initialize axes
-        results = list()
-        pool = multiprocessing.Pool(processes=4)
-
-        # start all threads
-        for i in range(len(val)):            
-            # update a deep copy
-            _system_params = copy.deepcopy(self.params['system'])
-            if idx is not None:
-                _system_params[var][idx] = val[i]
-            else:
-                _system_params[var] = val[i]
-            # obtain results using multiprocessing pool
-            results.append(pool.apply(self.func, args=(_system_params, val[i], logger, results)))
-
-        # sort results by first entry
-        results = sorted(results)
-
-        return results
 
     def _get_multithreaded_results(self, var, idx, val):
         """Method to obtain results of multithreaded execution of a given function.
@@ -333,10 +311,12 @@ class BaseLooper():
         # initialize
         params_str = ''
 
-        # concatenate
-        _axis = self.params['looper'][axis] if axis in self.params['looper'] else self.params['looper'][axis.lower()]
-        for key in _axis:
-            params_str += ('_' + axis.lower() + '=' if key == 'var' else '_') + str(_axis[key])
+        # concatenate values
+        _axis = self.axes[axis]
+        _keys = ['var'] + (['idx'] if 'idx' in _axis else []) + ['min', 'max', 'dim']
+        for key in _keys:
+            if _axis[key] is not None:
+                params_str += ('_' + axis.lower() + '=' if key == 'var' else '_') + str(_axis[key])
 
         return params_str
 
@@ -352,7 +332,6 @@ class BaseLooper():
                 ==================  ====================================================
                 value               meaning
                 ==================  ====================================================
-                "multiprocess"      multi-processor execution.
                 "multithread"       multi-thread execution.
                 "serial"            single-thread execution (fallback).
                 ==================  ====================================================
@@ -373,17 +352,17 @@ class BaseLooper():
         x_val = self.axes['X']['val']
         x_dim = len(x_val)
 
-        # initialize
+        # initialize lists
         results = list()
         xs = list()
         vs = list()
 
+        # display initialization
+        if show_progress_x:
+            self._update_progress(pos=0, dim=x_dim, status='--------------Looping X-axis values', reset=True, module_logger=logger)
+
         # if multithreading is opted
-        if mode == 'multiprocess':
-            # obtain sorted results
-            results = self._get_multiprocessed_results(x_var, x_idx, x_val)
-        # if multithreading is opted
-        elif mode == 'multithread':
+        if mode == 'multithread':
             # obtain sorted results
             results = self._get_multithreaded_results(x_var, x_idx, x_val)
         else:
@@ -391,7 +370,7 @@ class BaseLooper():
             for i in range(x_dim):
                 # update progress
                 if show_progress_x:
-                    self._update_progress(pos=i, dim=x_dim)
+                    self._update_progress(pos=i, dim=x_dim, status='--------------Looping X-axis values', module_logger=logger)
                 # update a deep copy
                 system_params = copy.deepcopy(self.params['system'])
                 if x_idx is not None:
@@ -454,7 +433,10 @@ class BaseLooper():
             # validate values
             assert len(_val) != 0, 'Key "{}" should contain key "val" with a non-empty list'.format(axis)
 
-            # set values
+            # update axis
+            self.axes[axis]['min'] = _val[0]
+            self.axes[axis]['max'] = _val[-1]
+            self.axes[axis]['dim'] = len(_val)
             self.axes[axis]['val'] = _val
         # update values
         else:
@@ -467,16 +449,24 @@ class BaseLooper():
             _dim = int(_axis.get('dim', 101))
             _scale = str(_axis.get('scale', 'linear'))
 
+            # handle single value
+            if _dim == 1:
+                _val = np.array([_min])
+
             # set values
-            if _scale == 'log':
-                _val = np.logspace(_min, _max, _dim)
             else:
-                _val = np.linspace(_min, _max, _dim)
-                # truncate values
-                _step_size = (Decimal(str(_max)) - Decimal(str(_min))) / (_dim - 1)
-                _decimals = - _step_size.as_tuple().exponent
-                _val = np.around(_val, _decimals)
+                if _scale == 'log':
+                    _val = np.logspace(_min, _max, _dim)
+                else:
+                    _val = np.linspace(_min, _max, _dim)
+                    # truncate values
+                    _step_size = (Decimal(str(_max)) - Decimal(str(_min))) / (_dim - 1)
+                    _decimals = - _step_size.as_tuple().exponent
+                    _val = np.around(_val, _decimals)
             # update axis
+            self.axes[axis]['min'] = _val[0]
+            self.axes[axis]['max'] = _val[-1]
+            self.axes[axis]['dim'] = len(_val)
             self.axes[axis]['val'] = _val.tolist()
 
         # validate variable
@@ -487,27 +477,49 @@ class BaseLooper():
         _idx = _axis.get('idx', None)
         self.axes[axis]['idx'] = int(_idx) if _idx is not None else None
 
-    def _update_progress(self, pos: int, dim: int):
-        """Method to update the progress of the calculation.
+    def _update_progress(self, pos: int=None, dim: int=1, status: str=None, reset: bool=False, module_logger=logger):
+        """Method to update the progress of the module.
         
         Parameters
         ----------
-        pos : int
+        pos : int, optional
             Index of current iteration.
-        dim : int 
+        dim : int, optional
             Total number of iterations.
+        status : str, optional
+            Status message.
+        reset : bool, optional
+            Option to reset the console or GUI.
+        module_logger : :class:`logging.Logger`, optional
+            Logger for the module requesting update.
         """
         
         # calculate progress
-        progress = float(pos) / float(dim - 1) * 100
+        if dim > 1 and pos is not None:
+            progress = float(pos) / float(dim - 1) * 100.0
+        else:
+            progress = float(pos) / float(dim) * 100.0 if pos is not None else 0.0
+
         # current time
         _time = time.time()
 
         # display progress
-        if _time - self.time > 0.5:
-            logger.info('Calculating the values: Progress = {progress:3.2f}'.format(progress=progress))
-            if self.cb_update is not None:
-                self.cb_update(status='Calculating the values...', progress=progress)
+        _is_start_or_end = progress == 100.0 or reset or (pos == 0 and reset)
+        if _time - self.time > 0.5 or _is_start_or_end:
+            # update logger if parallel
+            if self.parallel:
+                if not reset:
+                    _time_elapsed = _time - self.p_start
+                    module_logger.info('\r{:0.3f}s\t'.format(_time_elapsed) + ('\t' if _time_elapsed < 100.0 else '') + '\t\t' * self.p_index + '{:0.2f}%'.format(progress))
+            # else update both logger and callback
+            else:
+                _status = status if status is not None else ''
+                _progress = ': Progress = ' + (('  ' if progress < 10.0 else ' ') if progress < 100.0 else '')
+                # update console logger
+                module_logger.info((_status + _progress + '{:3.2f}%\t'.format(progress)) if pos is not None else (_status + '\t\n' if reset else '\t'))
+                # update GUI callback
+                if self.cb_update is not None:
+                    self.cb_update(status=status, progress=progress if pos is not None else None, reset=reset)
 
             # update time
             self.time = _time
@@ -582,7 +594,7 @@ class BaseLooper():
             Boolean denoting whether results were successfully loaded.
         """
 
-        # initialize
+        # initialize status
         loaded = False
 
         # supersede arguments by looper parameters
@@ -629,9 +641,8 @@ class BaseLooper():
             }
             
             # display completion
-            logger.info('------------------Results Loaded---------------------\t\n')
-            if self.cb_update is not None:
-                self.cb_update(status='Results Loaded', progress=None, reset=True)
+            self._update_progress(pos=1, status='---------------Obtaining the values', module_logger=logger)
+            self._update_progress(status='-----------------------------------------Results Loaded', reset=True, module_logger=logger)
 
             loaded = True
 
@@ -706,9 +717,7 @@ class BaseLooper():
         np.savez_compressed(file_path, np.array(self.results['V']))
         
         # display completion
-        logger.info('------------------Results Saved----------------------\t\n')
-        if self.cb_update is not None:
-            self.cb_update(status='Results Saved', progress=None, reset=True)
+        self._update_progress(status='------------------------------------------Results Saved', reset=True, module_logger=logger)
 
     def wrap(self, file_path_prefix: str=None, plot: bool=False, hold: bool=True, width: float=5.0, height: float=5.0):
         """Method to wrap the looper.

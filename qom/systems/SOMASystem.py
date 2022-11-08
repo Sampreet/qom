@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.SOMASystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-08-15'
-__updated__ = '2022-07-26'
+__updated__ = '2022-09-23'
 
 # dependencies
 from decimal import Decimal
@@ -21,6 +21,7 @@ from ..solvers import ODESolver
 # module logger
 logger = logging.getLogger(__name__)
 
+# TODO: Fix `get_nlse_dynamics`.
 # TODO: Implement integration in `get_lle_dynamics`.
 
 class SOMASystem(BaseSystem):
@@ -28,7 +29,7 @@ class SOMASystem(BaseSystem):
         
     Parameters
     ----------
-    params : dict
+    params : dict, optional
         Parameters for the system.
     cb_update : callable, optional
         Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is an integer and ``reset`` is a boolean.
@@ -59,7 +60,7 @@ class SOMASystem(BaseSystem):
         ======================  ================================================
     """
 
-    def __init__(self, params, cb_update=None):
+    def __init__(self, params={}, cb_update=None):
         """Class constructor for SOMASystem."""
 
         # initialize super class
@@ -186,11 +187,15 @@ class SOMASystem(BaseSystem):
         Modes.append([m for m in modes])
         alphas = np.array(modes[::2])
 
+        # display initialization
+        if _show_progress:
+            self._update_progress(pos=0, dim=t_dim, status='-----------Obtaining the dynamics', reset=True, module_logger=logger)
+
         for i in range(1, t_dim):
             t = (i - 1) * t_ss + t_min
             # update progress
             if _show_progress:
-                self._update_progress(module_name=__name__, pos=i, dim=t_dim)
+                self._update_progress(pos=i, dim=t_dim, status='-----------Obtaining the dynamics', module_logger=logger)
 
             # apply nonlinearity
             Ns = self.get_Ns(modes, params, t)
@@ -215,9 +220,8 @@ class SOMASystem(BaseSystem):
 
         # display completion
         if _show_progress:
-            logger.info('------------------Dynamics Obtained------------------\n')
-            if self.cb_update is not None:
-                self.cb_update(status='Dynamics Obtained', progress=None, reset=True)
+            self._update_progress(pos=1, dim=1, status='-----------Obtaining the dynamics', module_logger=logger)
+            self._update_progress(status='-------------------------------------Dynamics Obtained', reset=True, module_logger=logger)
 
         return Modes, self.get_X(params), T
 

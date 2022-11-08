@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2022-09-03'
+__updated__ = '2022-09-18'
 
 # dependencies
 from typing import Union
@@ -34,13 +34,13 @@ class BaseSystem():
 
     Parameters
     ----------
-    params : dict
+    params : dict, optional
         Parameters for the system.
-    code : str
+    code : str, optional
         Codename for the interfaced system.
-    name : str
+    name : str, optional
         Full name of the interfaced system.
-    num_modes : int
+    num_modes : int, optional
         Number of modes of the interfaced system.
     cb_update : callable, optional
         Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is an integer and ``reset`` is a boolean.
@@ -143,7 +143,7 @@ class BaseSystem():
         'get_rhc_count_stationary': ['get_ivc', 'get_mode_rates']
     }
     required_params = {
-        'get_averaged_eigenvalues': ['cache', 'cache_dir', 'cache_file', 'method', 'range_min', 'range_max', 'show_progress', 't_min', 't_max', 't_dim'],
+        'get_averaged_eigenvalues': ['cache', 'cache_dir', 'cache_file', 'idx_e', 'method', 'range_min', 'range_max', 'show_progress', 't_min', 't_max', 't_dim'],
         'get_classical_amplitude_difference': ['cache', 'cache_dir', 'cache_file', 'idx_e', 'measure_type', 'method', 'show_progress', 't_min', 't_max', 't_dim'],
         'get_classical_phase_difference': ['cache', 'cache_dir', 'cache_file', 'idx_e', 'measure_type', 'method', 'show_progress', 't_min', 't_max', 't_dim'],
         'get_lyapunov_exponents': ['cache', 'cache_dir', 'cache_file', 'method', 'method_le', 'num_iters', 'show_progress', 't_min', 't_max', 't_dim'],
@@ -178,7 +178,7 @@ class BaseSystem():
         'type_func': 'complex'
     }
 
-    def __init__(self, params: dict, code: str, name: str, num_modes: int, cb_update=None):
+    def __init__(self, params: dict={}, code: str='sys_00', name: str='Base System', num_modes: int=2, cb_update=None):
         """Class constructor for BaseSystem."""
 
         # set attributes
@@ -189,13 +189,18 @@ class BaseSystem():
         self.params = params
 
         # initialize properties
+        self.A = None
+        self.D = None
+        self.params_ivp = None
         self.Modes = None
         self.Corrs = None
         self.T = None
         self.time = time.time()
+        self.is_A_constant = False
+        self.is_D_constant = True
 
     def _get_cache_options(self, solver_params):
-        """Method to return updated options to cache dynamics.
+        """Method to obtain updated options to cache dynamics.
         
         Parameters
         ----------
@@ -224,7 +229,7 @@ class BaseSystem():
         if cache and cache_dir != '' and cache_file != '':
             # update directory
             if cache_dir == 'data':
-                cache_dir += '\\' + self.code + '\\' + str(t_min) + '_' + str(t_max) + '_' + str(t_dim)
+                cache_dir += '/' + self.code + '/' + str(t_min) + '_' + str(t_max) + '_' + str(t_dim)
             # update filename
             if cache_file == 'V' and self.params is not None:
                 for key in self.params:
@@ -232,8 +237,39 @@ class BaseSystem():
 
         return cache, cache_dir, cache_file
 
+    def _get_D_params_ivp(self, c):
+        """Method to obtain the noise matrix and the parameters of the system given the constants of the IVP.
+        
+        Parameters
+        ----------
+        c : list
+            Constants of the IVP.
+
+        Returns
+        -------
+        D : `numpy.ndarray`
+            Noise matrix.
+        params_ivp : list
+            Parameters for the IVP.
+        """
+
+        # frequently used variables
+        _dim = 2 * self.num_modes
+
+        # if noise matrix is absent
+        if len(c) < _dim**2:
+            return None, c
+
+        # extract noise matrix
+        D = np.array(c[:_dim**2]).reshape((_dim, _dim))
+
+        # extract system parameters
+        params_ivp = c[_dim**2:]
+
+        return D, params_ivp
+
     def _get_func_real(self, func):
-        """Method to return a real-valued function from a complex-valued one.
+        """Method to obtain a real-valued function from a complex-valued one.
         
         Parameters
         ----------
@@ -248,7 +284,7 @@ class BaseSystem():
         
         # real-valued function
         def func_real(v_real, c, t):
-            """Function to obtain a real-valued function.
+            """Method to obtain the real-valued values of a given function.
                     
             Parameters
             ----------
@@ -322,29 +358,42 @@ class BaseSystem():
 
         return measure
 
-    def _update_progress(self, module_name: str, pos: int, dim: int):
-        """Method to update the progress of the calculation.
+    def _update_progress(self, pos: int=None, dim: int=1, status: str=None, reset: bool=False, module_logger=logger):
+        """Method to update the progress of the module.
         
         Parameters
         ----------
-        module_name : str
-            Name of the calculating module.
-        pos : int
+        pos : int, optional
             Index of current iteration.
-        dim : int 
+        dim : int, optional
             Total number of iterations.
+        status : str, optional
+            Status message.
+        reset : bool, optional
+            Option to reset the console or GUI.
+        module_logger : :class:`logging.Logger`, optional
+            Logger for the module requesting update.
         """
         
         # calculate progress
-        progress = float(pos) / float(dim - 1) * 100
+        if dim > 1 and pos is not None:
+            progress = float(pos) / float(dim - 1) * 100.0
+        else:
+            progress = float(pos) / float(dim) * 100.0 if pos is not None else 0.0
+
         # current time
         _time = time.time()
 
         # display progress
-        if _time - self.time > 0.5:
-            logger.info('Computing ({module_name}): Progress = {progress:3.2f}'.format(module_name=module_name, progress=progress))
+        _init_or_comp = (pos == 0 and reset) or progress == 100.0 or reset
+        if _time - self.time > 0.5 or _init_or_comp:
+            _status = status if status is not None else ''
+            _progress = ': Progress = ' + (('  ' if progress < 10.0 else ' ') if progress < 100.0 else '')
+            # update console logger
+            module_logger.info((_status + _progress + '{:3.2f}%\t'.format(progress)) if pos is not None else (_status + '\t\n' if reset else '\t'))
+            # update GUI callback
             if self.cb_update is not None:
-                self.cb_update(status='Computing... ({module_name})'.format(module_name=module_name), progress=progress)
+                self.cb_update(status=status, progress=progress if pos is not None else None, reset=reset)
 
             # update time
             self.time = _time
@@ -419,20 +468,25 @@ class BaseSystem():
 
         # if only mode ODEs
         if len(v) == self.num_modes:
-            return self.get_mode_rates(modes=v, params=c, t=t)        
+            return self.get_mode_rates(modes=v, params=c, t=t)
 
         # extract the modes and correlations
-        _dim    = [2 * self.num_modes, 2 * self.num_modes]
+        _shape  = (2 * self.num_modes, 2 * self.num_modes)
         modes   = v[:self.num_modes]
-        corrs   = np.real(v[self.num_modes:]).reshape(_dim)
-        D       = np.array(c[:_dim[0] * _dim[1]]).reshape(_dim)
-        params  = c[_dim[0] * _dim[1]:]
+        corrs   = np.real(v[self.num_modes:]).reshape(_shape)
 
         # mode rates
-        mode_rates  = self.get_mode_rates(modes=modes, params=params, t=t)
+        mode_rates = self.get_mode_rates(modes=modes, params=self.params_ivp, t=t)
 
         # drift matrix
-        A = self.get_A(modes=modes, params=params, t=t)
+        A = self.A if self.is_A_constant else self.get_A(modes=modes, params=self.params_ivp, t=t)
+
+        # get noise matrix
+        D = self.D if self.is_D_constant else self.get_D(modes=modes, params=self.params_ivp, t=t)
+
+        # handle null noise matrix
+        if D is None:
+            D = np.zeros(_shape, dtype=np.float_)
 
         # quadrature correlation rate equation
         dcorrs_dt = A.dot(corrs) + corrs.dot(np.transpose(A)) + D
@@ -474,15 +528,8 @@ class BaseSystem():
         # get averaged modes
         modes = self.get_measure_average(solver_params=_solver_params)
 
-        # extract parameters
-        _, c = self.get_ivc()
-        if len(c) > 4 * self.num_modes**2:
-            params = c[4 * self.num_modes**2:]
-        else:
-            params = c
-
         # drift matrix
-        A = self.get_A(modes=modes, params=params, t=None)
+        A = self.get_A(modes=modes, params=self.params_ivp, t=None)
 
         # initialize lists
         eig_avg = list()
@@ -589,11 +636,6 @@ class BaseSystem():
         method_le = solver_params.get('method_le', 'gso')
         num_iters = int(solver_params.get('num_iters', 10000))
         _dim = 2 * self.num_modes
-        iv, c = self.get_ivc()
-        if len(c) > _dim**2:
-            params = c[_dim**2:]
-        else:
-            params = c
 
         # get modes and times
         Modes, _, T = self.get_modes_corrs_dynamics(solver_params=solver_params)
@@ -614,9 +656,9 @@ class BaseSystem():
             W = np.real(np.reshape(v[self.num_modes:], (_dim, _dim)))
 
             # obtain quadrature rates
-            mode_rates = self.get_mode_rates(modes=modes, params=params, t=t)
+            mode_rates = self.get_mode_rates(modes=modes, params=self.params_ivp, t=t)
             # obtain deviation rates
-            W_rate = np.dot(self.get_A(modes=modes, params=params, t=t), W).flatten().tolist()
+            W_rate = np.dot(self.get_A(modes=modes, params=self.params_ivp, t=t), W).flatten().tolist()
 
             return mode_rates + W_rate
 
@@ -693,13 +735,10 @@ class BaseSystem():
         # validate required functions
         assert self.validate_required_funcs(func_name='get_mean_optical_amplitudes', mode='verbose') is True, 'Missing required predefined callables'
         
-        # extract parameters
+        # extract system parameters
         _, c = self.get_ivc()
-        if len(c) > 4 * self.num_modes**2:
-            params = c[4 * self.num_modes**2:]
-        else:
-            params = c
-        A_l, Delta, kappa, C = self.get_oss_args(params=params)
+        _, params_ivp = self._get_D_params_ivp(c=c)
+        A_l, Delta, kappa, C = self.get_oss_args(params=params_ivp)
 
         # basic method
         if method == 'basic':
@@ -749,14 +788,6 @@ class BaseSystem():
 
         # validate required functions
         assert self.validate_required_funcs(func_name='get_mean_optical_occupancies', mode='verbose') is True, 'Missing required predefined callables'
-        
-        # extract parameters
-        _, c = self.get_ivc()
-        if len(c) > 4 * self.num_modes**2:
-            params = c[4 * self.num_modes**2:]
-        else:
-            params = c
-        A_l, Delta, kappa, C = self.get_oss_args(params=params)
 
         # basic method
         if method == 'basic':
@@ -766,6 +797,11 @@ class BaseSystem():
 
         # cubic method
         else:
+            # extract parameters
+            _, c = self.get_ivc()
+            _, params_ivp = self._get_D_params_ivp(c=c)
+            A_l, Delta, kappa, C = self.get_oss_args(params=params_ivp)
+            
             # get coefficients
             coeff_0 = 4 * C**2
             coeff_1 = 8 * C * Delta
@@ -858,32 +894,25 @@ class BaseSystem():
         # validate required function
         assert getattr(self, 'get_A', None) is not None if _measure_type == 'eigen_dm' else True, 'Missing required predefined callable ``get_A``'
 
-        # display initialization
-        if _show_progress:
-            logger.info('------------------Obtaining Measures-----------------\n')
-            if self.cb_update is not None:
-                self.cb_update(status='Obtaining Measures...', progress=None, reset=True)
-
         # initialize list
         M = list()
+
+        # display initialization
+        if _show_progress:
+            self._update_progress(pos=0, dim=_range_max - _range_min, status='-' * (23 - len(_module_name)) + 'Computing (' + _module_name + ')', reset=True, module_logger=logger)
 
         # iterate for all times in given range
         for i in range(_range_min, _range_max):
             # update progress
             if _show_progress:
-                self._update_progress(module_name=_module_name, pos=i - _range_min, dim=_range_max - _range_min)
+                self._update_progress(pos=i - _range_min, dim=_range_max - _range_min, status='-' * (23 - len(_module_name)) + 'Computing (' + _module_name + ')', module_logger=logger)
 
             # eigenvalues of drift matrix
             if _measure_type == 'eigen_dm':
-                # extract parameters
-                _, c = self.get_ivc()
-                if len(c) > 4 * self.num_modes**2:
-                    params = c[4 * self.num_modes**2:]
-                else:
-                    params = c
-                eigs, _ = np.linalg.eig(self.get_A(modes=Modes[i], params=params, t=T[i]))
+                # get all eigenvalues
+                eigs, _ = np.linalg.eig(self.get_A(modes=Modes[i], params=self.params_ivp, t=T[i]))
 
-                # extract eigenvalues
+                # extract required eigenvalues
                 measure = list()
                 for idx in solver_params['idx_e']:
                     measure.append(eigs[idx])
@@ -899,9 +928,8 @@ class BaseSystem():
 
         # display completion
         if _show_progress:
-            logger.info('------------------Measures Obtained------------------\n')
-            if self.cb_update is not None:
-                self.cb_update(status='Measures Obtained', progress=None, reset=True)
+            self._update_progress(pos=1, status='-' * (23 - len(_module_name)) + 'Computing (' + _module_name + ')', module_logger=logger)
+            self._update_progress(status='--------------------------------------Measures Obtained', reset=True, module_logger=logger)
 
         # if plot opted
         if plot and 'wigner' not in _measure_type:
@@ -947,15 +975,10 @@ class BaseSystem():
 
         # eigenvalues of drift matrix
         if _measure_type == 'eigen_dm':
-            # extract parameters
-            _, c = self.get_ivc()
-            if len(c) > 4 * self.num_modes**2:
-                params = c[4 * self.num_modes**2:]
-            else:
-                params = c
-            eigs, _ = np.linalg.eig(self.get_A(modes=modes, params=params, t=None))
+            # get all eigenvalues
+            eigs, _ = np.linalg.eig(self.get_A(modes=modes, params=self.params_ivp, t=None))
                 
-            # extract eigenvalues
+            # extract required eigenvalues
             measure = list()
             for idx in solver_params['idx_e']:
                 measure.append(eigs[idx])
@@ -968,9 +991,8 @@ class BaseSystem():
 
         # display completion
         if _show_progress:
-            logger.info('------------------Measure Obtained-------------------\n')
-            if self.cb_update is not None:
-                self.cb_update(status='Measures Obtained', progress=None, reset=True)
+            self._update_progress(pos=1, status='-Computing (' + __name__ + ')', module_logger=logger)
+            self._update_progress(status='--------------------------------------Measures Obtained', reset=True, module_logger=logger)
 
         return measure
 
@@ -1014,13 +1036,28 @@ class BaseSystem():
 
         # get initial values and constants
         iv, c = self.get_ivc()
+
+        # handle null constants
+        if c is None:
+            c = list()
+
+        # extract noise matrix and system parameters
+        self.D, self.params_ivp = self._get_D_params_ivp(c=c)
+
+        # if noise matrix is not constant
+        if not self.is_D_constant:
+            # validate noise matrix function
+            assert getattr(self, 'get_D', None) is not None, 'Missing required function ``get_D``'
+
         # if correlations are required
         if len(iv) != self.num_modes:
             # validate drift matrix function
             assert getattr(self, 'get_A', None) is not None, 'Missing required function ``get_A``'
-        # handle null constants
-        if c is None:
-            c = list()
+
+            # cache A if time independent
+            if self.is_A_constant:
+                # cache drift matrix
+                self.A = self.get_A(modes=list(), params=self.params_ivp, t=None)
 
         # initialize solver
         solver = HLESolver(params=_solver_params, cb_update=self.cb_update)
@@ -1060,24 +1097,17 @@ class BaseSystem():
         type_func = solver_params.get('type_func', 'complex')
 
         # extract the modes and correlations
-        _dim = 2 * self.num_modes
+        _shape  = (2 * self.num_modes, 2 * self.num_modes)
 
         # get initial values and constants
         iv, c = self.get_ivc()
 
-        # if correlations are required
-        if len(iv) != self.num_modes:
-            # validate drift matrix function
-            assert getattr(self, 'get_A', None) is not None, 'Missing required function ``get_A``'
-
         # handle null constants
         if c is None:
             c = list()
-        # get parameters
-        if len(c) > _dim**2:
-            params = c[_dim**2:]
-        else:
-            params = c
+
+        # extract noise matrix and system parameters
+        self.D, self.params_ivp = self._get_D_params_ivp(c=c)
 
         # if modes are to be calculated
         if getattr(self, 'get_mode_rates', None) is not None:
@@ -1098,24 +1128,30 @@ class BaseSystem():
                     iv_real.append(np.imag(mode))
         
             # solve for modes
-            roots_real = so.fsolve(get_mode_rates_real, iv_real, (params, None, ))
+            roots_real = so.fsolve(get_mode_rates_real, iv_real, (self.params_ivp, None, ))
             modes = [roots_real[2 * i] + 1j * roots_real[2 * i + 1] for i in range(int(len(roots_real) / 2))] 
         # steady states expressions are given
         elif getattr(self, 'get_oss_modes', None) is not None:
-            modes = self.get_oss_modes(params)
+            modes = self.get_oss_modes(self.params_ivp)
         # modes not required  
         else:
             modes = None
 
-        # if drift matrix is given
-        if getattr(self, 'get_A', None) is not None:
+        # if correlations are required
+        if len(iv) != self.num_modes:
+            # validate drift matrix function
+            assert getattr(self, 'get_A', None) is not None, 'Missing required function ``get_A``'
+
             # get matrices
-            _A = self.get_A(modes=modes, params=params, t=None)
-            _D = np.array(c[:_dim**2]).reshape((_dim, _dim))
+            self.A = self.get_A(modes=modes, params=self.params_ivp, t=None)
+
+            # handle null noise matrix
+            if self.D is None:
+                self.D = np.zeros(_shape, dtype=np.float_)
 
             # convert to numpy arrays
-            _A = np.array(_A) if type(_A) is list else _A
-            _D = np.array(_D) if type(_D) is list else _D
+            _A = np.array(self.A) if type(self.A) is list else self.A
+            _D = np.array(self.D) if type(self.D) is list else self.D
 
             # solve for correlations
             corrs = sl.solve_lyapunov(_A, - _D)
@@ -1169,13 +1205,10 @@ class BaseSystem():
         # extract frequently used parameters
         method_sz = solver_params.get('method_sz', 'oss')
         _, c = self.get_ivc()
-        if len(c) > 4 * self.num_modes**2:
-            params = c[4 * self.num_modes**2:]
-        else:
-            params = c
+        _, params_ivp = self._get_D_params_ivp(c=c)
             
         # get optical steady state mode amplitudes for all mean optical occupancies
-        Modes = self.get_oss_modes(params=params)
+        Modes = self.get_oss_modes(params=params_ivp)
 
         # initialize lists
         counts = list()
@@ -1186,11 +1219,11 @@ class BaseSystem():
             # if coefficients is given
             if getattr(self, 'get_coeffs', None) is not None:
                 # initialize solver
-                solver = RHCSolver(coeffs=self.get_coeffs(modes=modes, params=params, t=None))
+                solver = RHCSolver(coeffs=self.get_coeffs(modes=modes, params=params_ivp, t=None))
             # use drift matrix
             else:
                 # initialize solver
-                solver = RHCSolver(A=self.get_A(modes=modes, params=params, t=None))
+                solver = RHCSolver(A=self.get_A(modes=modes, params=params_ivp, t=None))
                 
             # get indices with sign changes
             idxs = solver.get_indices()
@@ -1298,35 +1331,27 @@ class BaseSystem():
         _range_max = int(solver_params.get('range_max', len(T)))
         _t_ss = np.float_(solver_params.get('t_max', T[-1] - T[0])) / int(solver_params.get('t_dim', len(T)))
 
-        # extract parameters
-        _, c = self.get_ivc()
-        if len(c) > 4 * self.num_modes**2:
-            params = c[4 * self.num_modes**2:]
-        else:
-            params = c
-            
-        # display initialization
-        if _show_progress:
-            logger.info('------------------Obtaining Counts-------------------\n')
-            if self.cb_update is not None:
-                self.cb_update(status='Obtaining Counts...', progress=None, reset=True)
-
         # initialize counter
         Counts = list()
+
+        # display initialization
+        if _show_progress:
+            self._update_progress(pos=0, dim=_range_max - _range_min, status='-Computing (' + __name__ + ')', reset=True, module_logger=logger)
+
         # iterate for all times in given range
         for i in range(_range_min, _range_max):
             # update progress
             if _show_progress:
-                self._update_progress(module_name=__name__, pos=i - _range_min, dim=_range_max - _range_min)
+                self._update_progress(pos=i - _range_min, dim=_range_max - _range_min, status='-Computing (' + __name__ + ')', module_logger=logger)
                     
             # if coefficients is given
             if getattr(self, 'get_coeffs', None) is not None:
                 # initialize solver
-                solver = RHCSolver(coeffs=self.get_coeffs(modes=Modes[i], params=params, t=i * _t_ss))
+                solver = RHCSolver(coeffs=self.get_coeffs(modes=Modes[i], params=self.params_ivp, t=i * _t_ss))
             # use drift matrix
             else:
                 # initialize solver
-                solver = RHCSolver(A=self.get_A(modes=Modes[i], params=params, t=i * _t_ss))
+                solver = RHCSolver(A=self.get_A(modes=Modes[i], params=self.params_ivp, t=i * _t_ss))
 
             # indices of the RHC sequence
             _idxs = solver.get_indices()
@@ -1335,9 +1360,8 @@ class BaseSystem():
 
         # display completion
         if _show_progress:
-            logger.info('------------------Counts Obtained--------------------\n')
-            if self.cb_update is not None:
-                self.cb_update(status='Counts Obtained', progress=None, reset=True)
+            self._update_progress(pos=1, status='-Computing (' + __name__ + ')', module_logger=logger)
+            self._update_progress(status='----------------------------------------Counts Obtained', reset=True, module_logger=logger)
 
         # if plot opted
         if plot:
@@ -1374,21 +1398,14 @@ class BaseSystem():
         # get modes
         modes, _ = self.get_modes_corrs_stationary(solver_params=solver_params)
 
-        # extract parameters
-        _, c = self.get_ivc()
-        if len(c) > 4 * self.num_modes**2:
-            params = c[4 * self.num_modes**2:]
-        else:
-            params = c
-
         # if coefficients is given
         if getattr(self, 'get_coeffs', None) is not None:
             # initialize solver
-            solver = RHCSolver(coeffs=self.get_coeffs(modes=modes, params=params, t=None))
+            solver = RHCSolver(coeffs=self.get_coeffs(modes=modes, params=self.params_ivp, t=None))
         # use drift matrix
         else:
             # initialize solver
-            solver = RHCSolver(A=self.get_A(modes=modes, params=params, t=None))
+            solver = RHCSolver(A=self.get_A(modes=modes, params=self.params_ivp, t=None))
             
         # get indices with sign changes
         idxs = solver.get_indices()

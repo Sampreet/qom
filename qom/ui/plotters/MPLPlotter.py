@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2022-08-20'
+__updated__ = '2022-11-04'
 
 # dependencies
 from matplotlib.colors import LinearSegmentedColormap, Normalize
@@ -312,7 +312,7 @@ class MPLPlotter(BasePlotter):
         _sizes = self.axes['Y'].sizes
         _styles = self.axes['Y'].styles
 
-        # udpate colors
+        # udpate colors from palette if dimension mismatch or none
         if _colors is None or len(_colors) < dim:
             palette_colors = self.get_colors(self.params['palette'], self.bins)
             # select extreme colors if two plots
@@ -321,6 +321,11 @@ class MPLPlotter(BasePlotter):
             # else select colors serially
             else:
                 _colors = [[palette_colors[i % self.bins]] if 'scatter' in _type else palette_colors[i % self.bins] for i in range(dim)]
+        # select colors from palette if indices are given
+        else:
+            palette_colors = self.get_colors(self.params['palette'], self.bins)
+            # select palette colors
+            _colors = [[palette_colors[_colors[i] % self.bins] if type(_colors[i]) is int else _colors[i]] if 'scatter' in _type else (palette_colors[_colors[i] % self.bins] if type(_colors[i]) is int else _colors[i]) for i in range(dim)]
 
         # udpate sizes
         if _sizes is None or len(_sizes) < dim:
@@ -346,16 +351,18 @@ class MPLPlotter(BasePlotter):
         # extractfrequently used variables
         _cbar_position = self.params['cbar']['position']
         _min = min(width, height)
+        if _min < 4.0:
+            _min = 4.0
         
         # update all axes
         for _ax in plt.gcf().get_axes():
             # update spines
             for spine in ['top', 'bottom', 'left', 'right']:
-                _ax.spines[spine].set_linewidth(_min / 5)
+                _ax.spines[spine].set_linewidth(_min / 4.0)
 
             # update tick lines
-            _ax.tick_params(length=_min, width=_min / 5, which='major')
-            _ax.tick_params(length=_min / 2, width=_min / 5, which='minor')
+            _ax.tick_params(length=_min, width=_min / 5.0, which='major')
+            _ax.tick_params(length=_min / 2.0, width=_min / 5.0, which='minor')
 
         # resize figure
         if self.cbar is not None:
@@ -856,10 +863,10 @@ class MPLPlotter(BasePlotter):
         # handle complex values
         if type(vs[0]) in _dtypes_complex or (type(vs[0]) in _dtypes_arrays and type(vs[0][0]) in _dtypes_complex):
             if 'imag' in self.params['component']:
-                logger.info('Plotting only imaginary parts of the complex values\n')
+                logger.info('Plotting only Imaginary Parts of the Complex Values\t\n')
                 vs = np.imag(vs).tolist()
             else: 
-                logger.info('Plotting only real parts of the complex values\n')
+                logger.info('-----Plotting only Real Parts of the Complex Values\t\n')
                 vs = np.real(vs).tolist()
 
         # 1D plots

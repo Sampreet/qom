@@ -6,7 +6,7 @@
 __name__    = 'qom.loopers.XYZLooper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-28'
-__updated__ = '2022-03-19'
+__updated__ = '2022-09-18'
 
 # dependencies
 import logging
@@ -29,6 +29,12 @@ class XYZLooper(BaseLooper):
         Parameters for the looper and optionally, the system and the plotter. The "looper" key is a dictionary containing the keys "X", "Y" and "Z", each with the keys "var" and "val" for the name of the parameter to loop and its corresponding values, along with additional options (refer notes).
     cb_update : callable, optional
         Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is an integer and ``reset`` is a boolean.
+    parallel : bool, optional
+        Option to format outputs when the looper is run in parallel.
+    p_start : float, optional
+        Time at which the process was started. If `None`, the value is initialized to current time.
+    p_index : int, optional
+        Index of the process.
 
     .. note:: All the options defined under the "looper" dictionary in ``params`` supersede individual method arguments. Refer :class:`qom.loopers.BaseLooper` for a complete list of supported options.
     """
@@ -37,11 +43,11 @@ class XYZLooper(BaseLooper):
     code = 'XYZLooper'
     name = '3D Looper'
     
-    def __init__(self, func, params: dict, cb_update=None):
+    def __init__(self, func, params: dict, cb_update=None, parallel: bool=False, p_start: float=None, p_index: int=0):
         """Class constructor for XYZLooper."""
 
         # initialize super class
-        super().__init__(func=func, params=params, code=self.code, name=self.name, cb_update=cb_update)
+        super().__init__(func=func, params=params, code=self.code, name=self.name, cb_update=cb_update, parallel=parallel, p_start=p_start, p_index=p_index)
 
         # set axes
         self._set_axis(axis='X')
@@ -49,9 +55,7 @@ class XYZLooper(BaseLooper):
         self._set_axis(axis='Z')
 
         # display initialization
-        logger.info('-------------------Looper Initialized-----------------\t\n')
-        if self.cb_update is not None:
-            self.cb_update(status='Looper Initialized', progress=None)
+        self._update_progress(status='--------------------------------------Looper Initialized', reset=True, module_logger=logger)
 
     def loop(self, grad: bool=False, grad_position='all', grad_mono_idx: int=0, mode: str='serial', show_progress_x: bool=False, show_progress_yz: bool=True):
         """Method to calculate the output of a given function for each X-axis Y-axis and Z-axis point.
@@ -78,7 +82,6 @@ class XYZLooper(BaseLooper):
                 ==================  ====================================================
                 value               meaning
                 ==================  ====================================================
-                "multiprocess"      multi-processor execution.
                 "multithread"       multi-thread execution.
                 "serial"            single-thread execution (fallback).
                 ==================  ====================================================
@@ -117,11 +120,15 @@ class XYZLooper(BaseLooper):
         _zs = list()
         _vs = list()
 
+        # display initialization
+        if show_progress_yz:
+            self._update_progress(pos=0, dim=dim, status='-------------Looping YZ-axis values', reset=True, module_logger=logger)
+
         # iterate Y-axis and Z-axis values
         for k in range(dim):
             # update progress
             if show_progress_yz:
-                self._update_progress(pos=k, dim=dim)
+                self._update_progress(pos=k, dim=dim, status='-------------Looping YZ-axis values', module_logger=logger)
 
             # get values
             _y = y_val[int(k % len(y_val))]
@@ -186,8 +193,7 @@ class XYZLooper(BaseLooper):
             self.results['V'] = _vs
 
         # display completion
-        logger.info('-------------------Results Obtained-------------------\t\n')
-        if self.cb_update is not None:
-            self.cb_update(status='Results Obtained', progress=None, reset=True)
+        self._update_progress(pos=1, status='-------------Looping YZ-axis values', module_logger=logger)
+        self._update_progress(status='----------------------------------------Results Obtained', reset=True, module_logger=logger)
 
         return self.results

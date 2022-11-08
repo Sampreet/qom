@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.ODESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2022-07-26'
+__updated__ = '2022-09-18'
 
 # dependencies
 import copy
@@ -124,32 +124,42 @@ class ODESolver():
         self.T = None
         self.time = time.time()
 
-    def _update_progress(self, pos: int, dim: int):
-        """Method to update the progress of the calculation.
+    def _update_progress(self, pos: int=None, dim: int=1, status: str=None, reset: bool=False, module_logger=logger):
+        """Method to update the progress of the module.
         
         Parameters
         ----------
-        pos : int
+        pos : int, optional
             Index of current iteration.
-        dim : int 
+        dim : int, optional
             Total number of iterations.
+        status : str, optional
+            Status message.
+        reset : bool, optional
+            Option to reset the console or GUI.
+        module_logger : :class:`logging.Logger`, optional
+            Logger for the module requesting update.
         """
-
-        # extract frequently used variables
-        method = self.params['method']
         
         # calculate progress
-        progress = float(pos) / float(dim - 1) * 100
+        if dim > 1 and pos is not None:
+            progress = float(pos) / float(dim - 1) * 100.0
+        else:
+            progress = float(pos) / float(dim) * 100.0 if pos is not None else 0.0
+
         # current time
-        _time = time.time()
+        _time = time.time() 
 
         # display progress
-        if _time - self.time > 0.5:
-            logger.info('Integrating (scipy.integrate.{method}): Progress = {progress:3.2f}'.format(method=method if method in self.new_methods else 'ode', progress=progress))
+        _init_or_comp = (pos == 0 and reset) or progress == 100.0 or reset
+        if _time - self.time > 0.5 or _init_or_comp:
+            _status = status if status is not None else ''
+            _progress = ': Progress = ' + (('  ' if progress < 10.0 else ' ') if progress < 100.0 else '')
+            # update console logger
+            module_logger.info((_status + _progress + '{:3.2f}%\t'.format(progress)) if pos is not None else (_status + '\t\n' if reset else '\t'))
+            # update GUI callback
             if self.cb_update is not None:
-                self.cb_update(status='Integrating (scipy.integrate.{method})...'.format(method=method if method in self.new_methods else 'ode'), progress=progress)
-            if self.cb_update is not None:
-                self.cb_update(status='Calculating the values...', progress=progress)
+                self.cb_update(status=status, progress=progress if pos is not None else None, reset=reset)
 
             # update time
             self.time = _time
@@ -176,6 +186,7 @@ class ODESolver():
         rtol = self.params.get('rtol', 1e-6)
         stiff = self.params.get('stiff', True)
         show_progress = self.params.get('show_progress', False)
+        _method = method if method in self.new_methods else 'ode'
 
         # update times
         self.T = T
@@ -194,12 +205,16 @@ class ODESolver():
 
         # initialize lists
         vs = [copy.deepcopy(self.v)]
+        
+        # display initialization
+        if show_progress:
+            self._update_progress(pos=0, dim=_dim, status='-' * (6 - len(_method)) + 'Integrating (scipy.integrate.' + _method + ')', reset=True, module_logger=logger)
 
         # for each time step, calculate the integration values
         for i in range(1, _dim):
             # display progress
             if show_progress:
-                self._update_progress(pos=i, dim=_dim)
+                self._update_progress(pos=i, dim=_dim, status='-' * (6 - len(_method)) + 'Integrating (scipy.integrate.' + _method + ')', module_logger=logger)
 
             # update constants
             if func_c is not None:

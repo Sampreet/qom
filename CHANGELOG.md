@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.9.0 - 2022/11/08 - 00 - Multiprocessing Support
+* Updated `qom.loopers.BaseLooper` module:
+    * Added process variables to support object multiprocessing.
+    * Removed multiprocessor mode from `loop` method.
+    * Updated params for saving/loading data.
+    * Exception handling for single value.
+* Revamped progress outputs for `qom.loopers`, `qom.solvers` and `qom.systems` modules.
+* Updated `qom.systems.BaseSystem` module:
+    * Support for constant drift and noise matrices.
+    * Revamped progress outputs and restructured IVP parameters.
+* Support for unformatted output in `qom.ui.log` module.
+* Minor fixes to `qom.ui.plotters.BasePlotter` module.
+* Updated option for palette colors and minor fixes in `qom.ui.plotters.MPLPlotter` module.
+* Updated `qom.utils.looper` module:
+    * Added `run_loopers_in_parallel` function to multiprocess `wrap_looper` function and merge results. Removed `merge_xy_loopers` function.
+    * Added support for multiprocessing in `wrap_looper` function.
+* Updated `README` and `setup`.
+
 ## v0.8.6 - 2022/09/06 - 00 - Wigner and LLE Support
 * Minor fixes to `qom.solvers.ODESolver` module.
 * Added single-mode Wigner function in `qom.systems.BaseSystem` module.

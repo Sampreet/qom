@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.LooperWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-08-19'
-__updated__ = '2021-09-08'
+__updated__ = '2022-10-12'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -17,7 +17,7 @@ import os
 
 # qom modules
 from ...loopers import XLooper, XYLooper, XYZLooper
-from ...utils import default_looper_func_names, get_looper_func
+from ...utils.looper import default_looper_func_names, get_looper_func
 from .BaseWidget import BaseWidget
 
 # module logger

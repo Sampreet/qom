@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.BasePlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-06'
-__updated__ = '2022-08-20'
+__updated__ = '2022-11-08'
 
 # dependencies
 import logging
@@ -196,8 +196,17 @@ class BasePlotter():
         'view_aspect': [1.0, 1.0, 1.0],
         'view_elevation': 32.0,
         'view_rotation': 215.0,
+        'v_label': '$v$',
+        'v_scale': 'linear',
         'vspan': list(),
-        'width': 4.8
+        'width': 4.8,
+        'x_label': '$x$',
+        'x_scale': 'linear',
+        'y_label': '$y$',
+        'y_legend': [],
+        'y_scale': 'linear',
+        'z_label': '$x$',
+        'z_scale': 'linear'
     }
 
     def __init__(self, axes: dict, params: dict):

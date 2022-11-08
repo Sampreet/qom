@@ -6,7 +6,7 @@
 __name__    = 'qom.solvers.HLESolver'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-04'
-__updated__ = '2022-04-24'
+__updated__ = '2022-09-18'
 
 # dependencies
 from decimal import Decimal
@@ -202,11 +202,12 @@ class HLESolver():
             # update modes
             self.Modes = vs
 
-            # display completion and initialization
+            # display completion
             if show_progress:
-                logger.info('-------------------Modes Obtained---------------------\n')
+                _status = '------------------------------------------Modes Obtained'
+                logger.info(_status + '\t\n')
                 if self.cb_update is not None:
-                    self.cb_update(status='Modes Obtained', progress=None, reset=True)
+                    self.cb_update(status=_status, progress=None, reset=True)
 
             # update initial values and constants
             iv_corrs = [np.real(ele) for ele in iv[num_modes:]]
@@ -249,9 +250,10 @@ class HLESolver():
             
             # display completion
             if show_progress:
-                logger.info('-------------------Correlations Obtained--------------\n')
+                _status = '-----------------------------------Correlations Obtained'
+                logger.info(_status + '\t\n')
                 if self.cb_update is not None:
-                    self.cb_update(status='Correlations Obtained', progress=None, reset=True)
+                    self.cb_update(status=_status, progress=None, reset=True)
         else:
             # update results
             self.results = {
@@ -261,9 +263,10 @@ class HLESolver():
 
             # display completion
             if show_progress:
-                logger.info('-------------------Results Obtained-------------------\n')
+                _status = '----------------------------------------Results Obtained'
+                logger.info(_status + '\t\n')
                 if self.cb_update is not None:
-                    self.cb_update(status='Results Obtained', progress=None, reset=True)
+                    self.cb_update(status=_status, progress=None, reset=True)
 
     def get_Corrs(self, num_modes=None):
         """Method to obtain the quantum correlations.
@@ -390,9 +393,10 @@ class HLESolver():
 
             # display loaded
             if show_progress:
-                logger.info('-------------------Results Loaded---------------------\n')
+                _status = '------------------------------------------Results Loaded'
+                logger.info(_status + '\t\n')
                 if self.cb_update is not None:
-                    self.cb_update(status='Results Loaded', progress=None, reset=True)
+                    self.cb_update(status=_status, progress=None, reset=True)
         else:
             # solve
             self._set_results(func_ode=func_ode, iv=iv, c=c, func_ode_corrs=func_ode_corrs, num_modes=num_modes, method=method)
@@ -410,8 +414,9 @@ class HLESolver():
             
                 # display saved
                 if show_progress:
-                    logger.info('-------------------Results Saved----------------------\n')
+                    _status = '-------------------------------------------Results Saved'
+                    logger.info(_status + '\t\n')
                     if self.cb_update is not None:
-                        self.cb_update(status='Results Saved', progress=None, reset=True)
+                        self.cb_update(status=_status, progress=None, reset=True)
 
         return self.results

@@ -2,20 +2,27 @@
 # -*- coding: utf-8 -*-
 
 # dependencies
-from decimal import Decimal
+import concurrent.futures as cf
 import copy
+import logging
+import multiprocessing as mp
 import numpy as np
+import os
+import time
  
 """Module for utility functions to wrap subpackages."""
 
 __name__    = 'qom.utils.looper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-05-25'
-__updated__ = '2022-03-19'
+__updated__ = '2022-09-19'
 
 # qom modules
 from ..ui import init_log
 from ..loopers import XLooper, XYLooper, XYZLooper
+
+# module_logger
+logger = logging.getLogger(__name__)
 
 default_looper_func_names = {
     'averaged_eigenvalues': 'aes',
@@ -73,7 +80,7 @@ def get_looper_func(SystemClass, solver_params: dict, func_code: str):
         # function to calculate
         def func_solver_params(system_params, val, logger, results):
             # initialize system
-            system = SystemClass(system_params)
+            system = SystemClass(params=system_params)
             # get value
             value = getattr(system, 'get_' + func_name)(solver_params=solver_params)
             # update results
@@ -118,7 +125,7 @@ def get_looper_func(SystemClass, solver_params: dict, func_code: str):
 
     return func
 
-def wrap_looper(SystemClass, params: dict, func, looper, file_path_prefix: str=None, plot: bool=False, hold: bool=True, width: float=5.0, height: float=5.0):
+def wrap_looper(SystemClass, params: dict, func, looper, file_path_prefix: str=None, plot: bool=False, hold: bool=True, width: float=5.0, height: float=5.0, parallel=False, p_start=time.time(), p_index=0):
     """Function to wrap loopers.
 
     Requires already defined callables ``func_ode``, ``get_mode_rates``, ``get_ivc``, ``get_A`` and ``get_oss_args`` inside the system class.
@@ -145,8 +152,8 @@ def wrap_looper(SystemClass, params: dict, func, looper, file_path_prefix: str=N
             "osz"           optical stability zone.
             "pcc"           Pearson correlation factor.
             ==============  ================================================
-    looper : str or class
-        Code of the looper or the looper class. Available loopers names are:
+    looper : str
+        Code of the looper. Available options are:
             ==============  ================================================
             value           meaning
             ==============  ================================================
@@ -164,15 +171,21 @@ def wrap_looper(SystemClass, params: dict, func, looper, file_path_prefix: str=N
         Width of the figure.
     height : float, optional
         Height of the figure.
+    parallel : bool, optional
+        Option to format outputs when the looper is run in parallel.
+    p_start : float, optional
+        Time at which the process was started. If `None`, the value is initialized to current time.
+    p_index : int, optional
+        Index of the process.
 
     Returns
     -------
     looper : :class:`qom.loopers.*`
         Instance of the looper.
     """
-    
+
     # initialize logger
-    init_log()
+    init_log(parallel=parallel)
 
     # select function
     if type(func) is str:
@@ -181,48 +194,52 @@ def wrap_looper(SystemClass, params: dict, func, looper, file_path_prefix: str=N
     # select looper
     if type(looper) is str:
         if looper == 'XYLooper':
-            looper = XYLooper(func, copy.deepcopy(params))
+            looper = XYLooper(func=func, params=copy.deepcopy(params), parallel=parallel, p_start=p_start, p_index=p_index)
         elif looper == 'XYZLooper':
-            looper = XYZLooper(func, copy.deepcopy(params))
+            looper = XYZLooper(func=func, params=copy.deepcopy(params), parallel=parallel, p_start=p_start, p_index=p_index)
         else:
-            looper = XLooper(func, copy.deepcopy(params))
+            looper = XLooper(func=func, params=copy.deepcopy(params), parallel=parallel, p_start=p_start, p_index=p_index)
 
     # wrap looper
     looper.wrap(file_path_prefix=file_path_prefix, plot=plot, hold=hold, width=width, height=height)
 
     return looper
 
-def merge_xy_loopers(y_ss, SystemClass, params: dict, func, looper, file_path_prefix: str, plot: bool=False, hold: bool=True, width: float=5.0, height: float=5.0):
+def run_wrap_looper_instance(args):
+    '''Function to run a single instance of `wrap_looper`.
+    
+    Parameters
+    ----------
+    args : list
+        Arguments of the `wrap_looper` function.
+
+    Returns
+    -------
+    looper : :class:`qom.loopers.*`
+        Instance of the looper.
+    '''
+
+    # extract arguments
+    SystemClass, params, func, looper, file_path_prefix, plot, hold, width, height, parallel, p_start, p_index = args
+
+    # return instance
+    return wrap_looper(SystemClass=SystemClass, params=params, func=func, looper=looper, file_path_prefix=file_path_prefix, plot=plot, hold=hold, width=width, height=height, parallel=parallel, p_start=p_start, p_index=p_index)
+
+def run_loopers_in_parallel(SystemClass, params: dict, func, looper, file_path_prefix: str=None, plot: bool=False, hold: bool=True, width: float=5.0, height: float=5.0, num_loopers: int=None):
     """Function to wrap loopers.
 
     Requires already defined callables ``func_ode``, ``get_mode_rates``, ``get_ivc``, ``get_A`` and ``get_oss_args`` inside the system class.
     
     Parameters
     ----------
-    y_ss : int
-        Step-size of subdivisions about Y-axis.
     SystemClass : :class:`qom.systems.*`
         Class containing the system.
     params : dict
         All parameters as defined in :class:`qom.loopers.BaseLooper`.
-    func : str or callable
-        Code of the function or the function to loop, following the format defined in :class:`qom.loopers.BaseLooper`. Available function codes are:
-            ==============  ================================================
-            value           meaning
-            ==============  ================================================
-            "aes"           averaged eigenvalue of the drift matrix.
-            "cad"           classical amplitude difference.
-            "cpd"           classical phase difference.
-            "les"           Lyapunov exponents.
-            "mav"           measure averages (fallback).
-            "mdy"           measure dynamics.
-            "moo"           mean optical occupancies.
-            "mss"           stationary measure.
-            "osz"           optical stability zone.
-            "pcc"           Pearson correlation factor.
-            ==============  ================================================
-    looper : str or class
-        Code of the looper or the looper class. Available loopers names are:
+    func : callable
+        Function to loop, following the format defined in :class:`qom.loopers.BaseLooper`.
+    looper : str
+        Code of the looper. Available options are:
             ==============  ================================================
             value           meaning
             ==============  ================================================
@@ -232,7 +249,7 @@ def merge_xy_loopers(y_ss, SystemClass, params: dict, func, looper, file_path_pr
             ==============  ================================================
     file_path_prefix : str, optional
         Path and prefix of the .npz file.
-    plot: bool, optional
+    plot : bool, optional
         Option to plot the results.
     hold : bool, optional
         Option to hold the plot.
@@ -240,6 +257,8 @@ def merge_xy_loopers(y_ss, SystemClass, params: dict, func, looper, file_path_pr
         Width of the figure.
     height : float, optional
         Height of the figure.
+    num_loopers : int, optional
+        Number of loopers to run in parallel. The slicing of the values is performed on the first axis. If `None`, then the number slices are determined automatically, throttled by the number of available cores.
 
     Returns
     -------
@@ -247,64 +266,100 @@ def merge_xy_loopers(y_ss, SystemClass, params: dict, func, looper, file_path_pr
         Instance of the looper.
     """
 
-    # validate parameters
-    assert file_path_prefix is not None, 'Parameter ``file_path`` should be defined'
+    # validate loopers
+    assert looper in ['XLooper', 'XYLooper', 'XYZLooper'], 'Parameter ``looper`` should be either "XLooper", "XYLooper" or "XYZLooper"'
 
-    # extract frequenty used variables
-    Y = copy.deepcopy(params['looper']['Y'])
-    y_min = Y['min']
-    y_max = Y['max']
-    y_dim = Y['dim']
+    # frequently used variables
+    t_start = time.time()
+    _s = 'Time Elapsed\t'
+    parallel = True
 
-    # get number of divisions
-    _num = int(np.round((y_max - y_min) / y_ss))
-    # get untruncated values
-    _val = np.linspace(y_min, y_max, _num + 1)
-    # truncate values
-    _step_size = (Decimal(str(y_max)) - Decimal(str(y_min))) / (_num - 1)
-    _decimals = - Decimal(str(y_ss)).as_tuple().exponent
-    _val = np.around(_val, _decimals)
+    # initialize logger
+    init_log(parallel=parallel)
+
+    # initialize looper
+    if 'XYZ' in looper:
+        looper = XYZLooper(func=func, params=params, parallel=True)
+        axis = 'Z'
+    if 'XY' in looper:
+        looper = XYLooper(func=func, params=params, parallel=True)
+        axis = 'Y'
+    else:
+        looper = XLooper(func=func, params=params, parallel=True)
+        axis = 'X'
+
+    # if save/load opted
+    if file_path_prefix is not None:
+        # load saved results and return looper
+        if looper.load_results(file_path_prefix=file_path_prefix):
+            # plot results
+            if plot:
+                looper.plot_results(hold=hold, width=width, height=height)
+
+            return looper
+
+    # extract axis values
+    val = looper.axes[axis]['val']
+
+    # handle null value or overflow
+    if num_loopers is None or num_loopers > len(val) or num_loopers < 1:
+        num_loopers = int(np.min([os.cpu_count() - 2, len(val)])) if len(val) > 1 else 1
+
+    # maximum dimension of each slice
+    slice_dim = int(np.ceil(len(val) / num_loopers))
+    
+    # handle corner case
+    while slice_dim * (num_loopers - 1) >= len(val):
+        num_loopers -= 1
 
     # initialize lists
     V = list()
+    all_args = list()
         
-    # subdivide Y-axis
-    for i in range(_num):
-        params['looper']['Y']['min'] = _val[i]
-        params['looper']['Y']['max'] = _val[i + 1]
-        params['looper']['Y']['dim'] = int((y_dim - 1) / _num + 1)
+    # slice and populate arguments
+    for i in range(num_loopers):
+        # duplicate parameters
+        _params = copy.deepcopy(params)
+        # update axis parameters
+        _params['looper'][axis] = {
+            'var': looper.axes[axis]['var'],
+            'idx': looper.axes[axis]['idx'],
+            'min': val[(i * slice_dim)],
+            'max': val[(i + 1) * slice_dim - 1] if (i + 1) * slice_dim <= len(val) else val[-1],
+            'dim': slice_dim if (i + 1) * slice_dim <= len(val) else len(val) - i * slice_dim
+        }
 
-        # get looper results
-        _looper = wrap_looper(SystemClass=SystemClass, params=params, func=func, looper=looper, file_path_prefix=file_path_prefix)
+        # update log string
+        _s += looper.code + ' #' + str(i) + '\t'
 
-        # update lists
-        V += _looper.results['V'][:-1]
+        # update arguments
+        all_args.append([SystemClass, _params, func, looper.code, file_path_prefix, plot, hold, width, height, parallel, t_start, i])
 
-    # update lists
-    if _looper is not None:
-        V += [_looper.results['V'][-1]]
-
-    # reset looper parameters
-    params['looper']['Y'] = Y
-
-    # select looper
-    if type(looper) is str:
-        if looper == 'XYLooper':
-            looper = XYLooper(func, params)
-        elif looper == 'XYZLooper':
-            looper = XYZLooper(func, params)
-        else:
-            looper = XLooper(func, params)
+    # update log
+    logger.info('\n' + _s + '\n')
+        
+    # multiprocess and join
+    with cf.ProcessPoolExecutor(max_workers=num_loopers if num_loopers < os.cpu_count() else os.cpu_count() - 2, mp_context=mp.get_context('spawn')) as executor:
+        _loopers = list(executor.map(run_wrap_looper_instance, all_args))
     
+    # join list of values
+    for _l in _loopers:
+        V += _l.results['V']
+
     # update results
     looper.results = {
         'X': looper.axes['X']['val'],
-        'Y': looper.axes['X']['val'],
+        'Y': looper.axes['Y']['val'] if 'XY' in looper.code else None,
+        'Z': looper.axes['Z']['val'] if 'XYZ' in looper.code else None,
         'V': V
     }
 
+    # update log
+    logger.info('\n')
+
     # save results
-    looper.save_results(file_path_prefix=file_path_prefix)
+    if file_path_prefix is not None:
+        looper.save_results(file_path_prefix=file_path_prefix)
 
     # plot results
     if plot:

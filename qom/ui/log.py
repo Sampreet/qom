@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.log'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-02-05'
-__updated__ = '2021-12-24'
+__updated__ = '2022-09-18'
 
 # dependencies
 import datetime as dt
@@ -15,7 +15,7 @@ import logging
 # module logger    
 logger = logging.getLogger(__name__)
 
-def init_log(log_format='full', debug=False):
+def init_log(log_format='full', debug=False, parallel=False):
     """Function to initialize the logger for the package.
     
     Parameters
@@ -24,6 +24,8 @@ def init_log(log_format='full', debug=False):
         Format type for output to console.
     debug : boolean, optional
         Option to enable DEBUG log level.
+    parallel : boolean, optional
+        Option to only display errors when running code in parallel
         
     Returns
     -------
@@ -42,12 +44,13 @@ def init_log(log_format='full', debug=False):
         logging.captureWarnings(True)
 
         # set stream handler
-        formatter = get_formatter(log_format)
+        formatter = get_formatter(log_format if not parallel else 'none')
         handler = get_handler(formatter)
         main_logger.addHandler(handler)
 
-        # test
-        logger.info('------------------------------Logger Initialized-----------------\n')
+        # display initialization
+        if not parallel:
+            logger.info('-------------------------------------------------Logger Initialized\n')
     
 def get_formatter(log_format='full'):
     """Function to obtain the formatter for stream handler.
@@ -70,6 +73,10 @@ def get_formatter(log_format='full'):
     # short format
     if log_format == 'short':
         return logging.Formatter('\r(%(levelname)s) %(name)s: %(message)s')
+
+    # no formatting
+    else:
+        return logging.Formatter('\r%(message)s')
         
 def get_handler(formatter):
     """Function to obtain the stream handler for console logger.
