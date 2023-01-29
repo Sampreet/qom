@@ -31,21 +31,21 @@ class BaseAxis():
         Values for the axis supporting a list of values or a dictionary containing the range of values with keys "min", "max", "dim" and "scale" or the values themselves under key "val".
     plotter_params : dict
         Parameters for the plotter. Currently supported keys are:
-            ==============  ====================================================
-            key             value
-            ==============  ====================================================
-            "label"         (*str*) text of the axis label.
-            "label_color"   (*str*) color of the axis label.
-            "label_pad"     (*int*) padding of the axis label.
-            "limits"        (*list*) minimum and maximum limits for the axis.
-            "scale"         (*str*) step scale for the values. Options are "linear" and "log".
-            "tick_dim"      (*float*) dimension of the ticks.
-            "tick_labels"   (*list*) tick labels of the plots.
-            "tick_pad"      (*int*) padding of the tick labels.
-            "tick_position" (*str*) position of ticks on the plot. Options are "both", "bottom", "left", "right" or "top".
-            "ticks"         (*list*) ticks of the plots.
-            "ticks_minor"   (*list*) positions of minor ticks of the plots.
-            ==============  ====================================================
+            ================    ================================================
+            key                 value
+            ================    ================================================
+            "label"             (*str*) text of the axis label.
+            "label_color"       (*str*) color of the axis label.
+            "label_pad"         (*int*) padding of the axis label.
+            "limits"            (*list*) minimum and maximum limits for the axis.
+            "scale"             (*str*) step scale for the values. Options are "linear" and "log".
+            "tick_dim"          (*float*) dimension of the ticks.
+            "tick_labels"       (*list*) tick labels of the plots.
+            "tick_pad"          (*int*) padding of the tick labels.
+            "tick_position"     (*str*) position of ticks on the plot. Options are "both", "bottom", "left", "right" or "top".
+            "ticks"             (*list*) ticks of the plots.
+            "ticks_minor"       (*list*) positions of minor ticks of the plots.
+            ================    ================================================
     """
 
     # attributes

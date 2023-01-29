@@ -6,7 +6,7 @@
 __name__    = 'qom.systems.BaseSystem'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-12-04'
-__updated__ = '2022-09-18'
+__updated__ = '2022-11-26'
 
 # dependencies
 from typing import Union
@@ -99,15 +99,15 @@ class BaseSystem():
 
     Some methods require one or more of the following predefined callables to work properly:
         ======================  ================================================
-        callable                purpose
+        callable                returns
         ======================  ================================================
-        func_ode                function returning the rate equations of the classical mode amplitudes and quantum correlations, formatted as ``func_ode(t, v, c)``, where ``t`` is the time at which the integration is performed, ``v`` is a list of the amplitudes and fluctuations and ``c`` is a list of constant parameters. The output should match the dimension of ``v``. If ``func_ode_corrs`` parameter is given, this function is treated as the function for the modes only.
-        func_ode_corrs          function returning rate equations of the quantum correlations. It follows the same formatting as ``func_ode``.
-        get_A                   function to obtain the drift matrix, formatted as ``get_A(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the drift matrix ``A``.
-        get_ivc                 function to obtain the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
-        get_mode_rates          function to obtain the rate of the classical mode amplitudes for a given list of modes, formatted as ``get_mode_rates(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the mode rates with same dimension as ``modes``.
-        get_oss_args            function to obtain the required parameters to calculate the optical steady state, formatted as ``get_oss_args(params)``, where ``params`` are the constant parameters of the system. 
-        get_oss_modes           function to obtain the classical mode amplitudes from the mean optical occupancy, formatted as ``get_oss_modes(params)``, where ``params`` are the constant parameters of the system. Returns the list of modes calculated for each mean optical occupancy.
+        func_ode                the rate equations of the classical mode amplitudes and quantum correlations, formatted as ``func_ode(t, v, c)``, where ``t`` is the time at which the integration is performed, ``v`` is a list of the amplitudes and fluctuations and ``c`` is a list of constant parameters. The output should match the dimension of ``v``. If ``func_ode_corrs`` parameter is given, this function is treated as the function for the modes only.
+        func_ode_corrs          the rate equations of the quantum correlations. It follows the same formatting as ``func_ode``.
+        get_A                   the drift matrix, formatted as ``get_A(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the drift matrix ``A``.
+        get_ivc                 the initial values and constants, formatted as ``get_ivc()``. Returns values ``iv`` and ``c`` for the initial values and constants respectively.
+        get_mode_rates          the rates of the classical mode amplitudes, formatted as ``get_mode_rates(modes, params, t)``, where ``modes`` are the modes amplitudes at time ``t`` and ``params`` are the constant parameters of the system. Returns the mode rates with same dimension as ``modes``.
+        get_oss_args            the parameters required to calculate the optical steady states, formatted as ``get_oss_args(params)``, where ``params`` are the constant parameters of the system. 
+        get_oss_modes           the steady state classical mode amplitudes from the mean optical occupancies, formatted as ``get_oss_modes(params)``, where ``params`` are the constant parameters of the system. Returns the list of modes calculated for each mean optical occupancy.
         ======================  ================================================
 
     The ``get_oss_args`` function should return the following values in order:

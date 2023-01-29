@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.MPLPlotter'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2020-10-03'
-__updated__ = '2022-11-04'
+__updated__ = '2023-01-29'
 
 # dependencies
 from matplotlib.colors import LinearSegmentedColormap, Normalize
@@ -354,6 +354,20 @@ class MPLPlotter(BasePlotter):
         if _min < 4.0:
             _min = 4.0
         
+        # update 3D axes
+        if self.params['type'] in self.types_3D:
+            _mpl_axes = plt.gca()
+            _axes = [_mpl_axes.xaxis, _mpl_axes.yaxis, _mpl_axes.zaxis]
+            for _ax in _axes:
+                _ax._axinfo['tick'].update({
+                    'linewidth': {
+                        True: _min / 5.0,
+                        False: _min / 20.0
+                    },
+                    'inward_factor': _min / 20.0
+                })
+                # _ax.set_tick_params(length=_min, width=_min / 5.0, which='major')
+                # _ax.set_tick_params(length=_min / 2.0, width=_min / 5.0, which='minor')
         # update all axes
         for _ax in plt.gcf().get_axes():
             # update spines

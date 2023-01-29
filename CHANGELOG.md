@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.9.0 - 2023/01/29 - 00 - Minor Fixes
+* Updated documentation of `qom.systems.BaseSystem` and `qom.ui.axes.BaseAxis` modules.
+* Minor fixes for 3D plot linewidths in `qom.ui.plotters.MPLPlotter` module.
+* Minor fixes to parellel instances in `qom.utils.looper` module.
+* Minor updates to docsources.
+
 ## v0.9.0 - 2022/11/08 - 00 - Multiprocessing Support
 * Updated `qom.loopers.BaseLooper` module:
     * Added process variables to support object multiprocessing.

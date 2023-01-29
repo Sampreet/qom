@@ -17,8 +17,8 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'Quantum Optomechanics Toolbox'
-copyright = '2020, Sampreet Kalita'
+project = 'The Quantum Optomechanics Toolbox'
+copyright = '2023, Sampreet Kalita'
 author = 'Sampreet Kalita'
 
 

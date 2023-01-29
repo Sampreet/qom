@@ -1,8 +1,8 @@
 .. Quantum Optomechanics Toolbox documentation master file, created by
    sphinx-quickstart on Fri Dec  4 15:06:12 2020.
 
-Welcome to the Documentation!
-=============================
+Welcome to the ``qom-v0.9.0`` Documentation!
+============================================
 
 The Quantum Optomechanics Toolbox (packaged as ``qom``) is a wrapper-styled, scalable toolbox featuring multiple modules for the calculation of stationary as well as dynamical properties of many-body quantum optomechanical systems. 
 Its inheritable system classes can also be used to study other systems that follow the optomechanical model.

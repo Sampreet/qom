@@ -10,12 +10,12 @@ import numpy as np
 import os
 import time
  
-"""Module for utility functions to wrap subpackages."""
+"""Module containing utility functions for loopers."""
 
 __name__    = 'qom.utils.looper'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-05-25'
-__updated__ = '2022-09-19'
+__updated__ = '2023-01-29'
 
 # qom modules
 from ..ui import init_log
@@ -125,106 +125,6 @@ def get_looper_func(SystemClass, solver_params: dict, func_code: str):
 
     return func
 
-def wrap_looper(SystemClass, params: dict, func, looper, file_path_prefix: str=None, plot: bool=False, hold: bool=True, width: float=5.0, height: float=5.0, parallel=False, p_start=time.time(), p_index=0):
-    """Function to wrap loopers.
-
-    Requires already defined callables ``func_ode``, ``get_mode_rates``, ``get_ivc``, ``get_A`` and ``get_oss_args`` inside the system class.
-    
-    Parameters
-    ----------
-    SystemClass : :class:`qom.systems.*`
-        Class containing the system.
-    params : dict
-        All parameters as defined in :class:`qom.loopers.BaseLooper`.
-    func : str or callable
-        Code of the function or the function to loop, following the format defined in :class:`qom.loopers.BaseLooper`. Available function codes are:
-            ==============  ================================================
-            value           meaning
-            ==============  ================================================
-            "aes"           averaged eigenvalue of the drift matrix.
-            "cad"           classical amplitude difference.
-            "cpd"           classical phase difference.
-            "les"           Lyapunov exponents.
-            "mav"           measure averages (fallback).
-            "mdy"           measure dynamics.
-            "moo"           mean optical occupancies.
-            "mss"           stationary measure.
-            "osz"           optical stability zone.
-            "pcc"           Pearson correlation factor.
-            ==============  ================================================
-    looper : str
-        Code of the looper. Available options are:
-            ==============  ================================================
-            value           meaning
-            ==============  ================================================
-            "XLooper"       1D looper (:class:`qom.loopers.XLooper`) (fallback).
-            "XYLooper"      2D looper (:class:`qom.loopers.XYLooper`).
-            "XYZLooper"     3D looper (:class:`qom.loopers.XYZLooper`).
-            ==============  ================================================
-    file_path_prefix : str, optional
-        Prefix of the file path.
-    plot: bool, optional
-        Option to plot the results.
-    hold : bool, optional
-        Option to hold the plot.
-    width : float, optional
-        Width of the figure.
-    height : float, optional
-        Height of the figure.
-    parallel : bool, optional
-        Option to format outputs when the looper is run in parallel.
-    p_start : float, optional
-        Time at which the process was started. If `None`, the value is initialized to current time.
-    p_index : int, optional
-        Index of the process.
-
-    Returns
-    -------
-    looper : :class:`qom.loopers.*`
-        Instance of the looper.
-    """
-
-    # initialize logger
-    init_log(parallel=parallel)
-
-    # select function
-    if type(func) is str:
-        func = get_looper_func(SystemClass=SystemClass, solver_params=params.get('solver', {}), func_code=func)
-
-    # select looper
-    if type(looper) is str:
-        if looper == 'XYLooper':
-            looper = XYLooper(func=func, params=copy.deepcopy(params), parallel=parallel, p_start=p_start, p_index=p_index)
-        elif looper == 'XYZLooper':
-            looper = XYZLooper(func=func, params=copy.deepcopy(params), parallel=parallel, p_start=p_start, p_index=p_index)
-        else:
-            looper = XLooper(func=func, params=copy.deepcopy(params), parallel=parallel, p_start=p_start, p_index=p_index)
-
-    # wrap looper
-    looper.wrap(file_path_prefix=file_path_prefix, plot=plot, hold=hold, width=width, height=height)
-
-    return looper
-
-def run_wrap_looper_instance(args):
-    '''Function to run a single instance of `wrap_looper`.
-    
-    Parameters
-    ----------
-    args : list
-        Arguments of the `wrap_looper` function.
-
-    Returns
-    -------
-    looper : :class:`qom.loopers.*`
-        Instance of the looper.
-    '''
-
-    # extract arguments
-    SystemClass, params, func, looper, file_path_prefix, plot, hold, width, height, parallel, p_start, p_index = args
-
-    # return instance
-    return wrap_looper(SystemClass=SystemClass, params=params, func=func, looper=looper, file_path_prefix=file_path_prefix, plot=plot, hold=hold, width=width, height=height, parallel=parallel, p_start=p_start, p_index=p_index)
-
 def run_loopers_in_parallel(SystemClass, params: dict, func, looper, file_path_prefix: str=None, plot: bool=False, hold: bool=True, width: float=5.0, height: float=5.0, num_loopers: int=None):
     """Function to wrap loopers.
 
@@ -281,7 +181,7 @@ def run_loopers_in_parallel(SystemClass, params: dict, func, looper, file_path_p
     if 'XYZ' in looper:
         looper = XYZLooper(func=func, params=params, parallel=True)
         axis = 'Z'
-    if 'XY' in looper:
+    elif 'XY' in looper:
         looper = XYLooper(func=func, params=params, parallel=True)
         axis = 'Y'
     else:
@@ -364,5 +264,105 @@ def run_loopers_in_parallel(SystemClass, params: dict, func, looper, file_path_p
     # plot results
     if plot:
         looper.plot_results(hold=hold, width=width, height=height)
+
+    return looper
+
+def run_wrap_looper_instance(args):
+    '''Function to run a single instance of `wrap_looper`.
+    
+    Parameters
+    ----------
+    args : list
+        Arguments of the `wrap_looper` function.
+
+    Returns
+    -------
+    looper : :class:`qom.loopers.*`
+        Instance of the looper.
+    '''
+
+    # extract arguments
+    SystemClass, params, func, looper, file_path_prefix, plot, hold, width, height, parallel, p_start, p_index = args
+
+    # return instance
+    return wrap_looper(SystemClass=SystemClass, params=params, func=func, looper=looper, file_path_prefix=file_path_prefix, plot=plot, hold=hold, width=width, height=height, parallel=parallel, p_start=p_start, p_index=p_index)
+
+def wrap_looper(SystemClass, params: dict, func, looper, file_path_prefix: str=None, plot: bool=False, hold: bool=True, width: float=5.0, height: float=5.0, parallel=False, p_start=time.time(), p_index=0):
+    """Function to wrap loopers.
+
+    Requires already defined callables ``func_ode``, ``get_mode_rates``, ``get_ivc``, ``get_A`` and ``get_oss_args`` inside the system class.
+    
+    Parameters
+    ----------
+    SystemClass : :class:`qom.systems.*`
+        Class containing the system.
+    params : dict
+        All parameters as defined in :class:`qom.loopers.BaseLooper`.
+    func : str or callable
+        Code of the function or the function to loop, following the format defined in :class:`qom.loopers.BaseLooper`. Available function codes are:
+            ==============  ================================================
+            value           meaning
+            ==============  ================================================
+            "aes"           averaged eigenvalue of the drift matrix.
+            "cad"           classical amplitude difference.
+            "cpd"           classical phase difference.
+            "les"           Lyapunov exponents.
+            "mav"           measure averages (fallback).
+            "mdy"           measure dynamics.
+            "moo"           mean optical occupancies.
+            "mss"           stationary measure.
+            "osz"           optical stability zone.
+            "pcc"           Pearson correlation factor.
+            ==============  ================================================
+    looper : str
+        Code of the looper. Available options are:
+            ==============  ================================================
+            value           meaning
+            ==============  ================================================
+            "XLooper"       1D looper (:class:`qom.loopers.XLooper`) (fallback).
+            "XYLooper"      2D looper (:class:`qom.loopers.XYLooper`).
+            "XYZLooper"     3D looper (:class:`qom.loopers.XYZLooper`).
+            ==============  ================================================
+    file_path_prefix : str, optional
+        Prefix of the file path.
+    plot: bool, optional
+        Option to plot the results.
+    hold : bool, optional
+        Option to hold the plot.
+    width : float, optional
+        Width of the figure.
+    height : float, optional
+        Height of the figure.
+    parallel : bool, optional
+        Option to format outputs when the looper is run in parallel.
+    p_start : float, optional
+        Time at which the process was started. If `None`, the value is initialized to current time.
+    p_index : int, optional
+        Index of the process.
+
+    Returns
+    -------
+    looper : :class:`qom.loopers.*`
+        Instance of the looper.
+    """
+
+    # initialize logger
+    init_log(parallel=parallel)
+
+    # select function
+    if type(func) is str:
+        func = get_looper_func(SystemClass=SystemClass, solver_params=params.get('solver', {}), func_code=func)
+
+    # select looper
+    if type(looper) is str:
+        if looper == 'XYLooper':
+            looper = XYLooper(func=func, params=copy.deepcopy(params), parallel=parallel, p_start=p_start, p_index=p_index)
+        elif looper == 'XYZLooper':
+            looper = XYZLooper(func=func, params=copy.deepcopy(params), parallel=parallel, p_start=p_start, p_index=p_index)
+        else:
+            looper = XLooper(func=func, params=copy.deepcopy(params), parallel=parallel, p_start=p_start, p_index=p_index)
+
+    # wrap looper
+    looper.wrap(file_path_prefix=file_path_prefix, plot=plot, hold=hold, width=width, height=height)
 
     return looper
