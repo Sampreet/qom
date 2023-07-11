@@ -5,7 +5,8 @@ qom.solvers package
    :maxdepth: 1
    :caption: Modules:
 
-   qom.solvers.HLESolver
-   qom.solvers.ODESolver
-   qom.solvers.QCMSolver
-   qom.solvers.RHCSolver
+   qom.solvers.base
+   qom.solvers.deterministic
+   qom.solvers.differential
+   qom.solvers.measure
+   qom.solvers.stability

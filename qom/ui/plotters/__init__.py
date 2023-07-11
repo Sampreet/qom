@@ -1,1 +1,1 @@
-from .MPLPlotter import MPLPlotter
+from .matplotlib import MPLPlotter

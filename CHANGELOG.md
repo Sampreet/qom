@@ -1,5 +1,54 @@
 # Changelog
 
+## v1.0.0 - 2023/07/11 - 00 - Stable Numerics
+* Updated `qom.loopers.BaseLooper` module:
+    * Removed looper function arguments for value, logger and results. New format is `func(system_params)`.
+    * Added option to prefix saved file with system parameters.
+    * Support for broadcasting of X-axis results with uneven dimensions.
+    * Removed multithreading and plotting support. Multiprocessing and plotting support are now available in `qom.utils.loopers` module.
+    * Removed experimental features for calculating gradients.
+    * Minor fixes and updated documentation.
+    * Renamed to `qom.loopers.base`.
+* Clubbed `qom.loopers.XLooper`,  `qom.loopers.XYLooper` and `qom.loopers.XYZLooper` into `qom.looper.axes` module with minor fixes.
+* Revamped `qom.solvers.HLESolver` module:
+    * Streamlined `set_results` and `solve` methods of `HLESolver` class.
+    * Added methods `get_times`, `get_mode_intensities`, `get_mode_indices`, `get_corr_indices` to `HLESolver` class.
+    * Added `SSHLESolver` class for steady state solutions.
+    * Added `LLESolver` and `NLSESolver` classes for solving Lugiato-Lefever equations (LLEs) and Non-linear Schrodinger equations (NLSEs).
+    * Renamed to `qom.solvers.deterministic`.
+* Renamed `qom.solvers.ODESolver` module to `qom.solvers.differential` with minor fixes to `ODESolver` class.
+* Updated `qom.solvers.QCMSolver` module:
+    * Updated constructor and added validation checks for `QCMSolver` class. Current constructor supports multiple mode and correlation arrays.
+    * Added `get_measures` method in `QCMSolver` to batch-calculate measures for significant speedup.
+    * Added method for entanglement calculation using matrices (currently default) and updated helper methods for batch mode in `QCMSolver`.
+    * Added functions to calculate classical correlation measures (`get_average_amplitude_difference`, `get_average_phase_difference` and `get_correlation_Pearson`) and Lyapunov exponents (`get_Lyapunov_exponents`), detect bistability and multistability zones (`get_stability_zone`), obtain system measures (`get_system_measures`) and generate single-mode Wigner probability distributions (`get_Wigner_distributions_single_mode`).
+    * Renamed to `qom.solvers.measure`.
+* Updated `qom.solvers.RHCSolver` module:
+    * Updated constructor and added validation checks for `RHCSolver` class. Current constructor supports multiple drift matrix or coefficient arrays.
+    * Sped up SymPy-dependent methods and added `get_counts` method to `RHCSolver` class.
+    * Added support for calculation of instability counts using eigenvalues of the drift matrix in `get_counts_from_eigenvalues` function.
+    * Renamed to `qom.solvers.stability`.
+* Removed `SOSMSystem`, `SODMSystem`, `DOSMSystem`, `DODMSystem` and `SOMASystem` modules. Only the `BaseSystem` class in the `base` module can be used for interfacing user-defined systems. The many-body dynamics solvers earlier available in the `SOMASystem` module are now available in the `qom.solvers.deterministic` module.
+* Revamped `qom.systems.BaseSystem` module:
+    * Moved all solver methods of `BaseSystem` class to `qom.solvers.deterministic` module and measure calculation methods to `qom.solvers.measure` module.
+    * Minor fixes and speedups to ODE functions in `BaseSystem` class.
+    * Updated documentation with more formatting options for user-defined functions.
+    * Renamed to `qom.systems.base`.
+* Updated `qom.ui.plotters` package:
+    * Minor fixes to `BasePlotter` and `MPLPlotter` modules.
+    * Added support for label colors and additional scatter plots in `MPLPlotter` module.
+    * Updated documentations and renamed `BasePlotter` and `MPLPlotter` modules to `base` and `matplotlib`.
+* Clubbed `qom.ui.axes.BaseAxis` and `qom.ui.axes.MultiAxis` modules into `qom.ui.plotters.base`.
+* Removed `qom.ui.axes.DynamicAxis` and `qom.ui.axes.StaticAxis`.
+* Updated `qom.utils.looper` module:
+    * Removed solver functions and streamlined multiprocessing functions.
+    * Renamed to `qom.utils.loopers`.
+* Added `qom.utils.solvers` module to handle solver options.
+* Added `qom.io` module with support for IO operations.
+* Updated documentation for numerical packages and added demos.
+* Added `CITATION.bib` and `pyproject.toml`.
+* Updated `requirements`, `setup` and `README`.
+
 ## v0.9.0 - 2023/01/29 - 00 - Minor Fixes
 * Updated documentation of `qom.systems.BaseSystem` and `qom.ui.axes.BaseAxis` modules.
 * Minor fixes for 3D plot linewidths in `qom.ui.plotters.MPLPlotter` module.

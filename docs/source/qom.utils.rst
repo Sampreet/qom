@@ -5,4 +5,5 @@ qom.utils package
    :maxdepth: 1
    :caption: Modules:
 
-   qom.utils.looper
+   qom.utils.loopers
+   qom.utils.solvers

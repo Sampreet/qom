@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
- 
+
 """UI module to format logging."""
 
 __name__    = 'qom.ui.log'
-__authors__ = ['Sampreet Kalita']
-__created__ = '2020-02-05'
-__updated__ = '2022-09-18'
+__authors__ = ["Sampreet Kalita"]
+__created__ = "2020-02-05"
+__updated__ = "2023-07-09"
 
 # dependencies
 import datetime as dt

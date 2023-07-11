@@ -5,7 +5,5 @@ qom.loopers package
    :maxdepth: 1
    :caption: Modules:
 
-   qom.loopers.BaseLooper
-   qom.loopers.XLooper
-   qom.loopers.XYLooper
-   qom.loopers.XYZLooper
+   qom.loopers.axes
+   qom.loopers.base

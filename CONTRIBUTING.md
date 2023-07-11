@@ -17,44 +17,41 @@ The repository follows the following template:
 ROOT_DIR/
 |
 ├───docs/
+│   ├───images/
+│   │   ├───foobar.png
+│   │   └───...
+│   │
 │   ├───source/
 │   │   ├───conf.py
 │   │   ├───foobar.rst
 │   │   └───...
-│   │   
+│   │
 │   ├───make.bat
 │   └───Makefile
-|
-├───examples/
-│   ├───foo_bar.ipynb
-│   └───...
 |
 ├───qom/
 │   ├───loopers/
 │   │   ├───__init__.py
-│   │   ├───FooBarLooper.py
-│   │   └───...
-│   │   
+│   │   ├───axes.py
+│   │   └───base.py
+│   │
 │   ├───solvers/
 │   │   ├───__init__.py
-│   │   ├───FooBarSolver.py
-│   │   └───...
-│   │   
+│   │   ├───base.py
+│   │   ├───deterministic.py
+│   │   ├───differential.py
+│   │   ├───measure.py
+│   │   └───stability.py
+│   │
 │   ├───systems/
 │   │   ├───__init__.py
-│   │   ├───FooBarSystem.py
-│   │   └───...
-│   │   
+│   │   └───base.py
+│   │
 │   ├───ui/
-│   │   ├───axes/
-│   │   │   ├───__init__.py
-│   │   │   ├───FooBarAxis.py
-│   │   │   └───...
-│   │   │
 │   │   ├───plotters/
 │   │   │   ├───__init__.py
-│   │   │   ├───FooBarPlotter.py
-│   │   │   └───...
+│   │   │   ├───base.py
+│   │   │   └───matplotlib.py
 │   │   │
 │   │   ├───widgets/
 │   │   │   ├───icons/
@@ -72,20 +69,18 @@ ROOT_DIR/
 │   │   ├───__init__.py
 │   │   ├───gui.py
 │   │   └───log.py
-│   │   
+│   │
 │   ├───utils/
 │   │   ├───__init__.py
-│   │   ├───foo_bar.py
-│   │   └───...
-│   │   
-│   └───__init__.py
+│   │   ├───loopers.py
+│   │   └───solvers.py
+│   │
+│   ├───__init__.py
+│   └───io.py
 |
-├───tests/
-│   ├───foo_bar.py
-│   └───...
-│
 ├───.gitignore
 ├───CHANGELOG.md
+├───CITATION.bib
 ├───CODE_OF_CONDUCT.md
 ├───CONTRIBUTING.md
 ├───LICENSE
@@ -93,7 +88,6 @@ ROOT_DIR/
 ├───pyproject.toml
 ├───README.md
 ├───requirements.txt
-├───setup.cfg
 └───setup.py
 ```
 
