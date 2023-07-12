@@ -6,7 +6,7 @@
 __name__ = 'qom.solvers.base'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2023-07-04"
-__updated__ = "2023-07-09"
+__updated__ = "2023-07-12"
 
 # dependencies
 from decimal import Decimal
@@ -25,7 +25,7 @@ def get_all_times(params):
             ========    ====================================================
             't_min'     (*float*) minimum time at which integration starts.
             't_max'     (*float*) maximum time at which integration stops.
-            't_dim'     (*int*) number of values from `'t_max'` to `'t_min'`, both inclusive.
+            't_dim'     (*int*) number of values from ``'t_max'`` to ``'t_min'``, both inclusive.
             ========    ====================================================
 
     Returns
@@ -51,42 +51,42 @@ def get_all_times(params):
 def validate_Modes_Corrs(Modes=None, Corrs=None, is_modes_required:bool=False, is_corrs_required:bool=False):
     """Function to validate the modes and correlations.
 
-    At least one of `Modes` or `Corrs` should be non-`None`.
+    At least one of ``Modes`` or ``Corrs`` should be non-``None``.
     
     Parameters
     ----------
     Modes : list or numpy.ndarray, optional
-        Classical modes with shape `(dim, num_modes)`.
+        Classical modes with shape ``(dim, num_modes)``.
     Corrs : list or numpy.ndarray, optional
-        Quadrature quadrature correlations with shape `(dim, 2 * num_modes, 2 * num_modes)`.
+        Quadrature quadrature correlations with shape ``(dim, 2 * num_modes, 2 * num_modes)``.
     is_modes_required : bool, optional
-        Option to set `Modes` as required.
+        Option to set ``Modes`` as required.
     is_corrs_required : bool, optional
-        Option to set `Corrs` as required.
+        Option to set ``Corrs`` as required.
 
     Returns
     -------
     Modes : numpy.ndarray
-        Classical modes with shape `(dim, num_modes)`.
+        Classical modes with shape ``(dim, num_modes)``.
     Corrs : numpy.ndarray
-        Quadrature quadrature correlations with shape `(dim, 2 * num_modes, 2 * num_modes)`.
+        Quadrature quadrature correlations with shape ``(dim, 2 * num_modes, 2 * num_modes)``.
     """
 
     # handle null
-    assert Modes is not None or Corrs is not None, "At least one of `Modes` or `Corrs` should be non-`None`"
+    assert Modes is not None or Corrs is not None, "At least one of ``Modes`` or ``Corrs`` should be non-``None``"
 
     # check requirements
-    assert Modes is not None if is_modes_required else True, "Missing required parameter `Modes`"
-    assert Corrs is not None if is_corrs_required else True, "Missing required parameter `Corrs`"
+    assert Modes is not None if is_modes_required else True, "Missing required parameter ``Modes``"
+    assert Corrs is not None if is_corrs_required else True, "Missing required parameter ``Corrs``"
 
     # handle list
     Modes  = np.array(Modes, dtype=np.complex_) if Modes is not None and type(Modes) is list else Modes
     Corrs  = np.array(Corrs, dtype=np.float_) if Corrs is not None and type(Corrs) is list else Corrs
 
     # validate shapes
-    assert len(Modes.shape) == 2 if Modes is not None else True, "`Modes` should be of shape `(dim, num_modes)`"
-    assert (len(Corrs.shape) == 3 and Corrs.shape[1] == Corrs.shape[2]) if Corrs is not None else True, "`Corrs` should be of shape `(dim, 2 * num_modes, 2 * num_modes)`"
-    assert 2 * Modes.shape[1] == Corrs.shape[1] if Modes is not None and Corrs is not None else True, "Shape mismatch for `Modes` and `Corrs`; expected shapes are `(dim, num_modes)` and `(dim, 2 * num_modes, 2 * num_modes)`"
+    assert len(Modes.shape) == 2 if Modes is not None else True, "``Modes`` should be of shape ``(dim, num_modes)``"
+    assert (len(Corrs.shape) == 3 and Corrs.shape[1] == Corrs.shape[2]) if Corrs is not None else True, "``Corrs`` should be of shape ``(dim, 2 * num_modes, 2 * num_modes)``"
+    assert 2 * Modes.shape[1] == Corrs.shape[1] if Modes is not None and Corrs is not None else True, "Shape mismatch for ``Modes`` and ``Corrs``; expected shapes are ``(dim, num_modes)`` and ``(dim, 2 * num_modes, 2 * num_modes)``"
 
     return Modes, Corrs
 
@@ -109,24 +109,24 @@ def validate_As_Coeffs(As=None, Coeffs=None):
     """
 
     # check non-empty
-    assert As is not None or Coeffs is not None, "At least one of `As` and `Coeffs` should be non-`None`"
+    assert As is not None or Coeffs is not None, "At least one of ``As`` and ``Coeffs`` should be non-``None``"
 
     # if drift matrices are given
     if As is not None:
         # validate drift matrix
-        assert isinstance(As, Union[list, np.ndarray].__args__), "`As` should be of type `list` or `numpy.ndarray`"
+        assert isinstance(As, Union[list, np.ndarray].__args__), "``As`` should be of type ``list`` or ``numpy.ndarray``"
         # convert to numpy array
         As = np.array(As, dtype=np.float_) if type(As) is list else As
         # validate shape
-        assert len(As.shape) == 3 and As.shape[1] == As.shape[2], "`As` should be of shape `(dim_0, 2 * num_modes, 2 * num_modes)`"
+        assert len(As.shape) == 3 and As.shape[1] == As.shape[2], "``As`` should be of shape ``(dim_0, 2 * num_modes, 2 * num_modes)``"
     # if coefficients are given
     else:
         # validate coefficients
-        assert isinstance(Coeffs, Union[list, np.ndarray].__args__), "`Coeffs` should be of type `list` or `numpy.ndarray`"
+        assert isinstance(Coeffs, Union[list, np.ndarray].__args__), "``Coeffs`` should be of type ``list`` or ``numpy.ndarray``"
         # convert to numpy array
         Coeffs = np.array(Coeffs, dtype=np.float_) if type(Coeffs) is list else Coeffs
         # validate shape
-        assert len(Coeffs.shape) == 2, "`Coeffs` should be of shape `(dim_0, 2 * num_modes + 1)`"
+        assert len(Coeffs.shape) == 2, "``Coeffs`` should be of shape ``(dim_0, 2 * num_modes + 1)``"
 
     return As, Coeffs
 
@@ -143,4 +143,4 @@ def validate_system(system, required_system_attributes:list):
 
     # check required system attributes
     for attribute in required_system_attributes:
-        assert getattr(system, attribute, None) is not None, "Missing required system attribute `{}`".format(attribute)
+        assert getattr(system, attribute, None) is not None, "Missing required system attribute ``{}``".format(attribute)

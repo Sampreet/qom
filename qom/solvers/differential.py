@@ -6,7 +6,7 @@
 __name__ = 'qom.solvers.differential'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2021-01-04"
-__updated__ = "2023-07-10"
+__updated__ = "2023-07-12"
 
 # dependencies
 import logging
@@ -19,28 +19,28 @@ from ..io import Updater
 class ODESolver():
     r"""Class to solve ordinary differential equations using :class:`scipy.integrate`.
 
-    Initializes `solver_methods`, `func`, `params`, `integrator` and `updater`.
+    Initializes ``solver_methods``, ``func``, ``params``, ``integrator`` and ``updater``.
 
     Parameters
     ----------
     func : callable
-        Function returning the rate equations of the input variables, formatted as `func(t, v, c)`, where `t` is the time at which the integration is performed, `v` is a list of variables and `c` is a list of constants. The output should match the dimension of `v`.
+        Function returning the rate equations of the input variables, formatted as ``func(t, v, c)``, where ``t`` is the time at which the integration is performed, ``v`` is a list of variables and ``c`` is a list of constants. The output should match the dimension of ``v``.
     params : dict
-        Parameters for the solver. Refer to ``Notes`` below for all available options.
+        Parameters for the solver. Refer to **Notes** below for all available options.
     cb_update : callable, optional
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
 
     Notes
     -----
-        The `params` dictionary currently supports the following keys:
+        The ``params`` dictionary currently supports the following keys:
             ================    ====================================================
             key                 value
             ================    ====================================================
-            'show_progress'     (*bool*) option to display the progress of the integration. Default is `False`.
-            'ode_method'        (*str*) method used to solve the ODEs. Available options are `'BDF'`, `'DOP853'`, `'LSODA'`, `'Radau'`, `'RK23'`, `'RK45'` (fallback), `'dop853'`, `'dopri5'`, `'lsoda'`, `'vode'` and `'zvode'` (refer to :class:`qom.solvers.ODESolver`). Default is `'RK45'`.
-            'ode_is_stiff'      (*bool*) option to select whether the integration is a stiff problem or a non-stiff one. Default is `False`.
-            'ode_atol'          (*float*) absolute tolerance of the integrator. Default is `1e-12`.
-            'ode_rtol'          (*float*) relative tolerance of the integrator. Default is `1e-6`.
+            'show_progress'     (*bool*) option to display the progress of the integration. Default is ``False``.
+            'ode_method'        (*str*) method used to solve the ODEs. Available options are ``'BDF'``, ``'DOP853'``, ``'LSODA'``, ``'Radau'``, ``'RK23'``, ``'RK45'`` (fallback), ``'dop853'``, ``'dopri5'``, ``'lsoda'``, ``'vode'`` and ``'zvode'`` (refer to :class:`qom.solvers.ODESolver`). Default is ``'RK45'``.
+            'ode_is_stiff'      (*bool*) option to select whether the integration is a stiff problem or a non-stiff one. Default is ``False``.
+            'ode_atol'          (*float*) absolute tolerance of the integrator. Default is ``1e-12``.
+            'ode_rtol'          (*float*) relative tolerance of the integrator. Default is ``1e-6``.
             ================    ====================================================
 
         Currently available Python-based methods are:
@@ -115,7 +115,7 @@ class ODESolver():
         """
 
         # validate parameters
-        assert params.get('ode_method', self.solver_defaults['ode_method']) in self.scipy_methods, "Parameter `'ode_method'` should assume one of `{}`".format(self.scipy_methods)
+        assert params.get('ode_method', self.solver_defaults['ode_method']) in self.scipy_methods, "Parameter ``'ode_method'`` should assume one of ``{}``".format(self.scipy_methods)
 
         # set solver parameters
         self.params = dict()
@@ -134,7 +134,7 @@ class ODESolver():
         c : numpy.ndarray
             Constants of the integration.
         func_c : callable, optional
-            Function returning the time-dependent constants of the integration, formatted as `func_c(i)`, where `i` is the *i*-th step of integration.
+            Function returning the time-dependent constants of the integration, formatted as ``func_c(i)``, where ``i`` is the *i*-th step of integration.
 
         Returns
         -------

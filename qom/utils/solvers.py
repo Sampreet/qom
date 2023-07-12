@@ -6,7 +6,10 @@
 __name__ = 'qom.utils.solvers'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2023-06-21"
-__updated__ = "2023-07-10"
+__updated__ = "2023-07-12"
+
+# dependencies
+import numpy as np
 
 # qom modules
 from ..solvers.deterministic import HLESolver, SSHLESolver
@@ -25,15 +28,15 @@ def get_func_Lyapunov_exponents(SystemClass, params:dict={}, steady_state:bool=T
     steady_state : bool, default=True.
         Whether the calculated modes and correlations are steady state values or time series.
     cb_update : callable, optional
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
         
     Returns
     -------
     get_le : callable
-        Function to obtain the Lyapunov exponents.
+        Function to obtain the Lyapunov exponents. Returns a ``numpy.ndarray`` with shape ``(2 * num_modes, )``.
     """
 
-    # function
+    # function to obtain the Lyapunov exponents
     def get_le(system_params):
         # initialize system
         system = SystemClass(
@@ -64,7 +67,7 @@ def get_func_Lyapunov_exponents(SystemClass, params:dict={}, steady_state:bool=T
     return get_le
 
 def get_func_quantum_correlation_measures(SystemClass, params:dict={}, steady_state:bool=True, cb_update=None):
-    """Function to get the function to obtain quantum correlation measures.
+    """Function to get the function to obtain the quantum correlation measures.
 
     Parameters
     ----------
@@ -75,15 +78,15 @@ def get_func_quantum_correlation_measures(SystemClass, params:dict={}, steady_st
     steady_state : bool, default=True.
         Whether the calculated modes and correlations are steady state values or time series.
     cb_update : callable, optional
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
         
     Returns
     -------
     get_qcm : callable
-        Function to obtain quantum correlation measures.
+        Function to obtain the quantum correlation measures. Returns a ``numpy.ndarray`` with shape ``(dim, num_measure_codes)``.
     """
 
-    # function
+    # function to obtain the quantum correlation measures
     def get_qcm(system_params):
         # initialize system
         system = SystemClass(
@@ -120,21 +123,21 @@ def get_func_stability_zone(SystemClass, params:dict={}, steady_state:bool=True,
     SystemClass : :class:`qom.systems.*`
         Uninitialized system class. Requires predefined system methods for certain solver methods.
     params : dict, optional
-        Parameters for the solver. Refer to :class:`qom.solvers.deterministic.HLESolver`, :class:`qom.solvers.deterministic.SSHLESolver` and :class:`qom.solvers.stability.RHCSolver` for available parameters. If the value of key `"system_measure_name"` is `"coeffs_A"`, the stability is calculated using the coefficients, else the drift matrices are used (fallback).
+        Parameters for the solver. Refer to :class:`qom.solvers.deterministic.HLESolver`, :class:`qom.solvers.deterministic.SSHLESolver` and :class:`qom.solvers.stability.RHCSolver` for available parameters. If the value of key ``"system_measure_name"`` is ``"coeffs_A"``, the stability is calculated using the coefficients, else the drift matrices are used (fallback).
     steady_state : bool, default=True.
         Whether the calculated modes and correlations are steady state values or time series.
     use_rhc : bool, default=False
         Option to use the Routh-Hurwitz criteria to calculate the counts for the unstable eigenvalues.
     cb_update : callable, optional
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
         
     Returns
     -------
     get_sz : callable
-        Function to obtain the stability zone.
+        Function to obtain the stability zone. Returns a ``numpy.ndarray`` with shape ``(dim, )``. If ``steady_state`` is set to ``True``, the array contains a single element denoting the multi-stability indicator. Refer to ``qom.solvers.measure.get_stability_zone`` function for the meaning of indicators.
     """
 
-    # function
+    # function to obtain the stability zone
     def get_sz(system_params):
         # initialize system
         system = SystemClass(
@@ -189,18 +192,18 @@ def get_func_stability_zone(SystemClass, params:dict={}, steady_state:bool=True,
             )
 
         if steady_state:
-            return [get_stability_zone(
+            return np.array([get_stability_zone(
                 counts=counts
-            )]
+            )], dtype=np.int_)
         else:
-            return [get_stability_zone(
+            return np.array([get_stability_zone(
                 counts=[count]
-            ) for count in counts]
+            ) for count in counts], dtype=np.int_)
 
     return get_sz
 
 def get_func_system_measures(SystemClass, params:dict={}, steady_state:bool=True, cb_update=None):
-    """Function to get the function to obtain system measure.
+    """Function to get the function to obtain the system measures.
 
     Parameters
     ----------
@@ -211,15 +214,15 @@ def get_func_system_measures(SystemClass, params:dict={}, steady_state:bool=True
     steady_state : bool, default=True.
         Whether the calculated modes and correlations are steady state values or time series.
     cb_update : callable, optional
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
         
     Returns
     -------
     get_sm : callable
-        Function to obtain system measure.
+        Function to obtain the system measures. Returns a ``numpy.ndarray`` with shape ``(dim, )`` plus the shape of each measure.
     """
 
-    # function
+    # function to obtain the system measures
     def get_sm(system_params):
         # initialize system
         system = SystemClass(

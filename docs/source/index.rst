@@ -1,10 +1,10 @@
 .. Quantum Optomechanics Toolbox documentation master file, created by
    sphinx-quickstart on Fri Dec 4 15:06:12 2020.
 
-Welcome to the `qom-v1.0.0` Documentation!
-==========================================
+Welcome to the ``qom-v1.0.0`` Documentation!
+============================================
 
-The Quantum Optomechanics Toolbox (packaged as `qom`) is a wrapper-styled, scalable toolbox featuring multiple modules for the calculation of stationary as well as dynamical properties of many-body quantum optomechanical systems.
+The Quantum Optomechanics Toolbox (packaged as ``qom``) is a wrapper-styled, scalable toolbox featuring multiple modules for the calculation of stationary as well as dynamical properties of many-body quantum optomechanical systems.
 Backed by numerical libraries like NumPy and SciPy, and featuring the highly customizable visualizations offered by Matplotlib and Seaborn APIs, the toolbox aims to serve as an easy-to-use alternative to writing code explicitly and avoiding repetitive exercises for presentable visuals.
 
 Key Features
@@ -96,28 +96,52 @@ Installation
 Dependencies
 ------------
 
-The project requires `Python 3.8+` installed, preferably via the [Anaconda distribution](https://www.anaconda.com/download).
+The toolbox requires ``Python 3.8+`` installed, preferably via the `Anaconda distribution <https://www.anaconda.com/download>`_.
+Once ``Anaconda`` is set up, create and activate a new ``conda`` environment using:
+
+.. code-block:: bash
+
+   conda create -n qom python
+   conda activate qom
+
+The toolbox relies primarily on the libraries ``numpy`` (for fast numerical algebra), ``scipy`` (for numerical methods), ``sympy`` (for symbolic algebra), ``seaborn`` (for color palettes) and ``matplotlib`` (for plotting results).
+These should be installed separately before installing the toolbox using:
+
+.. code-block:: bash
+
+   conda install matplotlib numpy scipy sympy seaborn
 
 .. note:: To run the GUI modules, ``pyqt`` should be installed separately.
 
-Installing from PyPI
---------------------
+Once the dependencies are installed, the toolbox can be installed via PyPI (last release: v0.9.0) or locally (latest version: v1.0.0).
 
-To install the package and its requirements from the Python Package Index, execute: 
+Installing via PyPI
+-------------------
+
+To install the packages via the Python Package Index (PyPI), execute: 
 
 .. code-block:: bash
 
    pip install -i https://test.pypi.org/simple/ qom
 
+The corresponding documentation is available `here <https://sampreet.github.io/qom-docs/v0.9.0>`_.
+
 Installing Locally
 ------------------
 
-To install the package locally, download [the repository](https://github.com/sampreet/qom) as `.zip` and extract the contents.
-Now, execute the following from *outside* the top-level directory, `ROOT_DIR`, inside which `setup.py` is located:
+To install the package locally, download `the repository <https://github.com/sampreet/qom>`_ as ``.zip`` and extract the contents.
+Now, execute the following from *outside* the top-level directory, ``ROOT_DIR``, inside which ``setup.py`` is located (refer to the file structure `here <https://github.com/Sampreet/qom/blob/master/CONTRIBUTING.md>`_):
 
 .. code-block:: bash
 
    pip install -e ROOT_DIR
+
+The corresponding documentation is available `here <https://sampreet.github.io/qom-docs>`_.
+
+Citing
+======
+
+Please cite `S. Kalita and A. K. Sarma, *The QOM Toolbox: An object-oriented Python framework for cavity optomechanical systems*, Proceedings of Eighth International Congress on Information and Communication Technology **3**, Springer Singapore (2023) <https://github.com/Sampreet/qom/blob/master/CITATION.bib>`_ if you use our work in your research.
 
 Available Modules
 =================

@@ -26,7 +26,7 @@ References
 __name__ = 'qom.solvers.measure'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2021-01-04"
-__updated__ = "2023-07-10"
+__updated__ = "2023-07-12"
 
 # dependencies
 from typing import Union
@@ -43,25 +43,25 @@ from ..io import Updater
 class QCMSolver():
     r"""Class to solve for quantum correlation measures.
 
-    Initializes `Modes`, `Corrs`, `Omega_s` (symplectic matrix), `params` and `updater`.
+    Initializes ``Modes``, ``Corrs``, ``Omega_s`` (symplectic matrix), ``params`` and ``updater``.
 
     Parameters
     ----------
     Modes : numpy.ndarray
-        Classical modes with shape `(dim, num_modes)`.
+        Classical modes with shape ``(dim, num_modes)``.
     Corrs : numpy.ndarray
-        Quadrature quadrature correlations with shape `(dim, 2 * num_modes, 2 * num_modes)`.
+        Quadrature quadrature correlations with shape ``(dim, 2 * num_modes, 2 * num_modes)``.
     params : dict
         Parameters for the solver. Available options are:
             ================    ====================================================
             key                 value
             ================    ====================================================
-            'show_progress'     (*bool*) option to display the progress of the solver. Default is `False`.
-            'measure_codes'     (*list* or *str*) codenames of the measures to calculate. Options are `'discord_G'` for Gaussian quantum discord [3]_, `'entan_ln'` for quantum entanglement (using matrix multiplications, fallback) [1]_, `'entan_ln_2'` for quantum entanglement (using analytical expressions) [2]_, `'sync_c'` for complete quantum synchronization [4]_, `'sync_p'` for quantum phase synchronization [4]_]). Default is `['entan_ln']`.
-            'indices'           (*list* or *tuple*) indices of the modes as a list or tuple of two integers. Default is `(0, 1)`.
+            'show_progress'     (*bool*) option to display the progress of the solver. Default is ``False``.
+            'measure_codes'     (*list* or *str*) codenames of the measures to calculate. Options are ``'discord_G'`` for Gaussian quantum discord [3]_, ``'entan_ln'`` for quantum entanglement (using matrix multiplications, fallback) [1]_, ``'entan_ln_2'`` for quantum entanglement (using analytical expressions) [2]_, ``'sync_c'`` for complete quantum synchronization [4]_, ``'sync_p'`` for quantum phase synchronization [4]_]). Default is ``['entan_ln']``.
+            'indices'           (*list* or *tuple*) indices of the modes as a list or tuple of two integers. Default is ``(0, 1)``.
             ================    ====================================================
     cb_update : callable, optional
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
     """
 
     # attributes
@@ -117,8 +117,8 @@ class QCMSolver():
         """
 
         # check required parameters
-        assert 'measure_codes' in params, "Parameter `params` does not contain a required key `'measure_codes'`"
-        assert 'indices' in params, "Parameter `params` does not contain a required key `'indices'`"
+        assert 'measure_codes' in params, "Parameter ``params`` does not contain a required key ``'measure_codes'``"
+        assert 'indices' in params, "Parameter ``params`` does not contain a required key ``'indices'``"
 
         # extract frequently used variables
         measure_codes = params['measure_codes']
@@ -126,22 +126,22 @@ class QCMSolver():
         _dim = len(self.Modes[0]) if self.Modes is not None else int(len(self.Corrs[0]) / 2)
 
         # validate measure type
-        assert isinstance(measure_codes, Union[list, str].__args__), "Value of key `'measure_codes'` can only be of types `list` or `str`"
+        assert isinstance(measure_codes, Union[list, str].__args__), "Value of key ``'measure_codes'`` can only be of types ``list`` or ``str``"
         # convert to list
         measure_codes = [measure_codes] if type(measure_codes) is str else measure_codes
         # check elements
         for measure_code in measure_codes:
-            assert measure_code in self.method_codes, "Elements of key `'measure_codes'` can only be one or more keys of `{}`".format(self.method_codes.keys)
+            assert measure_code in self.method_codes, "Elements of key ``'measure_codes'`` can only be one or more keys of ``{}``".format(self.method_codes.keys)
         # update parameter
         params['measure_codes'] = measure_codes
 
         # validate indices
-        assert isinstance(indices, Union[list, tuple].__args__), "Value of key `'indices'` can only be of types `list` or `tuple`"
+        assert isinstance(indices, Union[list, tuple].__args__), "Value of key ``'indices'`` can only be of types ``list`` or ``tuple``"
         # convert to list
         indices = list(indices) if type(indices) is tuple else indices
         # check length
-        assert len(indices) == 2, "Value of key `'indices'` can only have 2 elements"
-        assert indices[0] < _dim and indices[1] < _dim, "Elements of key `'indices'` cannot exceed the total number of modes ({})".format(_dim)
+        assert len(indices) == 2, "Value of key ``'indices'`` can only have 2 elements"
+        assert indices[0] < _dim and indices[1] < _dim, "Elements of key ``'indices'`` cannot exceed the total number of modes ({})".format(_dim)
         # update parameter
         params['indices'] = indices
 
@@ -156,7 +156,7 @@ class QCMSolver():
         Returns
         -------
         Measures : numpy.ndarray
-            Measures calculated with shape `(dim, num_measure_codes)`.
+            Measures calculated with shape ``(dim, num_measure_codes)``.
         """
 
         # extract frequently used variables
@@ -245,13 +245,13 @@ class QCMSolver():
         Returns
         -------
         I_1s : numpy.ndarray
-            Determinants of `A`.
+            Determinants of ``A``.
         I_2s : numpy.ndarray
-            Determinants of `B`.
+            Determinants of ``B``.
         I_3s : numpy.ndarray
-            Determinants of `C`.
+            Determinants of ``C``.
         I_4s : numpy.ndarray
-            Determinants of `corrs_modes`.
+            Determinants of ``corrs_modes``.
         """
 
         # get block matrices and its components
@@ -528,7 +528,7 @@ def get_average_amplitude_difference(Modes):
     Parameters
     ----------
     Modes : numpy.ndarray
-        The two specific modes with shape `(dim, 2)`.
+        The two specific modes with shape ``(dim, 2)``.
 
     Returns
     -------
@@ -537,7 +537,7 @@ def get_average_amplitude_difference(Modes):
     """
 
     # validate modes
-    assert Modes is not None and (type(Modes) is list or type(Modes) is np.ndarray) and np.shape(Modes)[1] == 2, "Parameter `Modes` should be a list or NumPy array with dimension `(dim, 2)`"
+    assert Modes is not None and (type(Modes) is list or type(Modes) is np.ndarray) and np.shape(Modes)[1] == 2, "Parameter ``Modes`` should be a list or NumPy array with dimension ``(dim, 2)``"
 
     # get means
     means = np.mean(Modes, axis=0)
@@ -551,7 +551,7 @@ def get_average_phase_difference(Modes):
     Parameters
     ----------
     Modes : numpy.ndarray
-        The two specific modes with shape `(dim, 2)`.
+        The two specific modes with shape ``(dim, 2)``.
 
     Returns
     -------
@@ -560,7 +560,7 @@ def get_average_phase_difference(Modes):
     """
 
     # validate modes
-    assert Modes is not None and (type(Modes) is list or type(Modes) is np.ndarray) and np.shape(Modes)[1] == 2, "Parameter `Modes` should be a list or NumPy array with dimension `(dim, 2)`"
+    assert Modes is not None and (type(Modes) is list or type(Modes) is np.ndarray) and np.shape(Modes)[1] == 2, "Parameter ``Modes`` should be a list or NumPy array with dimension ``(dim, 2)``"
 
     # get means
     means = np.mean(Modes, axis=0)
@@ -574,16 +574,16 @@ def get_bifurcation_amplitudes(Modes):
     Parameters
     ----------
     Modes : numpy.ndarray
-        The mode amplitudes in the trajectory with shape `(dim, num_modes)`.
+        The mode amplitudes in the trajectory with shape ``(dim, num_modes)``.
 
     Returns
     -------
     Amps : list
-        The bifurcation amplitudes of the modes. The first `num_modes` arrays contain the bifurcation amplitudes of the real parts of the modes; the next `num_modes` arrays contain those of the imaginary parts.
+        The bifurcation amplitudes of the modes. The first ``num_modes`` arrays contain the bifurcation amplitudes of the real parts of the modes; the next ``num_modes`` arrays contain those of the imaginary parts.
     """
 
     # validate modes
-    assert Modes is not None and (type(Modes) is list or type(Modes) is np.ndarray) and len(np.shape(Modes)) == 2, "Parameter `Modes` should be a list or NumPy array with dimension `(dim, num_modes)`"
+    assert Modes is not None and (type(Modes) is list or type(Modes) is np.ndarray) and len(np.shape(Modes)) == 2, "Parameter ``Modes`` should be a list or NumPy array with dimension ``(dim, num_modes)``"
 
     # convert to real
     Modes_real = np.concatenate((np.real(Modes), np.imag(Modes)), axis=1, dtype=np.float_)
@@ -615,7 +615,7 @@ def get_correlation_Pearson(Modes):
     Parameters
     ----------
     Modes : numpy.ndarray
-        The two specific modes with shape `(dim, 2)`.
+        The two specific modes with shape ``(dim, 2)``.
 
     Returns
     -------
@@ -624,7 +624,7 @@ def get_correlation_Pearson(Modes):
     """
 
     # validate modes
-    assert Modes is not None and (type(Modes) is list or type(Modes) is np.ndarray) and np.shape(Modes)[1] == 2, "Parameter `Modes` should be a list or NumPy array with dimension `(dim, 2)`"
+    assert Modes is not None and (type(Modes) is list or type(Modes) is np.ndarray) and np.shape(Modes)[1] == 2, "Parameter ``Modes`` should be a list or NumPy array with dimension ``(dim, 2)``"
 
     # get means
     means = np.mean(Modes, axis=0)
@@ -641,9 +641,9 @@ def get_Lyapunov_exponents(system, modes, t=None, params:dict={}, cb_update=None
     Parameters
     ----------
     system : :class:`qom.systems.*`
-        Instance of the system. Requires predefined system method `get_ivc` and `get_A`.
+        Instance of the system. Requires predefined system method ``get_ivc`` and ``get_A``.
     modes : numpy.ndarray
-        Final classical modes with shape `(num_modes, )`.
+        Final classical modes with shape ``(num_modes, )``.
     t : numpy.ndarray, optional
         Final time of the evolution.
     params : dict
@@ -651,18 +651,18 @@ def get_Lyapunov_exponents(system, modes, t=None, params:dict={}, cb_update=None
             ================    ====================================================
             key                 value
             ================    ====================================================
-            'show_progress'     (*bool*) option to display the progress of the solver. Default is `False`.
-            'num_steps'         (*int*) number of additional time steps to calculate the deviations for Lyapunov exponents. Default value is `1000`.
-            'step_size'         (*float*) step size of each time step. Default value is `0.1`.
-            'use_svd'           (*bool*) option to use the singular value decomposition method to calculate the Lyapunov exponents. If `False`, the Gram-Schmidt orthonormalization method is used. Default is `True`.
+            'show_progress'     (*bool*) option to display the progress of the solver. Default is ``False``.
+            'num_steps'         (*int*) number of additional time steps to calculate the deviations for Lyapunov exponents. Default value is ``1000``.
+            'step_size'         (*float*) step size of each time step. Default value is ``0.1``.
+            'use_svd'           (*bool*) option to use the singular value decomposition method to calculate the Lyapunov exponents. If ``False``, the Gram-Schmidt orthonormalization method is used. Default is ``True``.
             ================    ====================================================
     cb_update : callable, optional
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
 
     Returns
     -------
     lambdas : numpy.ndarray
-        Lyapunov exponents.
+        Lyapunov exponents with shape ``(2 * num_modes, )``.
     """
 
     # validate system
@@ -824,32 +824,32 @@ def get_system_measures(system, Modes, T=None, params:dict={}, cb_update=None):
     Parameters
     ----------
     system : :class:`qom.systems.*`
-        Instance of the system. Requires predefined system method `get_ivc` and the getter for the system measure.
+        Instance of the system. Requires predefined system method ``get_ivc`` and the getter for the system measure.
     Modes : numpy.ndarray
-        Classical modes with shape `(dim, num_modes)`.
+        Classical modes with shape ``(dim, num_modes)``.
     T : numpy.ndarray, optional
-        Times with shape `(dim, )`.
+        Times with shape ``(dim, )``.
     params : dict
         Parameters for the solver. Available options are:
             ========================    ====================================================
             key                         value
             ========================    ====================================================
-            'show_progress'             (*bool*) option to display the progress of the solver. Default is `False`.
-            'system_measure_name'       (*str*) name of the system measure to calculate. Requires a callable formatted with the prefix `'get_'` and arguments `modes`, `c` and `t`. For e.g., `get_A(modes, c, t)`.
+            'show_progress'             (*bool*) option to display the progress of the solver. Default is ``False``.
+            'system_measure_name'       (*str*) name of the system measure to calculate. Requires a callable formatted with the prefix ``'get_'`` and arguments ``modes``, ``c`` and ``t``. For e.g., ``get_A(modes, c, t)``.
             ========================    ====================================================
     cb_update : callable, optional
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
     
     Returns
     -------
     measures : numpy.ndarray
-        Measures obtained.
+        Measures obtained with shape ``(dim, )`` plus the shape of each measure.
     """
 
     # validate parameters
-    assert 'system_measure_name' in params, "Parameter `'system_measure_name'` is not defined"
+    assert 'system_measure_name' in params, "Parameter ``'system_measure_name'`` is not defined"
     system_measure_name = params.get('system_measure_name', 'A')
-    assert type(system_measure_name) is str, "Value of parameter `'system_measure_name'` should be a string"
+    assert type(system_measure_name) is str, "Value of parameter ``'system_measure_name'`` should be a string"
 
     # validate system
     validate_system(
@@ -913,24 +913,24 @@ def get_Wigner_distributions_single_mode(Corrs, params, cb_update=None):
     Parameters
     ----------
     Corrs : numpy.ndarray
-        Quadrature quadrature correlations with shape `(dim, 2 * num_modes, 2 * num_modes)`.
+        Quadrature quadrature correlations with shape ``(dim, 2 * num_modes, 2 * num_modes)``.
     params : dict
         Parameters of the solver. Available options are:
         ================    ====================================================
         key                 value
         ================    ====================================================
-        'show_progress'     (*bool*) option to display the progress of the solver. Default is `False`.
-        'indices'           (*list* or *tuple*) indices of the modes as a list, or a tuple of two integers. Default is `[0]`.
+        'show_progress'     (*bool*) option to display the progress of the solver. Default is ``False``.
+        'indices'           (*list* or *tuple*) indices of the modes as a list, or a tuple of two integers. Default is ``[0]``.
         'wigner_xs'         (*list*) X-axis values.
         'wigner_ys'         (*list*) Y-axis values.
         ================    ====================================================
     cb_update : callable, optional
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
     
     Returns
     -------
     Wigners : numpy.ndarray
-        Single-mode Wigner distributions of shape `(dim_1, dim_0, p_dim, q_dim)`, where `dim_1` and `dim_0` are the first dimensions of the correlations and the indices respectively.
+        Single-mode Wigner distributions of shape ``(dim_1, dim_0, p_dim, q_dim)``, where ``dim_1`` and ``dim_0`` are the first dimensions of the correlations and the indices respectively.
     """
 
     # validate correlations
@@ -943,7 +943,7 @@ def get_Wigner_distributions_single_mode(Corrs, params, cb_update=None):
     xs = params.get('wigner_xs', None)
     ys = params.get('wigner_ys', None)
     for val in [xs, ys]:
-        assert val is not None and (type(val) is list or type(val) is np.ndarray), "Solver parameters 'wigner_xs' and 'wigner_ys' should be either NumPy arrays or `list`"
+        assert val is not None and (type(val) is list or type(val) is np.ndarray), "Solver parameters 'wigner_xs' and 'wigner_ys' should be either NumPy arrays or ``list``"
     # handle list
     xs = np.array(xs, dtype=np.float_) if type(xs) is list else xs
     ys = np.array(ys, dtype=np.float_) if type(xs) is list else ys

@@ -6,7 +6,7 @@
 __name__ = 'qom.solvers.deterministic'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2021-01-04"
-__updated__ = "2023-07-10"
+__updated__ = "2023-07-12"
 
 # dependencies
 import copy
@@ -24,45 +24,45 @@ from ..io import Updater
 class HLESolver():
     r"""Class to solve the Heisenberg-Langevin equations for classical mode amplitudes and quantum quadrature correlations.
 
-    Initializes `system`, `params`, `T`, `Modes`, `Corrs`, `Measures` and `updater`.
+    Initializes ``system``, ``params``, ``T``, ``Modes``, ``Corrs``, ``Measures`` and ``updater``.
 
     Parameters
     ----------
     system : :class:`qom.systems.*`
         Instance of the system. Requires predefined system methods for certain solver methods.
     params : dict
-        Parameters for the solver. Refer to ``Notes`` below for all available options. Required options are:
+        Parameters for the solver. Refer to **Notes** below for all available options. Required options are:
             ========    ====================================================
             key         value
             ========    ====================================================
             't_min'     (*float*) minimum time at which integration starts.
             't_max'     (*float*) maximum time at which integration stops.
-            't_dim'     (*int*) number of values from `'t_max'` to `'t_min'`, both inclusive.
+            't_dim'     (*int*) number of values from ``'t_max'`` to ``'t_min'``, both inclusive.
             ========    ====================================================
     cb_update : callable, optional
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
 
     Notes
     -----
-        The `params` dictionary currently supports the following keys:
+        The ``params`` dictionary currently supports the following keys:
             ================    ====================================================
             key                 value
             ================    ====================================================
-            'show_progress'     (*bool*) option to display the progress of the solver. Default is `False`.
-            'cache'             (*bool*) option to cache the time series on the disk. Default is `True`.
-            'cache_dir'         (*str*) directory where the time series is cached. Default is `'cache'`.
-            'cache_file'        (*str*) filename of the cached time series. Default is `'V'`.
-            'ode_method'        (*str*) method used to solve the ODEs. Available options are `'BDF'`, `'DOP853'`, `'LSODA'`, `'Radau'`, `'RK23'`, `'RK45'` (fallback), `'dop853'`, `'dopri5'`, `'lsoda'`, `'vode'` and `'zvode'`. Refer to :class:`qom.solvers.differential.ODESolver` for details of each method. Default is `'RK45'`.
-            'ode_is_stiff'      (*bool*) option to select whether the integration is a stiff problem or a non-stiff one. Default is `False`.
-            'ode_atol'          (*float*) absolute tolerance of the integrator. Default is `1e-12`.
-            'ode_rtol'          (*float*) relative tolerance of the integrator. Default is `1e-6`.
-            't_min'             (*float*) minimum time at which integration starts. Default is `0.0`.
-            't_max'             (*float*) maximum time at which integration stops. Default is `1000.0`.
-            't_dim'             (*int*) number of values from `'t_max'` to `'t_min'`, both inclusive. Default is `10001`.
-            't_index_delay'     (*int*) index of the time to delay for the derived constants and controls. Default is `0`.
-            't_index_min'       (*float*) minimum index of the range of time at which the values are required. If not provided, this is set to `0`.
-            't_index_max'       (*float*) maximum index of the range of time at which the values are required. If not provided, this is set to `t_dim - 1`.
-            'indices'           (*list* or *tuple*) indices of the modes as a list, or a tuple of two integers. Default is `[0]`.
+            'show_progress'     (*bool*) option to display the progress of the solver. Default is ``False``.
+            'cache'             (*bool*) option to cache the time series on the disk. Default is ``True``.
+            'cache_dir'         (*str*) directory where the time series is cached. Default is ``'cache'``.
+            'cache_file'        (*str*) filename of the cached time series. Default is ``'V'``.
+            'ode_method'        (*str*) method used to solve the ODEs. Available options are ``'BDF'``, ``'DOP853'``, ``'LSODA'``, ``'Radau'``, ``'RK23'``, ``'RK45'`` (fallback), ``'dop853'``, ``'dopri5'``, ``'lsoda'``, ``'vode'`` and ``'zvode'``. Refer to :class:`qom.solvers.differential.ODESolver` for details of each method. Default is ``'RK45'``.
+            'ode_is_stiff'      (*bool*) option to select whether the integration is a stiff problem or a non-stiff one. Default is ``False``.
+            'ode_atol'          (*float*) absolute tolerance of the integrator. Default is ``1e-12``.
+            'ode_rtol'          (*float*) relative tolerance of the integrator. Default is ``1e-6``.
+            't_min'             (*float*) minimum time at which integration starts. Default is ``0.0``.
+            't_max'             (*float*) maximum time at which integration stops. Default is ``1000.0``.
+            't_dim'             (*int*) number of values from ``'t_max'`` to ``'t_min'``, both inclusive. Default is ``10001``.
+            't_index_delay'     (*int*) index of the time to delay for the derived constants and controls. Default is ``0``.
+            't_index_min'       (*float*) minimum index of the range of time at which the values are required. If not provided, this is set to ``0``.
+            't_index_max'       (*float*) maximum index of the range of time at which the values are required. If not provided, this is set to ``t_dim - 1``.
+            'indices'           (*list* or *tuple*) indices of the modes as a list, or a tuple of two integers. Default is ``[0]``.
             ================    ====================================================
     """
 
@@ -131,7 +131,7 @@ class HLESolver():
         # check required parameters
         t_keys = ['t_min', 't_max', 't_dim']
         for key in t_keys:
-            assert key in params, "Parameter `params` does not contain the required key `'{}'`".format(key)
+            assert key in params, "Parameter ``params`` does not contain the required key ``'{}'``".format(key)
 
         # set solver parameters
         self.params = dict()
@@ -155,7 +155,7 @@ class HLESolver():
         Parameters
         ----------
         func_ode_modes_corrs : callable
-            Function returning the rate equations of the modes and correlations. If `func_ode_corrs` parameter is given, this function is treated as the function for the modes only. Refer to :class:`qom.systems.base.BaseSystem` for their implementations.
+            Function returning the rate equations of the modes and correlations. If ``func_ode_corrs`` parameter is given, this function is treated as the function for the modes only. Refer to :class:`qom.systems.base.BaseSystem` for their implementations.
         iv_modes : list or numpy.ndarray
             Initial values for the modes.
         iv_corrs : list or numpy.ndarray
@@ -221,7 +221,7 @@ class HLESolver():
                 Returns
                 -------
                 i : int
-                    Index of the element in `T`.
+                    Index of the element in ``T``.
                 
                 Returns
                 -------
@@ -280,7 +280,7 @@ class HLESolver():
         Parameters
         ----------
         func_ode_modes_corrs : callable
-            Function returning the rate equations of the modes and correlations. If `func_ode_corrs` parameter is given, this function is treated as the function for the modes only. Refer to :class:`qom.systems.base.BaseSystem` for their implementations.
+            Function returning the rate equations of the modes and correlations. If ``func_ode_corrs`` parameter is given, this function is treated as the function for the modes only. Refer to :class:`qom.systems.base.BaseSystem` for their implementations.
         iv_modes : list or numpy.ndarray
             Initial values for the modes.
         iv_corrs : list or numpy.ndarray
@@ -293,7 +293,7 @@ class HLESolver():
         Returns
         -------
         results : dict
-            Results obtained after solving, with keys `'T'` and `'V'` for times and values.
+            Results obtained after solving, with keys ``'T'`` and ``'V'`` for times and values.
         """
 
         # extract frequently used variables
@@ -349,7 +349,7 @@ class HLESolver():
     def get_all_modes_corrs(self):
         """Method to obtain all the modes and correlations.
 
-        Requires predefined system callables `get_ivc` and `func_ode_modes_corrs`. Alternatively, if the system inherits :class:`qom.systems.base.BaseSystem`, `get_mode_rates` may be defined along with `get_A` and `get_D` if correlations are present. Additionally, `func_ode_corrs` may be defined for dynamical values (refer to the `solve` method). Refer to :class:`qom.systems.base.BaseSystem` for their implementations.
+        Requires predefined system callables ``get_ivc`` and ``func_ode_modes_corrs``. Alternatively, if the system inherits :class:`qom.systems.base.BaseSystem`, ``get_mode_rates`` may be defined along with ``get_A`` and ``get_D`` if correlations are present. Additionally, ``func_ode_corrs`` may be defined for dynamical values (refer to the ``solve`` method). Refer to :class:`qom.systems.base.BaseSystem` for their implementations.
 
         Returns
         -------
@@ -387,7 +387,7 @@ class HLESolver():
     def get_all_modes(self):
         """Method to obtain all the modes.
 
-        Requires predefined system callables `get_ivc` and `func_ode_modes_corrs`. Alternatively, if the system inherits :class:`qom.systems.base.BaseSystem`, `get_mode_rates` may be defined along with `get_A` and `get_D` if correlations are present. Additionally, `func_ode_corrs` may be defined for dynamical values (refer to the `solve` method). Refer to :class:`qom.systems.base.BaseSystem` for their implementations.
+        Requires predefined system callables ``get_ivc`` and ``func_ode_modes_corrs``. Alternatively, if the system inherits :class:`qom.systems.base.BaseSystem`, ``get_mode_rates`` may be defined along with ``get_A`` and ``get_D`` if correlations are present. Additionally, ``func_ode_corrs`` may be defined for dynamical values (refer to the ``solve`` method). Refer to :class:`qom.systems.base.BaseSystem` for their implementations.
         
         Returns
         -------
@@ -411,7 +411,7 @@ class HLESolver():
     def get_all_corrs(self):
         """Method to obtain all the correlations.
 
-        Requires predefined system callables `get_ivc` and `func_ode_modes_corrs`. Alternatively, if the system inherits :class:`qom.systems.base.BaseSystem`, `get_mode_rates` may be defined along with `get_A` and `get_D` if correlations are present. Additionally, `func_ode_corrs` may be defined for dynamical values (refer to the `solve` method). Refer to :class:`qom.systems.base.BaseSystem` for their implementations.
+        Requires predefined system callables ``get_ivc`` and ``func_ode_modes_corrs``. Alternatively, if the system inherits :class:`qom.systems.base.BaseSystem`, ``get_mode_rates`` may be defined along with ``get_A`` and ``get_D`` if correlations are present. Additionally, ``func_ode_corrs`` may be defined for dynamical values (refer to the ``solve`` method). Refer to :class:`qom.systems.base.BaseSystem` for their implementations.
         
         Returns
         -------
@@ -449,7 +449,7 @@ class HLESolver():
     def get_modes_corrs(self):
         """Method to obtain the dynamics of the modes and correlations in a given range of time.
 
-        Requires predefined system callables `get_ivc` and `func_ode_modes_corrs`. Alternatively, if the system inherits :class:`qom.systems.base.BaseSystem`, `get_mode_rates` may be defined along with `get_A` and `get_D` if correlations are present. Additionally, `func_ode_corrs` may be defined for dynamical values (refer to the `solve` method). Refer to :class:`qom.systems.base.BaseSystem` for their implementations.
+        Requires predefined system callables ``get_ivc`` and ``func_ode_modes_corrs``. Alternatively, if the system inherits :class:`qom.systems.base.BaseSystem`, ``get_mode_rates`` may be defined along with ``get_A`` and ``get_D`` if correlations are present. Additionally, ``func_ode_corrs`` may be defined for dynamical values (refer to the ``solve`` method). Refer to :class:`qom.systems.base.BaseSystem` for their implementations.
 
         Returns
         -------
@@ -469,7 +469,7 @@ class HLESolver():
     def get_modes(self):
         """Method to obtain the dynamics of the modes in a given range of time.
 
-        Requires predefined system callables `get_ivc` and `func_ode_modes_corrs`. Alternatively, if the system inherits :class:`qom.systems.base.BaseSystem`, `get_mode_rates` may be defined along with `get_A` and `get_D` if correlations are present. Additionally, `func_ode_corrs` may be defined for dynamical values (refer to the `solve` method). Refer to :class:`qom.systems.base.BaseSystem` for their implementations.
+        Requires predefined system callables ``get_ivc`` and ``func_ode_modes_corrs``. Alternatively, if the system inherits :class:`qom.systems.base.BaseSystem`, ``get_mode_rates`` may be defined along with ``get_A`` and ``get_D`` if correlations are present. Additionally, ``func_ode_corrs`` may be defined for dynamical values (refer to the ``solve`` method). Refer to :class:`qom.systems.base.BaseSystem` for their implementations.
 
         Returns
         -------
@@ -483,7 +483,7 @@ class HLESolver():
     def get_corrs(self):
         """Method to obtain the dynamics of the correlations in a given range of time.
 
-        Requires predefined system callables `get_ivc` and `func_ode_modes_corrs`. Alternatively, if the system inherits :class:`qom.systems.base.BaseSystem`, `get_mode_rates` may be defined along with `get_A` and `get_D` if correlations are present. Additionally, `func_ode_corrs` may be defined for dynamical values (refer to the `solve` method). Refer to :class:`qom.systems.base.BaseSystem` for their implementations.
+        Requires predefined system callables ``get_ivc`` and ``func_ode_modes_corrs``. Alternatively, if the system inherits :class:`qom.systems.base.BaseSystem`, ``get_mode_rates`` may be defined along with ``get_A`` and ``get_D`` if correlations are present. Additionally, ``func_ode_corrs`` may be defined for dynamical values (refer to the ``solve`` method). Refer to :class:`qom.systems.base.BaseSystem` for their implementations.
 
         Returns
         -------
@@ -505,12 +505,12 @@ class HLESolver():
 
         # validate indices
         _indices = self.params['indices']
-        assert type(_indices) is list or type(_indices) is tuple, "Value of key `'indices'` can only be of types `list` or `tuple`"
+        assert type(_indices) is list or type(_indices) is tuple, "Value of key ``'indices'`` can only be of types ``list`` or ``tuple``"
         # convert to list
         _indices = list(_indices) if type(_indices) is tuple else _indices
         # check range
         for index in _indices:
-            assert index < self.system.num_modes, "Elements of key `'indices'` cannot exceed the total number of modes ({})".format(self.system.num_modes)
+            assert index < self.system.num_modes, "Elements of key ``'indices'`` cannot exceed the total number of modes ({})".format(self.system.num_modes)
             
         return self.get_all_modes()[self.params['t_index_min']:self.params['t_index_max'] + 1, _indices]
     
@@ -537,11 +537,11 @@ class HLESolver():
 
         # validate indices
         _Indices = self.params['indices']
-        assert type(_Indices) is list, "Value of key `'indices'` can only be of type `list`"
+        assert type(_Indices) is list, "Value of key ``'indices'`` can only be of type ``list``"
         # check range
         for _indices in _Indices:
-            assert (type(_indices) is list or type(_indices) is tuple) and len(_indices) == 2, "Elements in value of key `'indices'` can only be of types `list` or `tuple` of size 2"
-            assert _indices[0] < 2 * self.system.num_modes and _indices[1] < 2 * self.system.num_modes, "Elements in value of key `'indices'` cannot exceed twice the total number of modes ({})".format(2 * self.system.num_modes)
+            assert (type(_indices) is list or type(_indices) is tuple) and len(_indices) == 2, "Elements in value of key ``'indices'`` can only be of types ``list`` or ``tuple`` of size 2"
+            assert _indices[0] < 2 * self.system.num_modes and _indices[1] < 2 * self.system.num_modes, "Elements in value of key ``'indices'`` cannot exceed twice the total number of modes ({})".format(2 * self.system.num_modes)
 
         # format indices
         _Indices = np.array(_Indices, dtype=np.int8)
@@ -551,26 +551,26 @@ class HLESolver():
 class SSHLESolver():
     r"""Class to solve the steady state Heisenberg-Langevin equations for classical mode amplitudes and quantum quadrature correlations.
 
-    Initializes `system`, `params`, `Modes`, `Corrs`, `As`, `Ds`, `Measures` and `updater`.
+    Initializes ``system``, ``params``, ``Modes``, ``Corrs``, ``As``, ``Ds``, ``Measures`` and ``updater``.
 
     Parameters
     ----------
     system : :class:`qom.systems.*`
         Instance of the system. Requires predefined system methods for certain solver methods.
     params : dict
-        Parameters for the solver. Refer to ``Notes`` below for all available options.
+        Parameters for the solver. Refer to **Notes** below for all available options.
     cb_update : callable, optional
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
 
     Notes
     -----
-        The `params` dictionary currently supports the following keys:
+        The ``params`` dictionary currently supports the following keys:
             ====================    ====================================================
             key                     value
             ====================    ====================================================
-            'show_progress'         (*bool*) option to display the progress of the solver. Default is `False`.
-            'indices'               (*list* or *tuple*) indices of the modes as a list or tuple of two integers. Default is `[0]`.
-            'use_system_method'     (*bool*) option to use the system method `get_modes_steady_state` to obtain the steady state mode amplitudes. Requires the predefined system method `get_coeffs_N_o` if the system method implements `get_mean_optical_occupancies`. Default is `True`.
+            'show_progress'         (*bool*) option to display the progress of the solver. Default is ``False``.
+            'indices'               (*list* or *tuple*) indices of the modes as a list or tuple of two integers. Default is ``[0]``.
+            'use_system_method'     (*bool*) option to use the system method ``get_modes_steady_state`` to obtain the steady state mode amplitudes. Requires the predefined system method ``get_coeffs_N_o`` if the system method implements ``get_mean_optical_occupancies``. Default is ``True``.
             ====================    ====================================================
     """
 
@@ -625,7 +625,7 @@ class SSHLESolver():
     def get_modes_corrs(self):
         """Method to obtain the steady states of the modes and correlations.
 
-        Requires system method `get_ivc` to obtain the derived constants and controls `c`. To calculate the modes, either `get_modes_steady_state` or `get_mode_rates` should be defined. Priority is given to `get_modes_steady_state`. The correlations are calculated by solving the Lyapunov equation. For this, the `get_A` and `get_D` methods should be defined along with the method required to calculate the modes.
+        Requires system method ``get_ivc`` to obtain the derived constants and controls ``c``. To calculate the modes, either ``get_modes_steady_state`` or ``get_mode_rates`` should be defined. Priority is given to ``get_modes_steady_state``. The correlations are calculated by solving the Lyapunov equation. For this, the ``get_A`` and ``get_D`` methods should be defined along with the method required to calculate the modes.
 
         Returns
         -------
@@ -741,12 +741,12 @@ class SSHLESolver():
 
         # validate indices
         _indices = self.params['indices']
-        assert type(_indices) is list or type(_indices) is tuple, "Value of key `'indices'` can only be of types `list` or `tuple`"
+        assert type(_indices) is list or type(_indices) is tuple, "Value of key ``'indices'`` can only be of types ``list`` or ``tuple``"
         # convert to list
         _indices = list(_indices) if type(_indices) is tuple else _indices
         # check range
         for index in _indices:
-            assert index < self.system.num_modes, "Elements of key `'indices'` cannot exceed the total number of modes ({})".format(self.system.num_modes)
+            assert index < self.system.num_modes, "Elements of key ``'indices'`` cannot exceed the total number of modes ({})".format(self.system.num_modes)
         
         return self.get_modes()[:, _indices]
     
@@ -773,11 +773,11 @@ class SSHLESolver():
 
         # validate indices
         _Indices = self.params['indices']
-        assert type(_Indices) is list, "Value of key `'indices'` can only be of type `list`"
+        assert type(_Indices) is list, "Value of key ``'indices'`` can only be of type ``list``"
         # check range
         for _indices in _Indices:
-            assert (type(_indices) is list or type(_indices) is tuple) and len(_indices) == 2, "Elements in value of key `'indices'` can only be of types `list` or `tuple` of size 2"
-            assert _indices[0] < 2 * self.system.num_modes and _indices[1] < 2 * self.system.num_modes, "Elements in value of key `'indices'` cannot exceed twice the total number of modes ({})".format(2 * self.system.num_modes)
+            assert (type(_indices) is list or type(_indices) is tuple) and len(_indices) == 2, "Elements in value of key ``'indices'`` can only be of types ``list`` or ``tuple`` of size 2"
+            assert _indices[0] < 2 * self.system.num_modes and _indices[1] < 2 * self.system.num_modes, "Elements in value of key ``'indices'`` cannot exceed twice the total number of modes ({})".format(2 * self.system.num_modes)
 
         # format indices
         _Indices = np.array(_Indices, dtype=np.int8)
@@ -823,28 +823,28 @@ class SSHLESolver():
 class LLESolver():
     """Method to solve the Lugiato-Lefever equation (LLE) for classical mode amplitudes using the split-step Fourier method.
 
-    Initializes `system`, `params`, `T`, `Modes` and `updater`.
+    Initializes ``system``, ``params``, ``T``, ``Modes`` and ``updater``.
 
     Parameters
     ----------
     system : :class:`qom.systems.*`
         Instance of the system. Requires predefined system methods for certain solver methods.
     params : dict
-        Parameters for the solver. Refer to ``Notes`` below for all available options.
+        Parameters for the solver. Refer to **Notes** below for all available options.
     cb_update : callable, optional
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
 
     Notes
     -----
-        The `params` dictionary  currently supports the following keys:
+        The ``params`` dictionary  currently supports the following keys:
             ================    ====================================================
             key                 value
             ================    ====================================================
-            'show_progress'     (*bool*) option to display the progress of the solver. Default is `False`.
-            't_min'             (*float*) minimum time at which integration starts. Default is `0.0`.
-            't_max'             (*float*) maximum time at which integration stops. Default is `1000.0`.
-            't_dim'             (*int*) number of values from `'t_max'` to `'t_min'`, both inclusive. Default is `10001`.
-            'indices'           (*list* or *tuple*) indices of the modes as a list. Default is `[0]`.
+            'show_progress'     (*bool*) option to display the progress of the solver. Default is ``False``.
+            't_min'             (*float*) minimum time at which integration starts. Default is ``0.0``.
+            't_max'             (*float*) maximum time at which integration stops. Default is ``1000.0``.
+            't_dim'             (*int*) number of values from ``'t_max'`` to ``'t_min'``, both inclusive. Default is ``10001``.
+            'indices'           (*list* or *tuple*) indices of the modes as a list. Default is ``[0]``.
             ================    ====================================================
     """
 
@@ -895,7 +895,7 @@ class LLESolver():
         # check required parameters
         t_keys = ['t_min', 't_max', 't_dim']
         for key in t_keys:
-            assert key in params, "Parameter `params` does not contain the required key `'{}'`"
+            assert key in params, "Parameter ``params`` does not contain the required key ``'{}'``"
 
         # set solver parameters
         self.params = dict()
@@ -905,7 +905,7 @@ class LLESolver():
     def get_all_modes(self):
         """Method to obtain all the modes.
 
-        Requires predefined system callables `get_ivc`, `get_coeffs_dispersion`, `get_nonlinearities` and `get_sources`. Refer to :class:`qom.systems.base.BaseSystem` for their implementations.
+        Requires predefined system callables ``get_ivc``, ``get_coeffs_dispersion``, ``get_nonlinearities`` and ``get_sources``. Refer to :class:`qom.systems.base.BaseSystem` for their implementations.
         
         Returns
         -------
@@ -997,12 +997,12 @@ class LLESolver():
 
         # validate indices
         _indices = self.params['indices']
-        assert type(_indices) is list or type(_indices) is tuple, "Value of key `'indices'` can only be of types `list` or `tuple`"
+        assert type(_indices) is list or type(_indices) is tuple, "Value of key ``'indices'`` can only be of types ``list`` or ``tuple``"
         # convert to list
         _indices = list(_indices) if type(_indices) is tuple else _indices
         # check range
         for index in _indices:
-            assert index < self.system.num_modes, "Elements of key `'indices'` cannot exceed the total number of modes ({})".format(self.system.num_modes)
+            assert index < self.system.num_modes, "Elements of key ``'indices'`` cannot exceed the total number of modes ({})".format(self.system.num_modes)
             
         return self.get_all_modes()[:, _indices]
     
@@ -1021,35 +1021,35 @@ class LLESolver():
 class NLSESolver():
     """Method to solve the non-linear Schrodinger equation (NLSE) using the split-step Fourier method.
 
-    Initializes `system`, `params`, `T`, `Modes` and `updater`.
+    Initializes ``system``, ``params``, ``T``, ``Modes`` and ``updater``.
 
     Parameters
     ----------
     system : :class:`qom.systems.*`
         Instance of the system. Requires predefined system methods for certain solver methods.
     params : dict
-        Parameters for the solver. Refer to ``Notes`` below for all available options.
+        Parameters for the solver. Refer to **Notes** below for all available options.
     cb_update : callable, optional
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
 
     Notes
     -----
-        The `params` dictionary  currently supports the following keys:
+        The ``params`` dictionary  currently supports the following keys:
             ================    ====================================================
             key                 value
             ================    ====================================================
-            'show_progress'     (*bool*) option to display the progress of the solver. Default is `False`.
-            'update_betas'      (*bool*) option to use the mechanical mode rates. Requires either one of the predefined system methods `get_beta_rates` (priority) or `get_betas` (fallback). Refer to :class:`qom.systems.base.BaseSystem` for their implementations. Default is `False`.
-            'use_sources'       (*bool*) option to use the source terms. Requires the predefined system method `get_sources`. Refer to :class:`qom.systems.base.BaseSystem` for its implementation. Default is `True`.
-            'ode_method'        (*str*) method used to solve the ODEs. Available options are `'BDF'`, `'DOP853'`, `'LSODA'`, `'Radau'`, `'RK23'`, `'RK45'` (fallback), `'dop853'`, `'dopri5'`, `'lsoda'`, `'vode'` and `'zvode'`. Refer to :class:`qom.solvers.differential.ODESolver` for details of each method. Default is `'RK45'`.
-            'ode_is_stiff'      (*bool*) option to select whether the integration is a stiff problem or a non-stiff one. Default is `False`.
-            'ode_atol'          (*float*) absolute tolerance of the integrator. Default is `1e-12`.
-            'ode_rtol'          (*float*) relative tolerance of the integrator. Default is `1e-6`.
-            't_min'             (*float*) minimum time at which integration starts. Default is `0.0`.
-            't_max'             (*float*) maximum time at which integration stops. Default is `1000.0`.
-            't_dim'             (*int*) number of values from `'t_max'` to `'t_min'`, both inclusive. Default is `10001`.
-            't_div'             (*int*) number of further divisions in each time step, both inclusive. Default is `1`.
-            'indices'           (*list* or *tuple*) indices of the modes as a list. Default is `[0]`.
+            'show_progress'     (*bool*) option to display the progress of the solver. Default is ``False``.
+            'update_betas'      (*bool*) option to use the mechanical mode rates. Requires either one of the predefined system methods ``get_beta_rates`` (priority) or ``get_betas`` (fallback). Refer to :class:`qom.systems.base.BaseSystem` for their implementations. Default is ``False``.
+            'use_sources'       (*bool*) option to use the source terms. Requires the predefined system method ``get_sources``. Refer to :class:`qom.systems.base.BaseSystem` for its implementation. Default is ``True``.
+            'ode_method'        (*str*) method used to solve the ODEs. Available options are ``'BDF'``, ``'DOP853'``, ``'LSODA'``, ``'Radau'``, ``'RK23'``, ``'RK45'`` (fallback), ``'dop853'``, ``'dopri5'``, ``'lsoda'``, ``'vode'`` and ``'zvode'``. Refer to :class:`qom.solvers.differential.ODESolver` for details of each method. Default is ``'RK45'``.
+            'ode_is_stiff'      (*bool*) option to select whether the integration is a stiff problem or a non-stiff one. Default is ``False``.
+            'ode_atol'          (*float*) absolute tolerance of the integrator. Default is ``1e-12``.
+            'ode_rtol'          (*float*) relative tolerance of the integrator. Default is ``1e-6``.
+            't_min'             (*float*) minimum time at which integration starts. Default is ``0.0``.
+            't_max'             (*float*) maximum time at which integration stops. Default is ``1000.0``.
+            't_dim'             (*int*) number of values from ``'t_max'`` to ``'t_min'``, both inclusive. Default is ``10001``.
+            't_div'             (*int*) number of further divisions in each time step, both inclusive. Default is ``1``.
+            'indices'           (*list* or *tuple*) indices of the modes as a list. Default is ``[0]``.
             ================    ====================================================
     """
 
@@ -1107,7 +1107,7 @@ class NLSESolver():
         # check required parameters
         t_keys = ['t_min', 't_max', 't_dim']
         for key in t_keys:
-            assert key in params, "Parameter `params` does not contain the required key `'{}'`"
+            assert key in params, "Parameter ``params`` does not contain the required key ``'{}'``"
 
         # set solver parameters
         self.params = dict()
@@ -1117,7 +1117,7 @@ class NLSESolver():
     def get_all_modes(self):
         """Method to obtain all the modes.
 
-        Requires predefined system callables `get_ivc`, `get_coeffs_dispersion` and `get_nonlinearities`. Either one of the callables `get_beta_rates` or `get_betas` may also be defined to update the mechanical mode rates. Additionally `get_sources` may be defined to include source terms. Refer to :class:`qom.systems.base.BaseSystem` for their implementations.
+        Requires predefined system callables ``get_ivc``, ``get_coeffs_dispersion`` and ``get_nonlinearities``. Either one of the callables ``get_beta_rates`` or ``get_betas`` may also be defined to update the mechanical mode rates. Additionally ``get_sources`` may be defined to include source terms. Refer to :class:`qom.systems.base.BaseSystem` for their implementations.
         
         Returns
         -------
@@ -1138,9 +1138,9 @@ class NLSESolver():
         t_dim = self.params['t_dim']
         t_ss = self.T[1] - self.T[0]
 
-        assert (getattr(self.system, 'get_beta_rates', None) is not None or getattr(self.system, 'get_betas', None) is not None) if update_betas else True, "Either one of the system methods `get_beta_rates` or `update_betas` are required when parameter `'update_betas'` is set to `True`."
+        assert (getattr(self.system, 'get_beta_rates', None) is not None or getattr(self.system, 'get_betas', None) is not None) if update_betas else True, "Either one of the system methods ``get_beta_rates`` or ``update_betas`` are required when parameter ``'update_betas'`` is set to ``True``."
 
-        assert getattr(self.system, 'get_sources', None) is not None if use_sources else True, "System method `get_sources` is required when parameter `'use_sources'` is set to `True`."
+        assert getattr(self.system, 'get_sources', None) is not None if use_sources else True, "System method ``get_sources`` is required when parameter ``'use_sources'`` is set to ``True``."
 
         # initialize variables
         modes, _, c = self.system.get_ivc()
@@ -1266,12 +1266,12 @@ class NLSESolver():
 
         # validate indices
         _indices = self.params['indices']
-        assert type(_indices) is list or type(_indices) is tuple, "Value of key `'indices'` can only be of types `list` or `tuple`"
+        assert type(_indices) is list or type(_indices) is tuple, "Value of key ``'indices'`` can only be of types ``list`` or ``tuple``"
         # convert to list
         _indices = list(_indices) if type(_indices) is tuple else _indices
         # check range
         for index in _indices:
-            assert index < self.system.num_modes, "Elements of key `'indices'` cannot exceed the total number of modes ({})".format(self.system.num_modes)
+            assert index < self.system.num_modes, "Elements of key ``'indices'`` cannot exceed the total number of modes ({})".format(self.system.num_modes)
             
         return self.get_all_modes()[:, _indices]
     

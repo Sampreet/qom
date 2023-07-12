@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.matplotlib'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2020-10-03"
-__updated__ = "2023-07-10"
+__updated__ = "2023-07-12"
 
 # dependencies
 from matplotlib.colors import LinearSegmentedColormap, Normalize
@@ -22,12 +22,12 @@ from .base import BasePlotter
 class MPLPlotter(BasePlotter):
     """Class to handle matplotlib plots.
 
-    Initializes `axes`, `params` and `plots`.
+    Initializes ``axes``, ``params`` and ``plots``.
         
     Parameters
     ----------
     axes : dict
-        Axes for the plot containing one or more keys for the axes (`'X'`, 'Y' or 'Z'), each either a list of values, or a dictionary. Refer to :class:`qom.ui.plotters.base.BasePlotter` for currently supported keys.
+        Axes for the plot containing one or more keys for the axes (``'X'``, 'Y' or 'Z'), each either a list of values, or a dictionary. Refer to :class:`qom.ui.plotters.base.BasePlotter` for currently supported keys.
     params : dict
         Parameters of the plot. Refer to :class:`qom.ui.plotters.base.BasePlotter` for all available options.
     """
@@ -144,7 +144,7 @@ class MPLPlotter(BasePlotter):
                 )
 
     def _get_font_props(self, font_dict:dict):
-        """Method to convert font dictionary to `FontProperties` object.
+        """Method to convert font dictionary to ``FontProperties`` object.
          
         Parameters
         ----------
@@ -398,8 +398,8 @@ class MPLPlotter(BasePlotter):
         """
 
         # validate parameters
-        assert type(vs) is list or type(vs) is np.ndarray, "Parameter `vs` should be a list or NumPy array"
-        assert type(xs) is list or type(xs) is np.ndarray, "Parameter `xs` should be a list or NumPy array"
+        assert type(vs) is list or type(vs) is np.ndarray, "Parameter ``vs`` should be a list or NumPy array"
+        assert type(xs) is list or type(xs) is np.ndarray, "Parameter ``xs`` should be a list or NumPy array"
 
         # frequently used variables
         _type = self.params['type']
@@ -493,7 +493,7 @@ class MPLPlotter(BasePlotter):
         """
 
         # validate parameters
-        assert type(vs) is list or type(vs) is np.ndarray, "Parameter `vs` should be a list or NumPy array"
+        assert type(vs) is list or type(vs) is np.ndarray, "Parameter ``vs`` should be a list or NumPy array"
 
         # frequently used variables
         _type = self.params['type']
@@ -565,7 +565,7 @@ class MPLPlotter(BasePlotter):
         """
 
         # validate parameters
-        assert type(vs) is list or type(vs) is np.ndarray, "Parameter `vs` should be a list or NumPy array"
+        assert type(vs) is list or type(vs) is np.ndarray, "Parameter ``vs`` should be a list or NumPy array"
 
         # frequently used variables
         _type = self.params['type']
@@ -757,17 +757,15 @@ class MPLPlotter(BasePlotter):
         
         return plt.gcf()
 
-    def save(self, filename:str):
+    def save(self, filename:str, dpi:int=300):
         """Method to save the figure.
 
         Parameters
         ----------
         filename : str
             Name of the saved file.
-        width : float
-            Width of the figure.
-        height : float
-            Height of the figure.
+        dpi : int
+            DPI of the saved file.
         """
 
         # create directory
@@ -786,7 +784,7 @@ class MPLPlotter(BasePlotter):
         plt.tight_layout()
         
         # save to file
-        plt.savefig(filename, dpi=300)
+        plt.savefig(filename, dpi=dpi)
 
     def set_cbar(self, mini:float=0, maxi:float=0, prec:int=2):
         """Method to set the colorbar for the figure.
@@ -896,10 +894,10 @@ class MPLPlotter(BasePlotter):
         """
 
         # validate parameters
-        assert type(vs) is list or type(vs) is np.ndarray, "Parameter `vs` should be a list or NumPy array"
-        assert xs is None or type(xs) is list or type(xs) is np.ndarray, "Parameter `xs` should be a list or NumPy array"
-        assert ys is None or type(ys) is list or type(ys) is np.ndarray, "Parameter `ys` should be a list or NumPy array"
-        assert zs is None or type(zs) is list or type(zs) is np.ndarray, "Parameter `zs` should be a list or NumPy array"
+        assert type(vs) is list or type(vs) is np.ndarray, "Parameter ``vs`` should be a list or NumPy array"
+        assert xs is None or type(xs) is list or type(xs) is np.ndarray, "Parameter ``xs`` should be a list or NumPy array"
+        assert ys is None or type(ys) is list or type(ys) is np.ndarray, "Parameter ``ys`` should be a list or NumPy array"
+        assert zs is None or type(zs) is list or type(zs) is np.ndarray, "Parameter ``zs`` should be a list or NumPy array"
 
         # extract frequently used variables
         _type = self.params['type']

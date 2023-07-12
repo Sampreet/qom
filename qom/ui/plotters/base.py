@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.base'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2020-10-06"
-__updated__ = "2023-07-10"
+__updated__ = "2023-07-12"
 
 # dependencies
 from decimal import Decimal
@@ -22,55 +22,55 @@ from ...io import Updater
 class BasePlotter():
     """Class to interface plotters.
 
-    Initializes `axes`, `bins`, `params` and `updater`.
+    Initializes ``axes``, ``bins``, ``params`` and ``updater``.
     
     Parameters
     ----------
     axes : dict
-        Axes for the plot containing one or more keys for the axes (`'X'`, 'Y' or 'Z'), each either a list of values, or dictionary containing the following keys (arranged in the descending order of their priorities):
+        Axes for the plot containing one or more keys for the axes (``'X'``, 'Y' or 'Z'), each either a list of values, or dictionary containing the following keys (arranged in the descending order of their priorities):
             ========    ====================================================
             key         value
             ========    ====================================================
             'var'       (*str*) name of the parameter to loop. Its value defaults to the axis name in lower case if the axis is a sequence of values and not a dictionary.
-            'val'       (*list* or *numpy.ndarray*) values of the parameter. The remaining keys are not checked if its value is given. Otherwise, the values of `'min'`, `'max'`, `'dim'` and `'scale'` are used to obtain `'val'`.
-            'min'       (*float*) minimum value of the parameter. Default is `-5.0`.
-            'max'       (*float*) maximum value of the parameter. Default is `5.0`.
-            'dim'       (*int*) number of values from 'min' to 'max', both inclusive. Default is `101`.
-            'scale'     (*str*) step scale of the values. Options are `'log'` for logarithmic and `'linear'` for linear. Default is `'linear'`
+            'val'       (*list* or *numpy.ndarray*) values of the parameter. The remaining keys are not checked if its value is given. Otherwise, the values of ``'min'``, ``'max'``, ``'dim'`` and ``'scale'`` are used to obtain ``'val'``.
+            'min'       (*float*) minimum value of the parameter. Default is ``-5.0``.
+            'max'       (*float*) maximum value of the parameter. Default is ``5.0``.
+            'dim'       (*int*) number of values from 'min' to 'max', both inclusive. Default is ``101``.
+            'scale'     (*str*) step scale of the values. Options are ``'log'`` for logarithmic and ``'linear'`` for linear. Default is ``'linear'``
             ========    ====================================================
     params : dict
         Parameters of the plot. Currently supported keys are:
             ========================    ====================================================
             key                         value
             ========================    ====================================================
-            'annotations'               (*list*) annotation dictionaries for the plot. Refer to ``Notes`` below for currently supported keys.
-            'bins'                      (*int*) number of colors for the plot. Default is `11`.
-            'cbar_position'             (*str*) position of the color bar. Options are `'top'`, `'right'`, `'bottom'` and `'left'`. Default is `'right'`.
+            'annotations'               (*list*) annotation dictionaries for the plot. Refer to **Notes** below for currently supported keys.
+            'bins'                      (*int*) number of colors for the plot. Default is ``11``.
+            'cbar_position'             (*str*) position of the color bar. Options are ``'top'``, ``'right'``, ``'bottom'`` and ``'left'``. Default is ``'right'``.
             'cbar_tick_labels'          (*list*) tick labels of the color bar.
             'cbar_ticks'                (*list*) ticks of the color bar.
-            'cbar_title'                (*str*) title of the color bar. Default is `''`.
-            'cbar_x_label'              (*str*) X-axis label of the color bar. Default is `''`.
-            'cbar_y_label'              (*str*) Y-axis label of the color bar. Default is `''`.
+            'cbar_title'                (*str*) title of the color bar. Default is ``''``.
+            'cbar_x_label'              (*str*) X-axis label of the color bar. Default is ``''``.
+            'cbar_y_label'              (*str*) Y-axis label of the color bar. Default is ``''``.
             'colors'                    (*list*) colors of the 1D plots. If not provided, the palette colors are used.
-            'component'                 (*str*) component of complex value. Options are `'real'` or `'imag'`. Default is `'real'`.
-            'font_math'                 (*str*) math renderer for fonts. Options are `'dejavusans'`, `'dejavuserif'`, `'cm'`, `'stix'` and `'stixsans'`. Default is `'cm'`.
-            'height'                    (*float*) height of the plot. Default is `5.0`.
+            'component'                 (*str*) component of complex value. Options are ``'real'`` or ``'imag'``. Default is ``'real'``.
+            'font_math'                 (*str*) math renderer for fonts. Options are ``'dejavusans'``, ``'dejavuserif'``, ``'cm'``, ``'stix'`` and ``'stixsans'``. Default is ``'cm'``.
+            'height'                    (*float*) height of the plot. Default is ``5.0``.
             'legend_labels'             (*list*) labels of the legend. If a twin axis exists, the legend is not displayed.
-            'legend_location'           (*bool*) location of the legend. Options are `'best'`, `'center'`, `'center left'`, `'center right'`, `'lower center'`, `'lower left'`, `'lower right'`, `'right'`, `'upper center'`, `'upper left'` and `'upper right'`. Default is `'best'`.
-            'palette'                   (*str*) color palette of the plot. Refer to `default_palettes` attribute for available options. Default is `'RdBu_r'`.
-            'show_cbar'                 (*bool*) option to show the color bar. Default is `False`.
-            'show_legend'               (*bool*) option to show the legend. Default is `False`.
-            'sizes'                     (*list*) size values for 1D plots. If not provided, a default value of `1.0` is used for each plot.
-            'styles'                    (*list*) styles for 1D plots. If not provided, styles are set serially from `default_linestyles` (for line plots) and `default_markers` (for scatter plots) attributes.
-            'type'                      (*str*) type of the plot. Refer to ``Notes`` below for all available options. Default is `'lines'`.
-            'view_aspect'               (*list*) aspect ratios of the 3D axes. Default is `[1.0, 1.0, 1.0]`.
-            'view_elevation'            (*float*) elevation for 3D view on Z-axis. Default is `32.0`.
-            'view_rotation'             (*float*) rotation for 3D view about Z-axis in degrees. Default is `215.0`.
-            'vertical_spans'            (*list*) vertical background spanning dictionaries for the plot. Refer to ``Notes`` below for currently supported keys.
-            'width'                     (*float*) width of the plot. Default is `'5.0'`.
+            'legend_location'           (*bool*) location of the legend. Options are ``'best'``, ``'center'``, ``'center left'``, ``'center right'``, ``'lower center'``, ``'lower left'``, ``'lower right'``, ``'right'``, ``'upper center'``, ``'upper left'`` and ``'upper right'``. Default is ``'best'``.
+            'palette'                   (*str*) color palette of the plot. Refer to ``default_palettes`` attribute for available options. Default is ``'RdBu_r'``.
+            'show_cbar'                 (*bool*) option to show the color bar. Default is ``False``.
+            'show_legend'               (*bool*) option to show the legend. Default is ``False``.
+            'sizes'                     (*list*) size values for 1D plots. If not provided, a default value of ``1.0`` is used for each plot.
+            'styles'                    (*list*) styles for 1D plots. If not provided, styles are set serially from ``default_linestyles`` (for line plots) and ``default_markers`` (for scatter plots) attributes.
+            'type'                      (*str*) type of the plot. Refer to **Notes** below for all available options. Default is ``'lines'``.
+            'view_aspect'               (*list*) aspect ratios of the 3D axes. Default is ``[1.0, 1.0, 1.0]``.
+            'view_elevation'            (*float*) elevation for 3D view on Z-axis. Default is ``32.0``.
+            'view_rotation'             (*float*) rotation for 3D view about Z-axis in degrees. Default is ``215.0``.
+            'vertical_spans'            (*list*) vertical background spanning dictionaries for the plot. Refer to **Notes** below for currently supported keys.
+            'width'                     (*float*) width of the plot. Default is ``'5.0'``.
             ========================    ====================================================
     cb_update : callable
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
 
     Notes
     -----
@@ -97,59 +97,59 @@ class BasePlotter():
             'surface_cz'        surface plot with projection on Z-axis.
             ================    ====================================================
         
-        The properties of each axis (`'X'`, `'Y'`, `'Z'`, `'V'` and `'V_twin'`) can be set by prefixing the specific property with the lower-case name of the axis and an underscore, e.g. `'v_label'`. Currently supported keys are:
+        The properties of each axis (``'X'``, ``'Y'``, ``'Z'``, ``'V'`` and ``'V_twin'``) can be set by prefixing the specific property with the lower-case name of the axis and an underscore, e.g. ``'v_label'``. Currently supported keys are:
             ================    ================================================
             key                 value
             ================    ================================================
-            'label'             (*str*) text of the axis label. If not provided, the values of `'name'` and `'unit'` are used for the label.
-            'label_color'       (*str* or *int*) color of the axis label as an index from the color palette or a supported color string. Default is `'k'`.
-            'label_pad'         (*int*) padding of the axis label. Default is `4`.
+            'label'             (*str*) text of the axis label. If not provided, the values of ``'name'`` and ``'unit'`` are used for the label.
+            'label_color'       (*str* or *int*) color of the axis label as an index from the color palette or a supported color string. Default is ``'k'``.
+            'label_pad'         (*int*) padding of the axis label. Default is ``4``.
             'limits'            (*list*) minimum and maximum limits for the axis.
             'name'              (*str*) display name of the axis.
-            'scale'             (*str*) step scale for the values. Options are `'linear'` (fallback) and `'log'`. Default is `'linear'`.
-            'tick_color'        (*str* or *int*) color of the axis label as an index from the color palette or a supported color string. Default is `'k'`.
-            'tick_dim'          (*float*) dimension of the ticks. Default is `'5'`.
+            'scale'             (*str*) step scale for the values. Options are ``'linear'`` (fallback) and ``'log'``. Default is ``'linear'``.
+            'tick_color'        (*str* or *int*) color of the axis label as an index from the color palette or a supported color string. Default is ``'k'``.
+            'tick_dim'          (*float*) dimension of the ticks. Default is ``'5'``.
             'tick_labels'       (*list*) tick labels of the plots.
-            'tick_pad'          (*int*) padding of the tick labels. Default is `'8'`.
-            'tick_position'     (*str*) position of ticks on the plot. Options are `'both-in'`, `'both-out'`, `'bottom-in'`, `'bottom-out'`, `'left-in'`, `'left-out'`, `'right-in'`, `'right-out'`, `'top-in'` and `'top-out'`. Default is `'both-in'`.
+            'tick_pad'          (*int*) padding of the tick labels. Default is ``'8'``.
+            'tick_position'     (*str*) position of ticks on the plot. Options are ``'both-in'``, ``'both-out'``, ``'bottom-in'``, ``'bottom-out'``, ``'left-in'``, ``'left-out'``, ``'right-in'``, ``'right-out'``, ``'top-in'`` and ``'top-out'``. Default is ``'both-in'``.
             'ticks'             (*list*) ticks of the plots.
             'ticks_minor'       (*list*) positions of minor ticks of the plots.
             'unit'              (*str*) unit of the plots.
             ================    ================================================
 
-        The font properties of each text type (`'label'`, `legend'`, `'tick'` and `'title'`) can be set by prefixing the specific property with the lower-case name of the type and an underscore, e.g. `'label_font_family'`. Currently supported keys are:
+        The font properties of each text type (``'label'``, ``legend'``, ``'tick'`` and ``'title'``) can be set by prefixing the specific property with the lower-case name of the type and an underscore, e.g. ``'label_font_family'``. Currently supported keys are:
             ================    ====================================================
             key                 value
             ================    ====================================================
-            'font_family'       (*str*) font family for the labels. Default is `'Times New Roman'`.
-            'font_size'         (*float*) font size for the labels. Default is `20.0` for `'label'` and `'title'` and `16.0` for `'legend'` and `'tick'`.
-            'font_stretch'      (*int*) font stretch for the labels. Default is `500`.
-            'font_style'        (*str*) font style for the labels. Default is `'normal'`.
-            'font_variant'      (*str*) font variant for the labels. Default is `'normal'`.
-            'font_weight'       (*int*) font weightt for the labels. Default is `500`.
+            'font_family'       (*str*) font family for the labels. Default is ``'Times New Roman'``.
+            'font_size'         (*float*) font size for the labels. Default is ``20.0`` for ``'label'`` and ``'title'`` and ``16.0`` for ``'legend'`` and ``'tick'``.
+            'font_stretch'      (*int*) font stretch for the labels. Default is ``500``.
+            'font_style'        (*str*) font style for the labels. Default is ``'normal'``.
+            'font_variant'      (*str*) font variant for the labels. Default is ``'normal'``.
+            'font_weight'       (*int*) font weightt for the labels. Default is ``500``.
             ================    ====================================================
 
-        The `'annotations'` array currently supports dictionaries with the following keys:
+        The ``'annotations'`` array currently supports dictionaries with the following keys:
             ================    ====================================================
             key                 value
             ================    ====================================================
-            'text'              (*str*) the text. Default is `''`.
-            'xy'                (*tuple*) tuple of positions of the text on the figure in fractions. Default is `(0.2, 0.8)`.
-            'color'             (*str* or *int*) color of the axis label as an index from the color palette or a supported color string. Default is `'k'`.
-            'font_dict_type'    (*str*) the type of font dictionary. Options are `'label'`, `'legend'`, `'tick'` and `'title'`. Default is `'label'`.
-            'orientation'       (*str*) the orientation of the text. Options are `'horizontal'` and `'vertical'`. Default is `'horizontal'`.
+            'text'              (*str*) the text. Default is ``''``.
+            'xy'                (*tuple*) tuple of positions of the text on the figure in fractions. Default is ``(0.2, 0.8)``.
+            'color'             (*str* or *int*) color of the axis label as an index from the color palette or a supported color string. Default is ``'k'``.
+            'font_dict_type'    (*str*) the type of font dictionary. Options are ``'label'``, ``'legend'``, ``'tick'`` and ``'title'``. Default is ``'label'``.
+            'orientation'       (*str*) the orientation of the text. Options are ``'horizontal'`` and ``'vertical'``. Default is ``'horizontal'``.
             ================    ====================================================
 
-        The `'vertical_spans'` array currently supports dictionaries with the following keys:
+        The ``'vertical_spans'`` array currently supports dictionaries with the following keys:
             ========    ====================================================
             key         value
             ========    ====================================================
-            'limits'    (*list*) the minimum and maximum X-axis values as a tuple. Default is `(0.0, 0.0)`.
-            'color'     (*str* or *int*) color of the axis label as an index from the color palette or a supported color string. Default is `'k'`.
-            'alpha'     (*float*) the opacity value. Default is `0.25`.
+            'limits'    (*list*) the minimum and maximum X-axis values as a tuple. Default is ``(0.0, 0.0)``.
+            'color'     (*str* or *int*) color of the axis label as an index from the color palette or a supported color string. Default is ``'k'``.
+            'alpha'     (*float*) the opacity value. Default is ``0.25``.
             ========    ====================================================
 
-    .. note:: Color palettes and font properties are currently backed by `matplotlib`. 
+    .. note:: Color palettes and font properties are currently backed by ``matplotlib``. 
     """
 
     # color palettes
@@ -160,7 +160,7 @@ class BasePlotter():
     }
     """dict : Custom diverging palettes."""
     default_palettes = ['Accent', 'Accent_r', 'Blues', 'Blues_r', 'BrBG', 'BrBG_r', 'BuGn', 'BuGn_r', 'BuPu', 'BuPu_r', 'CMRmap', 'CMRmap_r', 'Dark2', 'Dark2_r', 'GnBu', 'GnBu_r', 'Greens', 'Greens_r', 'Greys', 'Greys_r', 'OrRd', 'OrRd_r', 'Oranges', 'Oranges_r', 'PRGn', 'PRGn_r', 'Paired', 'Paired_r', 'Pastel1', 'Pastel1_r', 'Pastel2', 'Pastel2_r', 'PiYG', 'PiYG_r', 'PuBu', 'PuBuGn', 'PuBuGn_r', 'PuBu_r', 'PuOr', 'PuOr_r', 'PuRd', 'PuRd_r', 'Purples', 'Purples_r', 'RdBu', 'RdBu_r', 'RdGy', 'RdGy_r', 'RdPu', 'RdPu_r', 'RdYlBu', 'RdYlBu_r', 'RdYlGn', 'RdYlGn_r', 'Reds', 'Reds_r', 'Set1', 'Set1_r', 'Set2', 'Set2_r', 'Set3', 'Set3_r', 'Spectral', 'Spectral_r', 'Wistia', 'Wistia_r', 'YlGn', 'YlGnBu', 'YlGnBu_r', 'YlGn_r', 'YlOrBr', 'YlOrBr_r', 'YlOrRd', 'YlOrRd_r', 'afmhot', 'afmhot_r', 'autumn', 'autumn_r', 'binary', 'binary_r', 'bone', 'bone_r', 'brg', 'brg_r', 'bwr', 'bwr_r', 'cividis', 'cividis_r', 'cool', 'cool_r', 'coolwarm', 'coolwarm_r', 'copper', 'copper_r', 'cubehelix', 'cubehelix_r', 'flag', 'flag_r', 'gist_earth', 'gist_earth_r', 'gist_gray', 'gist_gray_r', 'gist_heat', 'gist_heat_r', 'gist_ncar', 'gist_ncar_r', 'gist_rainbow', 'gist_rainbow_r', 'gist_stern', 'gist_stern_r', 'gist_yarg', 'gist_yarg_r', 'gnuplot', 'gnuplot2', 'gnuplot2_r', 'gnuplot_r', 'gray', 'gray_r', 'hot', 'hot_r', 'hsv', 'hsv_r', 'icefire', 'icefire_r', 'inferno', 'inferno_r', 'magma', 'magma_r', 'mako', 'mako_r', 'nipy_spectral', 'nipy_spectral_r', 'ocean', 'ocean_r', 'pink', 'pink_r', 'plasma', 'plasma_r', 'prism', 'prism_r', 'rainbow', 'rainbow_r', 'rocket', 'rocket_r', 'seismic', 'seismic_r', 'spring', 'spring_r', 'summer', 'summer_r', 'tab10', 'tab10_r', 'tab20', 'tab20_r', 'tab20b', 'tab20b_r', 'tab20c', 'tab20c_r', 'terrain', 'terrain_r', 'twilight', 'twilight_r', 'twilight_shifted', 'twilight_shifted_r', 'viridis', 'viridis_r', 'vlag', 'vlag_r', 'winter', 'winter_r']
-    """list : Default `seaborn` palettes."""
+    """list : Default ``seaborn`` palettes."""
     
     # types of plots
     types_1D = ['line', 'lines', 'scatter', 'scatters']
@@ -337,7 +337,7 @@ class BasePlotter():
         ----------
         params : dict
             Plot parameters passed.
-        font_dict_type : {`'label'`, `legend'`, `'tick'`, `'title'`}
+        font_dict_type : {``'label'``, ``legend'``, ``'tick'``, ``'title'``}
             Type of font dictionary.
 
         Returns
@@ -385,7 +385,7 @@ class BasePlotter():
         """
 
         # validate parameters
-        assert type(palette) is str or type(palette) is list, "Parameter `palette` should be either a string or a list"
+        assert type(palette) is str or type(palette) is list, "Parameter ``palette`` should be either a string or a list"
 
         # if named color palette
         if type(palette) is str:
@@ -463,16 +463,16 @@ class BasePlotter():
 class BaseAxis():
     """Class to interface axes.
 
-    Initializes `bound`, `dim`, `label`, `label_color`, `label_pad`, `limits`, `name`, `scale`, `tick_dim`, `tick_labels`, `tick_pad`, `tick_position`, `ticks`, `ticks_minor`, `unit` and `val`. Inherited objects need to set the other properties individually.
+    Initializes ``bound``, ``dim``, ``label``, ``label_color``, ``label_pad``, ``limits``, ``name``, ``scale``, ``tick_dim``, ``tick_labels``, ``tick_pad``, ``tick_position``, ``ticks``, ``ticks_minor``, ``unit`` and ``val``. Inherited objects need to set the other properties individually.
 
     Parameters
     ----------
-    axis : {`'X'`, `'Y'`, `'Z'`, `'V'`, `'V_twin'`}
+    axis : {``'X'``, ``'Y'``, ``'Z'``, ``'V'``, ``'V_twin'``}
         Name of the axis.
     params : dict or list
         Parameters of the axis as a list of values, or a dictionary. Refer to :class:`qom.ui.plotters.base.BasePlotter` for currently supported keys.
     params_plotter : dict
-        Parameters for the plotter. Refer to ``Notes`` of :class:`qom.ui.plotters.base.BasePlotter` for all available options.
+        Parameters for the plotter. Refer to **Notes** of :class:`qom.ui.plotters.base.BasePlotter` for all available options.
     """
 
     axis_defaults = {
@@ -516,7 +516,7 @@ class BaseAxis():
             _val = params.get('val', None)
             # validate and update values
             if _val is not None:
-                assert len(_val) != 0, "Key `'{}'` should contain key `'val'` with a non-empty array".format(axis)
+                assert len(_val) != 0, "Key ``'{}'`` should contain key ``'val'`` with a non-empty array".format(axis)
                 self.val = _val
             # validate and initialize values
             else:
@@ -612,7 +612,7 @@ class BaseAxis():
             Maximum value of the range.
         dim : int
             Number of elements to consider.
-        scale : {`'linear'`, `'log'`}
+        scale : {``'linear'``, ``'log'``}
             Step scale for the values.
 
         Returns

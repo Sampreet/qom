@@ -12,7 +12,7 @@ References
 __name__ = 'qom.solvers.stability'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2020-12-03"
-__updated__ = "2023-07-10"
+__updated__ = "2023-07-12"
 
 # dependencies
 import logging
@@ -26,7 +26,7 @@ from ..io import Updater
 class RHCSolver():
     r"""Class to solve for stability using the Routh-Hurwitz criterion.
     
-    Initializes `As`, `Coeffs`, `params` and `updater`.
+    Initializes ``As``, ``Coeffs``, ``params`` and ``updater``.
 
     Parameters
     ----------
@@ -39,12 +39,12 @@ class RHCSolver():
             ================    ====================================================
             key                 value
             ================    ====================================================
-            'show_progress'     (*bool*) option to display the progress of the solver. Default is `False`.
+            'show_progress'     (*bool*) option to display the progress of the solver. Default is ``False``.
             ================    ====================================================
     cb_update : callable, optional
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
 
-    .. note:: At least one of the parameters `As` and `Coeffs` (preferably `Coeffs`) should be non-`None`.
+    .. note:: At least one of the parameters ``As`` and ``Coeffs`` (preferably ``Coeffs``) should be non-``None``.
     """
 
     # attributes
@@ -103,7 +103,7 @@ class RHCSolver():
         """
 
         # check inputs
-        assert self.As is not None, "`As` should be non-`None` to obtain `Coeffs`."
+        assert self.As is not None, "``As`` should be non-``None`` to obtain ``Coeffs``."
 
         # extract frequently used variables
         show_progress = self.params['show_progress']
@@ -163,12 +163,12 @@ class RHCSolver():
             0, ~ \mathrm{otherwise}
             \end{cases}
         
-        where the indices of :math:`M` are `1`-based.
+        where the indices of :math:`M` are ``1``-based.
         
         Returns
         -------
         Indices : numpy.ndarray
-            Indices where the sequence changes sign as `0`s and `1`s for each drift matrix.
+            Indices where the sequence changes sign as ``0``s and ``1``s for each drift matrix.
         """
 
         # if drift matrices are given
@@ -251,7 +251,7 @@ def get_counts_from_eigenvalues(As=None, Coeffs=None, params:dict={}, cb_update=
             'show_progress'     (*bool*) option to display the progress of the solver.
             ==================  ====================================================
     cb_update : callable, optional
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
     
     Returns
     -------

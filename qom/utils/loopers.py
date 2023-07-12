@@ -6,7 +6,7 @@
 __name__ = 'qom.utils.loopers'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2021-05-25"
-__updated__ = "2023-07-11"
+__updated__ = "2023-07-12"
 
 # dependencies
 import concurrent.futures as cf
@@ -32,7 +32,7 @@ def run_loopers_in_parallel(looper_name:str, func, params:dict, params_system:di
     
     Parameters
     ----------
-    looper_name : {`'XLooper'`, `'XYLooper'`, `'XYZLooper'`}
+    looper_name : {``'XLooper'``, ``'XYLooper'``, ``'XYZLooper'``}
         Name of the looper. Available options are:
             ==============  ================================================
             value           meaning
@@ -42,9 +42,9 @@ def run_loopers_in_parallel(looper_name:str, func, params:dict, params_system:di
             'XYZLooper'     3D looper (:class:`qom.loopers.axes.XYZLooper`).
             ==============  ================================================
     func : callable
-        Function to loop, formatted as `func(system_params)`, where `system_params` is a dictionary of the updated parameters for the system for that iteration of the looper.
+        Function to loop, formatted as ``func(system_params)``, where ``system_params`` is a dictionary of the updated parameters for the system for that iteration of the looper.
     params : dict
-        Parameters of the looper. Refer to ``Notes`` of :class:`qom.loopers.base.BaseLooper` for all available options.
+        Parameters of the looper. Refer to **Notes** of :class:`qom.loopers.base.BaseLooper` for all available options.
     params_system : dict
         Parameters of the system. If not provided, new keys are created for the looper variables.
     plot : bool, default=False
@@ -56,7 +56,7 @@ def run_loopers_in_parallel(looper_name:str, func, params:dict, params_system:di
     num_processes : int, optional
         Number of loopers to run in parallel. The slicing of the values is performed on the first axis. If not provided, then the number slices are determined automatically, throttled by the number of available cores.
     cb_update : callable
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
 
     Returns
     -------
@@ -65,7 +65,7 @@ def run_loopers_in_parallel(looper_name:str, func, params:dict, params_system:di
     """
 
     # validate loopers
-    assert looper_name in ['XLooper', 'XYLooper', 'XYZLooper'], "Parameter `looper_name` should be either `'XLooper'`, `'XYLooper'` or `'XYZLooper'`"
+    assert looper_name in ['XLooper', 'XYLooper', 'XYZLooper'], "Parameter ``looper_name`` should be either ``'XLooper'``, ``'XYLooper'`` or ``'XYZLooper'``"
 
     # frequently used variables
     p_start = time.time()
@@ -201,12 +201,12 @@ def run_loopers_in_parallel(looper_name:str, func, params:dict, params_system:di
     return looper
 
 def run_looper_instance(args):
-    """Function to run a single instance of `wrap_looper`.
+    """Function to run a single instance of ``wrap_looper``.
     
     Parameters
     ----------
     args : list
-        Arguments of the `wrap_looper` function.
+        Arguments of the ``wrap_looper`` function.
 
     Returns
     -------
@@ -233,7 +233,7 @@ def wrap_looper(looper_name:str, func, params:dict, params_system:dict, plot:boo
     
     Parameters
     ----------
-    looper_name : {`'XLooper'`, `'XYLooper'`, `'XYZLooper'`}
+    looper_name : {``'XLooper'``, ``'XYLooper'``, ``'XYZLooper'``}
         Name of the looper. Available options are:
             ==============  ================================================
             value           meaning
@@ -243,9 +243,9 @@ def wrap_looper(looper_name:str, func, params:dict, params_system:dict, plot:boo
             'XYZLooper'     3D looper (:class:`qom.loopers.axes.XYZLooper`).
             ==============  ================================================
     func : callable
-        Function to loop, formatted as `func(system_params)`, where `system_params` is a dictionary of the updated parameters for the system for that iteration of the looper.
+        Function to loop, formatted as ``func(system_params)``, where ``system_params`` is a dictionary of the updated parameters for the system for that iteration of the looper.
     params : dict
-        Parameters of the looper. Refer to ``Notes`` of :class:`qom.loopers.base.BaseLooper` for all available options.
+        Parameters of the looper. Refer to **Notes** of :class:`qom.loopers.base.BaseLooper` for all available options.
     params_system : dict
         Parameters of the system. If not provided, new keys are created for the looper variables.
     plot : bool, default=False
@@ -253,7 +253,7 @@ def wrap_looper(looper_name:str, func, params:dict, params_system:dict, plot:boo
     params_plotter : dict, optional
         Parameters of the plotter.
     cb_update : callable
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
     parallel : bool, default=False
         Option to format outputs when running in parallel.
     p_index : int, default=0
@@ -268,7 +268,7 @@ def wrap_looper(looper_name:str, func, params:dict, params_system:dict, plot:boo
     """
 
     # validate loopers
-    assert looper_name in ['XLooper', 'XYLooper', 'XYZLooper'], "Parameter `looper_name` should be either `'XLooper'`, `'XYLooper'` or `'XYZLooper'`"
+    assert looper_name in ['XLooper', 'XYLooper', 'XYZLooper'], "Parameter ``looper_name`` should be either ``'XLooper'``, ``'XYLooper'`` or ``'XYZLooper'``"
 
     # initialize logger
     init_log(parallel=parallel)
@@ -312,7 +312,7 @@ def plot_looper_results(looper, params_plotter:dict):
     looper : :class:`qom.loopers.axes.*`
         Instance of the looper.
     params_plotter : dict
-        Parameters of the plotter. Refer to ``Notes`` of :class:`qom.ui.plotters.base.BasePlotter` for all available parameters.
+        Parameters of the plotter. Refer to **Notes** of :class:`qom.ui.plotters.base.BasePlotter` for all available parameters.
     """
     
     # initialize plot

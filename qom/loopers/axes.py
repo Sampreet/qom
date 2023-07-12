@@ -6,7 +6,7 @@
 __name__ = 'qom.loopers.axes'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2020-12-21"
-__updated__ = "2023-07-10"
+__updated__ = "2023-07-12"
 
 # dependencies
 import numpy as np
@@ -20,13 +20,13 @@ class XLooper(BaseLooper):
     Parameters
     ----------
     func : callable
-        Function to loop, formatted as `func(system_params)`, where `system_params` is a dictionary of the updated parameters for the system for that iteration of the looper.
+        Function to loop, formatted as ``func(system_params)``, where ``system_params`` is a dictionary of the updated parameters for the system for that iteration of the looper.
     params : dict
-        Parameters of the looper containing the key `'X'`, each with the keys `'var'` and `'val'` (or `'min'`, `'max'` and `'dim'`) for the name of the parameter to loop and its corresponding values (or minimum and maximum values along with dimension). Refer to ``Notes`` of :class:`qom.loopers.base.BaseLooper` for all available options.
+        Parameters of the looper containing the key ``'X'``, each with the keys ``'var'`` and ``'val'`` (or ``'min'``, ``'max'`` and ``'dim'``) for the name of the parameter to loop and its corresponding values (or minimum and maximum values along with dimension). Refer to **Notes** of :class:`qom.loopers.base.BaseLooper` for all available options.
     params_system : dict, optional
         Parameters of the system. If not provided, new keys are created for the looper variables.
     cb_update : callable, optional
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
     parallel : bool, default=False
         Option to format outputs when running in parallel.
     p_index : int, default=0
@@ -61,7 +61,7 @@ class XLooper(BaseLooper):
         Returns
         -------
         results : dict
-            Axes and calculated values containing the keys `'X'` and `'V'`.
+            Axes and calculated values containing the keys ``'X'`` and ``'V'``.
         """
 
         # get X-axis values
@@ -92,13 +92,13 @@ class XYLooper(BaseLooper):
     Parameters
     ----------
     func : callable
-        Function to loop, formatted as `func(system_params)`, where `system_params` is a dictionary of the updated parameters for the system for that iteration of the looper.
+        Function to loop, formatted as ``func(system_params)``, where ``system_params`` is a dictionary of the updated parameters for the system for that iteration of the looper.
     params : dict
-        Parameters of the looper containing the key `'X'` and `'Y'`, each with the keys `'var'` and `'val'` (or `'min'`, `'max'` and `'dim'`) for the name of the parameter to loop and its corresponding values (or minimum and maximum values along with dimension). Refer to ``Notes`` of :class:`qom.loopers.base.BaseLooper` for all available options.
+        Parameters of the looper containing the key ``'X'`` and ``'Y'``, each with the keys ``'var'`` and ``'val'`` (or ``'min'``, ``'max'`` and ``'dim'``) for the name of the parameter to loop and its corresponding values (or minimum and maximum values along with dimension). Refer to **Notes** of :class:`qom.loopers.base.BaseLooper` for all available options.
     params_system : dict, optional
         Parameters of the system. If not provided, new keys are created for the looper variables.
     cb_update : callable, optional
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
     parallel : bool, default=False
         Option to format outputs when running in parallel.
     p_index : int, default=0
@@ -133,7 +133,7 @@ class XYLooper(BaseLooper):
         Returns
         -------
         results : dict
-            Axes and calculated values containing the keys `'X'`, `'Y'` and `'V'`. If the value of the parameter `'grad'` is set to `True` and `'grad_position'` is not `'all'`, then the key `'Y'` is not returned.
+            Axes and calculated values containing the keys ``'X'``, ``'Y'`` and ``'V'``. If the value of the parameter ``'grad'`` is set to ``True`` and ``'grad_position'`` is not ``'all'``, then the key ``'Y'`` is not returned.
         """
 
         # extract frequently used variables
@@ -207,13 +207,13 @@ class XYZLooper(BaseLooper):
     Parameters
     ----------
     func : callable
-        Function to loop, formatted as `func(system_params)`, where `system_params` is a dictionary of the updated parameters for the system for that iteration of the looper.
+        Function to loop, formatted as ``func(system_params)``, where ``system_params`` is a dictionary of the updated parameters for the system for that iteration of the looper.
     params : dict
-        Parameters of the looper containing the key `'X'`, `'Y'` and `'Z'`, each with the keys `'var'` and `'val'` (or `'min'`, `'max'` and `'dim'`) for the name of the parameter to loop and its corresponding values (or minimum and maximum values along with dimension). Refer to ``Notes`` of :class:`qom.loopers.base.BaseLooper` for all available options.
+        Parameters of the looper containing the key ``'X'``, ``'Y'`` and ``'Z'``, each with the keys ``'var'`` and ``'val'`` (or ``'min'``, ``'max'`` and ``'dim'``) for the name of the parameter to loop and its corresponding values (or minimum and maximum values along with dimension). Refer to **Notes** of :class:`qom.loopers.base.BaseLooper` for all available options.
     params_system : dict, optional
         Parameters of the system. If not provided, new keys are created for the looper variables.
     cb_update : callable, optional
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
     parallel : bool, default=False
         Option to format outputs when running in parallel.
     p_index : int, default=0
@@ -248,7 +248,7 @@ class XYZLooper(BaseLooper):
         Returns
         -------
         results : dict
-            Axes and calculated values containing the keys `'X'`, `'Y'`. `'Z'` and `'V'`. If the value of the parameter `'grad'` is set to `True` and `'grad_position'` is not `'all'`, then the key `'Z'` is not returned.
+            Axes and calculated values containing the keys ``'X'``, ``'Y'``. ``'Z'`` and ``'V'``. If the value of the parameter ``'grad'`` is set to ``True`` and ``'grad_position'`` is not ``'all'``, then the key ``'Z'`` is not returned.
         """
 
         # extract frequently used variables

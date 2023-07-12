@@ -6,7 +6,7 @@
 __name__ = 'qom.io'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2023-05-28"
-__updated__ = "2023-07-06"
+__updated__ = "2023-07-12"
 
 # dependencies
 import numpy as np
@@ -16,14 +16,14 @@ import time
 class Updater():
     r"""Class to update the logs and progress callbacks.
 
-    Initializes `logger` and `cb_update`.
+    Initializes ``logger`` and ``cb_update``.
 
     Parameters
     ----------
     logger : :class:`logging.logger`
         Module logger.
     cb_update : callable, optional
-        Callback function to update status and progress, formatted as `cb_update(status, progress, reset)`, where `status` is a string, `progress` is a float and `reset` is a boolean.
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
     parallel : bool, default=False
         Option to format outputs when running in parallel.
     p_index : int, default=0
@@ -149,7 +149,7 @@ class Updater():
     def exists(self, file_path:str):
         """Function to validate the data file.
 
-        If a file with an `'.npy'` extension is found, the same is converted to `'.npz'`.
+        If a file with an ``'.npy'`` extension is found, the same is converted to ``'.npz'``.
         
         Parameters
         ----------

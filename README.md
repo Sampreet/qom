@@ -1,9 +1,10 @@
 # The Quantum Optomechanics Toolbox
 
-![Version](https://img.shields.io/badge/version-1.0.0-red?style=for-the-badge)
+![Latest Version](https://img.shields.io/badge/version-1.0.0-red?style=for-the-badge)
 [![Last Commit](https://img.shields.io/github/last-commit/sampreet/qom?style=for-the-badge)](https://github.com/Sampreet/qom/blob/master/CHANGELOG.md)
 
-[![Latest Release](https://img.shields.io/github/release-date/sampreet/qom?style=flat-square&label=Latest%20Release)](https://github.com/Sampreet/qom/releases/tag/v0.9.0)
+
+[![Last Release](https://img.shields.io/github/release-date/sampreet/qom?style=flat-square&label=Last%20Release)](https://github.com/Sampreet/qom/releases/tag/v0.9.0)
 [![Open Issues](https://img.shields.io/github/issues-raw/sampreet/qom?style=flat-square)](https://github.com/Sampreet/qom/issues?q=is%3Aopen+is%3Aissue)
 [![Closed Issues](https://img.shields.io/github/issues-closed-raw/sampreet/qom?style=flat-square)](https://github.com/Sampreet/qom/issues?q=is%3Aissue+is%3Aclosed)
 
@@ -65,31 +66,50 @@ Backed by numerical libraries like NumPy and SciPy, and featuring the highly cus
 
 ### Dependencies
 
-The project requires `Python 3.8+` installed, preferably via the [Anaconda distribution](https://www.anaconda.com/download).
+The toolbox requires `Python 3.8+` installed, preferably via the [Anaconda distribution](https://www.anaconda.com/download).
+Once `Anaconda` is set up, create and activate a new `conda` environment using:
+
+```bash
+conda create -n qom python
+conda activate qom
+```
+
+The toolbox relies primarily on the libraries `numpy` (for fast numerical algebra), `scipy` (for numerical methods), `sympy` (for symbolic algebra), `seaborn` (for color palettes) and `matplotlib` (for plotting results).
+These should be installed separately before installing the toolbox using:
+
+```bash
+conda install matplotlib numpy scipy sympy seaborn
+```
 
 ***Note: To run the GUI modules, `pyqt` should be installed separately.***
 
-### Installing from PyPI
+Once the dependencies are installed, the toolbox can be installed via PyPI (last release: v0.9.0) or locally (latest version: v1.0.0).
 
-To install the package and its requirements from the Python Package Index, execute: 
+### Installing via PyPI
+
+To install the last release via the Python Package Index, execute: 
 
 ```bash
 pip install -i https://test.pypi.org/simple/ qom
 ```
 
+The corresponding documentation is available [here](https://sampreet.github.io/qom-docs/v0.9.0).
+
 ### Installing Locally
 
-To install the package locally, download the repository as `.zip` and extract the contents.
-Now, execute the following from *outside* the top-level directory, `ROOT_DIR`, inside which `setup.py` is located:
+To install the latest version locally, download the repository as `.zip` and extract the contents.
+Now, execute the following from *outside* the top-level directory, `ROOT_DIR`, inside which `setup.py` is located (refer to the file structure [here](./CONTRIBUTING.md)):
 
 ```bash
 pip install -e ROOT_DIR
 ```
 
+The corresponding documentation is available [here](https://sampreet.github.io/qom-docs).
+
 ## Basic Usage
 
 The library features easy-to-use functions to calculate as well as visualize the trend of several quantum signatures.
-Documentations of current modules are available on the [module index page](https://sampreet.github.io/qom-docs/py-modindex.html).
+A complete API documentation is available in the [official website](https://sampreet.github.io/qom-docs).
 
 ### Loopers
 
@@ -136,13 +156,15 @@ For example, the built-in function `get_mean_optical_occupancies` returns the in
 
 ```python
 # initialize the system with system parameters
-system = MySystem(system_params)
+system = MySystem(
+    params=system_params
+)
 # obtain mean occupancy of the optical mode
-N_os, _ = system.get_mean_optical_occupancies()
+N_os = system.get_mean_optical_occupancies()
 ```
 
 Here, `MySystem` is a class inheriting `BaseSystem`, initialized by `system_params`, which is a dictionary containing the parameters of the system.
-The complete documentation of the systems is available [here](https://sampreet.github.io/qom-docs/qom.systems.html).
+The complete documentation of the `BaseSystem` class is available [here](https://sampreet.github.io/qom-docs/qom.systems.base.html).
 
 ### UI
 
@@ -151,23 +173,16 @@ Plotters wrap independent visualization packages of Python under an equivalent s
 An implementation of `qom.ui.plotters.MPLPlotter` wrapping the `matplotlib` package is given below:
 
 ```python
-# all axes
-axes = {
-    'X': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-    'V': [0, 1, 4, 9, 16, 25, 36, 49, 64, 81, 100]
-}
-
-# parameters of the plotter
-params = {
-    'type': 'line',
-    'x_label': 'x',
-    'y_label': '$x^{2}$'
-}
-
 # initialize the plotter
-plotter = MPLPlotter(axes={}, params=params)
+plotter = MPLPlotter(
+    axes={},
+    params=plotter_params
+)
 # update the plot
-plotter.update(vs=axes['V'], xs=axes['X'])
+plotter.update(
+    vs=vs,
+    xs=xs
+)
 # display the plot
 plotter.show()
 ```
@@ -196,8 +211,6 @@ wrap_looper(
 ```
 
 Alternatively, parallel instances of the loopers can be run using the `qom.utils.loopers.run_loopers_in_parallel` function.
-
-A complete API documentation is available in the [official website](https://sampreet.github.io/qom-docs).
 
 ## Contributing
 
