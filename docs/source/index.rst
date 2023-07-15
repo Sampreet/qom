@@ -90,13 +90,15 @@ Examples
    * - Wigner distribution depicting the evolution of mechanical squeezing in a modulated optomechanical system.
      - Soliton propagation in an array of optomechanical systems at different phase lags between the input solitons.
 
+A set of notebooks and scripts to demonstrate the usage of the toolbox can be found `here <https://github.com/sampreet/qom-examples>`_.
+
 Installation
 ============
 
 Dependencies
 ------------
 
-The toolbox requires ``Python 3.8+`` installed, preferably via the `Anaconda distribution <https://www.anaconda.com/download>`_.
+`The Quantum Optomechanics Toolbox <https://github.com/sampreet/qom>`_ requires ``Python 3.8+``, preferably installed via the `Anaconda distribution <https://www.anaconda.com/download>`_.
 Once ``Anaconda`` is set up, create and activate a new ``conda`` environment using:
 
 .. code-block:: bash
@@ -104,8 +106,8 @@ Once ``Anaconda`` is set up, create and activate a new ``conda`` environment usi
    conda create -n qom python
    conda activate qom
 
-The toolbox relies primarily on the libraries ``numpy`` (for fast numerical algebra), ``scipy`` (for numerical methods), ``sympy`` (for symbolic algebra), ``seaborn`` (for color palettes) and ``matplotlib`` (for plotting results).
-These should be installed separately before installing the toolbox using:
+The toolbox primarily relies on ``numpy`` (for fast numerical algebra), ``scipy`` (for numerical methods), ``sympy`` (for symbolic algebra), ``seaborn`` (for color palettes) and ``matplotlib`` (for plotting results).
+These libraries can be installed using:
 
 .. code-block:: bash
 
@@ -130,7 +132,7 @@ Installing Locally
 ------------------
 
 To install the package locally, download `the repository <https://github.com/sampreet/qom>`_ as ``.zip`` and extract the contents.
-Now, execute the following from *outside* the top-level directory, ``ROOT_DIR``, inside which ``setup.py`` is located (refer to the file structure `here <https://github.com/Sampreet/qom/blob/master/CONTRIBUTING.md>`_):
+Now, execute the following from *outside* the top-level directory, ``ROOT_DIR``, inside which ``setup.py`` is located (refer to the file structure `here <https://github.com/sampreet/qom/blob/master/CONTRIBUTING.md>`_):
 
 .. code-block:: bash
 
@@ -141,7 +143,7 @@ The corresponding documentation is available `here <https://sampreet.github.io/q
 Citing
 ======
 
-Please cite `S. Kalita and A. K. Sarma, *The QOM Toolbox: An object-oriented Python framework for cavity optomechanical systems*, Proceedings of Eighth International Congress on Information and Communication Technology **3**, Springer Singapore (2023) <https://github.com/Sampreet/qom/blob/master/CITATION.bib>`_ if you use our work in your research.
+Please cite `S. Kalita and A. K. Sarma, *The QOM Toolbox: An object-oriented Python framework for cavity optomechanical systems*, Proceedings of Eighth International Congress on Information and Communication Technology **3**, Springer Singapore (2023) <https://github.com/sampreet/qom/blob/master/CITATION.bib>`_ if you use our work in your research.
 
 Available Modules
 =================

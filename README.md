@@ -1,12 +1,11 @@
 # The Quantum Optomechanics Toolbox
 
 ![Latest Version](https://img.shields.io/badge/version-1.0.0-red?style=for-the-badge)
-[![Last Commit](https://img.shields.io/github/last-commit/sampreet/qom?style=for-the-badge)](https://github.com/Sampreet/qom/blob/master/CHANGELOG.md)
+[![Last Commit](https://img.shields.io/github/last-commit/sampreet/qom?style=for-the-badge)](https://github.com/sampreet/qom/blob/master/CHANGELOG.md)
 
-
-[![Last Release](https://img.shields.io/github/release-date/sampreet/qom?style=flat-square&label=Last%20Release)](https://github.com/Sampreet/qom/releases/tag/v0.9.0)
-[![Open Issues](https://img.shields.io/github/issues-raw/sampreet/qom?style=flat-square)](https://github.com/Sampreet/qom/issues?q=is%3Aopen+is%3Aissue)
-[![Closed Issues](https://img.shields.io/github/issues-closed-raw/sampreet/qom?style=flat-square)](https://github.com/Sampreet/qom/issues?q=is%3Aissue+is%3Aclosed)
+[![Last Release](https://img.shields.io/github/release-date/sampreet/qom?style=flat-square&label=Last%20Release)](https://github.com/sampreet/qom/releases/tag/v0.9.0)
+[![Open Issues](https://img.shields.io/github/issues-raw/sampreet/qom?style=flat-square)](https://github.com/sampreet/qom/issues?q=is%3Aopen+is%3Aissue)
+[![Closed Issues](https://img.shields.io/github/issues-closed-raw/sampreet/qom?style=flat-square)](https://github.com/sampreet/qom/issues?q=is%3Aissue+is%3Aclosed)
 
 > A library of modules for computational quantum optomechanics... and beyond!
 
@@ -62,11 +61,13 @@ Backed by numerical libraries like NumPy and SciPy, and featuring the highly cus
 | ![Wigner](./docs/images/05_00_wigner.gif) | ![Soliton](./docs/images/05_01_soliton.gif) |
 | Wigner distribution depicting the evolution of mechanical squeezing in a modulated optomechanical system. | Soliton propagation in an array of optomechanical systems at different phase lags between the input solitons. |
 
+A set of notebooks and scripts to demonstrate the usage of the toolbox can be found [here](https://github.com/sampreet/qom-examples).
+
 ## Installation
 
 ### Dependencies
 
-The toolbox requires `Python 3.8+` installed, preferably via the [Anaconda distribution](https://www.anaconda.com/download).
+[The Quantum Optomechanics Toolbox](https://github.com/sampreet/qom) requires `Python 3.8+`, preferably installed via the [Anaconda distribution](https://www.anaconda.com/download).
 Once `Anaconda` is set up, create and activate a new `conda` environment using:
 
 ```bash
@@ -74,8 +75,8 @@ conda create -n qom python
 conda activate qom
 ```
 
-The toolbox relies primarily on the libraries `numpy` (for fast numerical algebra), `scipy` (for numerical methods), `sympy` (for symbolic algebra), `seaborn` (for color palettes) and `matplotlib` (for plotting results).
-These should be installed separately before installing the toolbox using:
+The toolbox primarily relies on `numpy` (for fast numerical algebra), `scipy` (for numerical methods), `sympy` (for symbolic algebra), `seaborn` (for color palettes) and `matplotlib` (for plotting results).
+These libraries can be installed using:
 
 ```bash
 conda install matplotlib numpy scipy sympy seaborn

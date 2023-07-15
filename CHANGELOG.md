@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.0 - 2023/07/13 - 00 - Updated README
+* Updated `docs/source/index`.
+* Updated `README`.
+
 ## v1.0.0 - 2023/07/12 - 00 - Updated Documentation
 * Updated docstrings in all modules.
 * Added option to select DPI while saving plots.
