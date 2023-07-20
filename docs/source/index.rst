@@ -32,6 +32,17 @@ What's New in v1.0!
    * - Runtimes for the calculation of dynamical stability of the steady state using the Routh-Hurwitz criteria.
      - Runtimes for the calculation of average entanglement from the dynamical values of modes and correlations.
 
+Up Next!
+--------
+
+.. list-table::
+   :widths: 100
+   :header-rows: 1
+
+   * - Monte-Carlo Quantum Trajectories
+   * - .. image:: ../images/00_02_mcqt.png
+   * - Comparison of runtimes for the Jaynes-Cummings Hamiltonian.
+
 Examples
 --------
 

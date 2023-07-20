@@ -21,8 +21,8 @@ Backed by numerical libraries like NumPy and SciPy, and featuring the highly cus
 ### What's New in v1.0!
 
 * Non-linear Schrodinger equation solver with integration support.
- Attractor detection and bifurcation for non-linear dynamical systems.
-- Huge performance boost with NumPy-based vectorization.
+* Attractor detection and bifurcation for non-linear dynamical systems.
+* Huge performance boost with NumPy-based vectorization.
 
 | Dynamical Stability | Quantum Correlations | 
 |---|---|
@@ -31,8 +31,10 @@ Backed by numerical libraries like NumPy and SciPy, and featuring the highly cus
 
 ### Up Next!
 
-- [ ] Solvers for Stochastic Dynamical Processes.
-- [ ] Support for Delay Differential Equations.
+| Monte-Carlo Quantum Trajectories | 
+|---|
+| ![Stability](./docs/images/00_02_mcqt.png) |
+| Comparison of runtimes for the Jaynes-Cummings Hamiltonian. |
 
 ## Examples
 

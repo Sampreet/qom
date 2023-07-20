@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.0 - 2023/07/20 - 00 - Updated README
+* Updated `docs/source/index`.
+* Removed `pyproject.toml`.
+* Updated `README`.
+
 ## v1.0.0 - 2023/07/13 - 00 - Updated README
 * Updated `docs/source/index`.
 * Updated `README`.
