@@ -26,12 +26,11 @@ References
 __name__ = 'qom.solvers.measure'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2021-01-04"
-__updated__ = "2023-07-12"
+__updated__ = "2023-08-13"
 
 # dependencies
 from typing import Union
 import inspect
-import logging
 import numpy as np
 import scipy.linalg as sl
 
@@ -103,7 +102,7 @@ class QCMSolver():
 
         # set updater
         self.updater = Updater(
-            logger=logging.getLogger('qom.solvers.QCMSolver'),
+            name='qom.solvers.QCMSolver',
             cb_update=cb_update
         )
         
@@ -673,7 +672,7 @@ def get_Lyapunov_exponents(system, modes, t=None, params:dict={}, cb_update=None
 
     # set updater
     updater = Updater(
-        logger=logging.getLogger(__name__),
+        name=__name__,
         cb_update=cb_update
     )
 
@@ -865,7 +864,7 @@ def get_system_measures(system, Modes, T=None, params:dict={}, cb_update=None):
 
     # set updater
     updater = Updater(
-        logger=logging.getLogger(__name__),
+        name=__name__,
         cb_update=cb_update
     )
 
@@ -920,7 +919,7 @@ def get_Wigner_distributions_single_mode(Corrs, params, cb_update=None):
         key                 value
         ================    ====================================================
         'show_progress'     (*bool*) option to display the progress of the solver. Default is ``False``.
-        'indices'           (*list* or *tuple*) indices of the modes as a list, or a tuple of two integers. Default is ``[0]``.
+        'indices'           (*list* or *tuple*) indices of the modes as a list. Default is ``[0]``.
         'wigner_xs'         (*list*) X-axis values.
         'wigner_ys'         (*list*) Y-axis values.
         ================    ====================================================
@@ -939,24 +938,27 @@ def get_Wigner_distributions_single_mode(Corrs, params, cb_update=None):
         is_corrs_required=True
     )
 
+    # validate indices
+    indices = params.get('indices', [0])
+    assert isinstance(indices, Union[list, tuple].__args__), "Solver parameter ``'indices'`` should be a ``list`` or ``tuple`` of mode indices"
+
     # validate axes
     xs = params.get('wigner_xs', None)
     ys = params.get('wigner_ys', None)
     for val in [xs, ys]:
-        assert val is not None and (type(val) is list or type(val) is np.ndarray), "Solver parameters 'wigner_xs' and 'wigner_ys' should be either NumPy arrays or ``list``"
+        assert val is not None and (type(val) is list or type(val) is np.ndarray), "Solver parameters ``'wigner_xs'`` and ``'wigner_ys'`` should be either NumPy arrays or ``list``"
     # handle list
     xs = np.array(xs, dtype=np.float_) if type(xs) is list else xs
     ys = np.array(ys, dtype=np.float_) if type(xs) is list else ys
 
     # set updater
     updater = Updater(
-        logger=logging.getLogger(__name__),
+        name=__name__,
         cb_update=cb_update
     )
 
     # extract frequently used variables
     show_progress = params.get('show_progress', False)
-    indices = params.get('indices', [0])
     dim_m = len(indices)
     dim_c = len(Corrs)
     dim_w = len(ys) * len(xs)
@@ -996,6 +998,118 @@ def get_Wigner_distributions_single_mode(Corrs, params, cb_update=None):
                     )
                 # wigner function
                 Wigners[:, j, idx_y, idx_x] = np.exp(- 0.5 * np.dot(Vects_t[idx_y, idx_x], _dots[idx_y, idx_x])[0]) / 2.0 / np.pi / np.sqrt(dets)
+
+    # display completion
+    if show_progress:
+        updater.update_info(
+            status="-" * 41 + "Measures Obtained"
+        )
+
+    return Wigners
+
+def get_Wigner_distributions_two_mode(Corrs, params, cb_update=None):
+    """Method to obtain two-mode Wigner distribitions.
+    
+    Parameters
+    ----------
+    Corrs : numpy.ndarray
+        Quadrature quadrature correlations with shape ``(dim, 2 * num_modes, 2 * num_modes)``.
+    params : dict
+        Parameters of the solver. Available options are:
+        ================    ====================================================
+        key                 value
+        ================    ====================================================
+        'show_progress'     (*bool*) option to display the progress of the solver. Default is ``False``.
+        'indices'           (*list* or *tuple*) list of indices of the modes and their quadratures as tuples or lists. Default is ``[(0, 0), (1, 0)]``.
+        'wigner_xs'         (*list*) X-axis values.
+        'wigner_ys'         (*list*) Y-axis values.
+        ================    ====================================================
+    cb_update : callable, optional
+        Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
+    
+    Returns
+    -------
+    Wigners : numpy.ndarray
+        Two-mode Wigner distributions of shape ``(dim_0, p_dim, q_dim)``, where ``dim_0`` is the first dimension of the correlations.
+    """
+
+    # validate correlations
+    validate_Modes_Corrs(
+        Corrs=Corrs,
+        is_corrs_required=True
+    )
+
+    # validate indices
+    indices = params.get('indices', [(0, 0), (1, 0)])
+    assert isinstance(indices, Union[list, tuple].__args__), "Solver parameter ``'indices'`` should be a ``list`` or ``tuple`` with each element being a ``list`` or ``tuple`` of the mode index and its quadrature index"
+    for idxs in indices:
+        assert isinstance(idxs, Union[list, tuple].__args__), "Each element of the indices should be a ``list`` or ``tuple`` of the mode index and its quadrature index"
+
+    # validate axes
+    xs = params.get('wigner_xs', None)
+    ys = params.get('wigner_ys', None)
+    for val in [xs, ys]:
+        assert val is not None and (type(val) is list or type(val) is np.ndarray), "Solver parameters ``'wigner_xs'`` and ``'wigner_ys'`` should be either NumPy arrays or ``list``"
+    # handle list
+    xs = np.array(xs, dtype=np.float_) if type(xs) is list else xs
+    ys = np.array(ys, dtype=np.float_) if type(xs) is list else ys
+
+    # set updater
+    updater = Updater(
+        name=__name__,
+        cb_update=cb_update
+    )
+
+    # extract frequently used variables
+    show_progress = params.get('show_progress', False)
+    indices = params.get('indices', [0])
+    dim_m = len(indices)
+    dim_c = len(Corrs)
+    dim_w = len(ys) * len(xs)
+    pos_i = 2 * indices[0][0]
+    pos_j = 2 * indices[1][0]
+    # get column vectors and row vectors
+    _X, _Y = np.meshgrid(xs, ys)
+    _dim = (ys.shape[0], xs.shape[0], 1, 1)
+    Vects_a = np.concatenate((np.reshape(_X, _dim), np.zeros(_dim, dtype=np.float_)), axis=2) if indices[0][1] == 0 else np.concatenate((np.zeros(_dim, dtype=np.float_), np.reshape(_X, _dim)), axis=2)
+    Vects_b = np.concatenate((np.reshape(_Y, _dim), np.zeros(_dim, dtype=np.float_)), axis=2) if indices[1][1] == 0 else np.concatenate((np.zeros(_dim, dtype=np.float_), np.reshape(_Y, _dim)), axis=2)
+    Vects = np.concatenate((Vects_a, Vects_b), axis=2)
+    Vects_t = np.transpose(Vects, axes=(0, 1, 3, 2))
+
+    # initialize measures
+    Wigners = np.zeros((dim_c, ys.shape[0], xs.shape[0]), dtype=np.float_)
+
+    # correlation matrix of the ith mode
+    As = Corrs[:, pos_i:pos_i + 2, pos_i:pos_i + 2]
+    # correlation matrix of the jth mode
+    Bs = Corrs[:, pos_j:pos_j + 2, pos_j:pos_j + 2]
+    # correlation matrix of the intermodes
+    Cs = Corrs[:, pos_i:pos_i + 2, pos_j:pos_j + 2]
+
+    # get transposes matrices
+    C_Ts = np.array(np.transpose(Cs, axes=(0, 2, 1)))
+
+    # reduced correlation matrices
+    V_pos = np.concatenate((np.concatenate((As, Cs), axis=2), np.concatenate((C_Ts, Bs), axis=2)), axis=1)
+    invs = np.linalg.pinv(V_pos)
+    dets = np.linalg.det(V_pos)
+
+    # calculate dot product of inverse and column vectors
+    _dots = np.transpose(np.dot(invs, Vects), axes=(4, 2, 3, 1, 0))[0]
+
+    # get Wigner distributions
+    for idx_y in range(len(ys)):
+        for idx_x in range(len(xs)):
+            # display progress
+            if show_progress:
+                updater.update_progress(
+                    pos=idx_y * len(xs) + idx_x,
+                    dim=dim_w,
+                    status="-" * 21 + "Obtaining Wigners",
+                    reset=False
+                )
+            # wigner function
+            Wigners[:, idx_y, idx_x] = np.exp(- 0.5 * np.dot(Vects_t[idx_y, idx_x], _dots[idx_y, idx_x])[0]) / 4.0 / np.pi**2 / np.sqrt(dets)
 
     # display completion
     if show_progress:

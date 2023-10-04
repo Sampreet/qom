@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.0.1 - 2023/10/04 - 00 - MCQT Solver and Two-mode Wigner
+* Minor fixes to `qom.solvers.deterministic` module.
+* Updated `qom.solvers.measure` module:
+    * Added support for two-mode Wigner distribution.
+    * Minor fixes to single-mode Wigner distribution.
+* Added `qom.solvers.deterministic` module with the `MCQTSolver` class for Monte-Carlo quantum trajectories.
+* Updated `qom.ui.plotters` package:
+    * Added support for legend range selection in `base` module.
+    * Added option to import legend from Y-axis data in `matplotlib` module.
+    * Added option for z-order of scatter plots in `matplotlib` module.
+* Added parallelization support for Monte-Carlo quantum trajectories solver in `qom.utils.solvers` module.
+* Added `qom.misc` module for operators and state vectors.
+* Minor fixes to `qom.io` module.
+* Updated logging for all modules.
+* Updated documentation.
+* Updated `README`.
+
 ## v1.0.0 - 2023/07/20 - 00 - Updated README
 * Updated `docs/source/index`.
 * Removed `pyproject.toml`.

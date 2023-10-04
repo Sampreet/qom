@@ -6,11 +6,10 @@
 __name__    = 'qom.ui.plotters.base'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2020-10-06"
-__updated__ = "2023-07-12"
+__updated__ = "2023-08-13"
 
 # dependencies
 from decimal import Decimal
-import logging
 import numpy as np
 import seaborn as sns
 
@@ -57,6 +56,7 @@ class BasePlotter():
             'height'                    (*float*) height of the plot. Default is ``5.0``.
             'legend_labels'             (*list*) labels of the legend. If a twin axis exists, the legend is not displayed.
             'legend_location'           (*bool*) location of the legend. Options are ``'best'``, ``'center'``, ``'center left'``, ``'center right'``, ``'lower center'``, ``'lower left'``, ``'lower right'``, ``'right'``, ``'upper center'``, ``'upper left'`` and ``'upper right'``. Default is ``'best'``.
+            'legend_range'              (*list* or *tuple*) range of plots to use for the legend as a two-element list or tuple. Default is ``[0, -1]``.
             'palette'                   (*str*) color palette of the plot. Refer to ``default_palettes`` attribute for available options. Default is ``'RdBu_r'``.
             'show_cbar'                 (*bool*) option to show the color bar. Default is ``False``.
             'show_legend'               (*bool*) option to show the legend. Default is ``False``.
@@ -215,6 +215,7 @@ class BasePlotter():
         'height': 5.0,
         'legend_labels': list(),
         'legend_location': 'best',
+        'legend_range': [0, -1],
         'palette': 'RdBu_r',
         'show_cbar': False,
         'show_legend': False,
@@ -308,7 +309,8 @@ class BasePlotter():
             'legend': {
                 'show': params.get('show_legend', self.plotter_defaults['show_legend']),
                 'labels': params.get('legend_labels', self.plotter_defaults['legend_labels']),
-                'location': params.get('legend_location', self.plotter_defaults['legend_location'])
+                'location': params.get('legend_location', self.plotter_defaults['legend_location']),
+                'range': params.get('legend_range', self.plotter_defaults['legend_range'])
             },
             'palette': _palette,
             'sizes': params.get('sizes', self.plotter_defaults['sizes']),
@@ -326,7 +328,7 @@ class BasePlotter():
 
         # set updater
         self.updater = Updater(
-            logger=logging.getLogger('qom.ui.plotters.' + self.name),
+            name='qom.ui.plotters.' + self.name,
             cb_update=cb_update
         )
 

@@ -6,7 +6,7 @@
 __name__ = 'qom.solvers.base'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2023-07-04"
-__updated__ = "2023-07-12"
+__updated__ = "2023-08-13"
 
 # dependencies
 from decimal import Decimal
@@ -18,7 +18,7 @@ def get_all_times(params):
     
     Parameters
     ----------
-    params : *dict*
+    params : dict
         Parameters of the solver. Required options are:
             ========    ====================================================
             key         value

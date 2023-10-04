@@ -12,10 +12,9 @@ References
 __name__ = 'qom.systems.base'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2020-12-04"
-__updated__ = "2023-07-12"
+__updated__ = "2023-09-14"
 
 # dependencies
-import logging
 import numpy as np
 
 # qom modules
@@ -31,7 +30,7 @@ class BaseSystem():
     Parameters
     ----------
     params : dict, optional
-        Parameters for the system. Refer to the notes below for all available options.
+        Parameters for the system.
     name : str, default='Sys_00'
         Name of the interfaced system.
     desc : str, default="Base System"
@@ -95,7 +94,7 @@ class BaseSystem():
 
         # set updater
         self.updater = Updater(
-            logger=logging.getLogger('qom.systems.' + self.name),
+            name='qom.systems.' + self.name,
             cb_update=cb_update
         )
 

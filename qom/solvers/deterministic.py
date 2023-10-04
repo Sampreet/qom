@@ -6,11 +6,10 @@
 __name__ = 'qom.solvers.deterministic'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2021-01-04"
-__updated__ = "2023-07-12"
+__updated__ = "2023-08-13"
 
 # dependencies
 import copy
-import logging
 import numpy as np
 import scipy.fft as sf
 import scipy.linalg as sl
@@ -109,7 +108,7 @@ class HLESolver():
 
         # set updater
         self.updater = Updater(
-            logger=logging.getLogger('qom.solvers.HLESolver'),
+            name='qom.solvers.HLESolver',
             cb_update=cb_update
         )
 
@@ -604,7 +603,7 @@ class SSHLESolver():
 
         # set updater
         self.updater = Updater(
-            logger=logging.getLogger('qom.solvers.SSHLESolver'),
+            name='qom.solvers.SSHLESolver',
             cb_update=cb_update
         )
 
@@ -625,7 +624,7 @@ class SSHLESolver():
     def get_modes_corrs(self):
         """Method to obtain the steady states of the modes and correlations.
 
-        Requires system method ``get_ivc`` to obtain the derived constants and controls ``c``. To calculate the modes, either ``get_modes_steady_state`` or ``get_mode_rates`` should be defined. Priority is given to ``get_modes_steady_state``. The correlations are calculated by solving the Lyapunov equation. For this, the ``get_A`` and ``get_D`` methods should be defined along with the method required to calculate the modes.
+        Requires system method predefined system callables ``get_ivc``. To calculate the modes, either ``get_modes_steady_state`` or ``get_mode_rates`` should be defined. Priority is given to ``get_modes_steady_state``. The correlations are calculated by solving the Lyapunov equation. For this, the ``get_A`` and ``get_D`` methods should be defined along with the method required to calculate the modes.
 
         Returns
         -------
@@ -879,7 +878,7 @@ class LLESolver():
 
         # set updater
         self.updater = Updater(
-            logger=logging.getLogger('qom.solvers.LLESolver'),
+            name='qom.solvers.LLESolver',
             cb_update=cb_update
         )
 
@@ -1091,7 +1090,7 @@ class NLSESolver():
 
         # set updater
         self.updater = Updater(
-            logger=logging.getLogger('qom.solvers.NLSESolver'),
+            name='qom.solvers.NLSESolver',
             cb_update=cb_update
         )
 

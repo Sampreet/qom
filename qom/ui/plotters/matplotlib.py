@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.matplotlib'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2020-10-03"
-__updated__ = "2023-07-12"
+__updated__ = "2023-09-13"
 
 # dependencies
 from matplotlib.colors import LinearSegmentedColormap, Normalize
@@ -17,7 +17,8 @@ import numpy as np
 # qom modules
 from .base import BasePlotter
 
-# TODO: Add segmented color bar for contour plots.
+# TODO: Add segmented color bar for contourf plots.
+# TODO: Add custom legend for scatter.
 
 class MPLPlotter(BasePlotter):
     """Class to handle matplotlib plots.
@@ -193,8 +194,13 @@ class MPLPlotter(BasePlotter):
 
         # legend
         if self.params['legend']['show'] and ax_twin is None:
-            _l = plt.legend(labels=self.params['legend']['labels'][:dim], loc=self.params['legend']['location'], frameon=False)  
-            plt.setp(_l.texts, fontproperties=self._get_font_props(self.params['font_dicts']['legend']))
+            # update legend labels
+            if self.params['legend']['labels'] == self.plotter_defaults['legend_labels'] and self.axes['Y'].label != '':
+                self.params['legend']['labels'] = [(self.axes['Y'].name + ' = ' + str(val) + ' ' + self.axes['Y'].unit) if self.axes['Y'].name != '' else (str(val) + ' ' + self.axes['Y'].unit) for val in self.axes['Y'].val]
+            # add legend
+            if dim > 0:
+                _l = plt.legend(handles=self.plots[self.params['legend']['range'][0]:dim if self.params['legend']['range'][1] == -1 else self.params['legend']['range'][1]], labels=self.params['legend']['labels'][:dim], loc=self.params['legend']['location'], frameon=False)  
+                plt.setp(_l.texts, fontproperties=self._get_font_props(self.params['font_dicts']['legend']))
 
     def _init_2D(self):
         """Method to initialize 2D plots."""
@@ -703,7 +709,7 @@ class MPLPlotter(BasePlotter):
         getattr(ax, 'set_' + ax_name + 'ticklabels')(ax_data.tick_labels)
         plt.setp(getattr(ax, 'get_' + ax_name + 'ticklabels')(), color=_tick_color, fontproperties=_font_props)
 
-    def add_scatter(self, vs, xs, color:str='k', size:float=1.0, style:str='.'):
+    def add_scatter(self, vs, xs, color:str='k', size:float=1.0, style:str='.', zorder=1):
         """Method to add a scatter plot.
         
         Parameters
@@ -718,6 +724,8 @@ class MPLPlotter(BasePlotter):
             Size of the plot.
         style : str
             Marker style of the plot.
+        zorder : int, default=1
+            Position of the scatter plot in the Z-axis.
         """
 
         # get current axis
@@ -727,7 +735,7 @@ class MPLPlotter(BasePlotter):
             color = self.palette_colors[color]
 
         # update axis
-        ax.scatter(x=xs, y=vs, s=size, color=color, marker=style)
+        ax.scatter(x=xs, y=vs, s=size, color=color, marker=style, zorder=zorder)
 
     def close(self):
         """Method to close the plotter.

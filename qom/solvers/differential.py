@@ -6,10 +6,9 @@
 __name__ = 'qom.solvers.differential'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2021-01-04"
-__updated__ = "2023-07-12"
+__updated__ = "2023-08-15"
 
 # dependencies
-import logging
 import numpy as np
 import scipy.integrate as si
 
@@ -98,10 +97,16 @@ class ODESolver():
         # set integrator
         if self.params['ode_method'] in self.old_api_methods:
             self.integrator = si.ode(self.func)
+            self.integrator.set_integrator(
+                name=self.params['ode_method'],
+                atol=self.params['ode_atol'],
+                rtol=self.params['ode_rtol'],
+                method='bdf' if self.params['ode_is_stiff'] else 'adams'
+            )
 
         # set updater
         self.updater = Updater(
-            logger=logging.getLogger('qom.solvers.ODESolver'),
+            name='qom.solvers.ODESolver',
             cb_update=cb_update
         )
 
@@ -148,14 +153,7 @@ class ODESolver():
         method_module = ode_method if ode_method in self.new_api_methods else 'ode'
 
         # old API methods
-        if ode_method in self.old_api_methods:            
-            # set integrator
-            self.integrator.set_integrator(
-                name=ode_method,
-                atol=self.params['ode_atol'],
-                rtol=self.params['ode_rtol'],
-                method='bdf' if self.params['ode_is_stiff'] else 'adams'
-            )    
+        if ode_method in self.old_api_methods:
             # set initial values and constants
             self.integrator.set_initial_value(
                 y=iv,
@@ -165,7 +163,7 @@ class ODESolver():
             self.integrator.set_f_params(c if c is not None else np.empty(0))
 
             # initialize values
-            vs = np.zeros((len(T), len(iv)), dtype=np.float_)
+            vs = np.zeros((len(T), len(iv)), dtype=np.complex_ if 'zvode' in ode_method else np.float_)
             vs[0] = iv
 
             # for each time step, calculate the integration values
@@ -180,9 +178,7 @@ class ODESolver():
                     )
                 # update constants
                 if func_c is not None:
-                    # old API methods
-                    if self.params['ode_method'] in self.old_api_methods:
-                        self.integrator.set_f_params(func_c(i))
+                    self.integrator.set_f_params(func_c(i))
             
                 # update values
                 vs[i] = self.integrator.integrate(T[i])
@@ -196,7 +192,6 @@ class ODESolver():
                     status="-" * (26 - len(method_module)) + "Integrating (scipy.integrate." + method_module + ")",
                     reset=False
                 )
-                
             # solve
             vs = self.solve_new(
                 T=T,

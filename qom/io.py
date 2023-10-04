@@ -6,9 +6,10 @@
 __name__ = 'qom.io'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2023-05-28"
-__updated__ = "2023-07-12"
+__updated__ = "2023-08-14"
 
 # dependencies
+import logging
 import numpy as np
 import os
 import time
@@ -20,8 +21,8 @@ class Updater():
 
     Parameters
     ----------
-    logger : :class:`logging.logger`
-        Module logger.
+    name : str
+        Name of the module or class.
     cb_update : callable, optional
         Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
     parallel : bool, default=False
@@ -32,11 +33,11 @@ class Updater():
         Time at which the process was started. If not provided, the value is initialized to current time.
     """
 
-    def __init__(self, logger, cb_update, parallel:bool=False, p_index:int=0, p_start:float=None):
+    def __init__(self, name, cb_update, parallel:bool=False, p_index:int=0, p_start:float=None):
         """Class constructor for Updater."""
 
         # set constants
-        self.logger = logger
+        self.logger = logging.getLogger(name)
         self.cb_update = cb_update
         self.parallel = parallel
         self.p_index = p_index
@@ -99,7 +100,7 @@ class Updater():
         status = status if status is not None else ""
 
         # current time
-        _time = time.time() 
+        _time = time.time()
 
         # display progress
         _init_or_comp = reset or progress == 100.0

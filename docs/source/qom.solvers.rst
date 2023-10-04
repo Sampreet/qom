@@ -10,3 +10,4 @@ qom.solvers package
    qom.solvers.differential
    qom.solvers.measure
    qom.solvers.stability
+   qom.solvers.stochastic

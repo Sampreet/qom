@@ -1,9 +1,9 @@
 # The Quantum Optomechanics Toolbox
 
-![Latest Version](https://img.shields.io/badge/version-1.0.0-red?style=for-the-badge)
+![Latest Version](https://img.shields.io/badge/version-1.0.1-red?style=for-the-badge)
 [![Last Commit](https://img.shields.io/github/last-commit/sampreet/qom?style=for-the-badge)](https://github.com/sampreet/qom/blob/master/CHANGELOG.md)
 
-[![Last Release](https://img.shields.io/github/release-date/sampreet/qom?style=flat-square&label=Last%20Release)](https://github.com/sampreet/qom/releases/tag/v0.9.0)
+[![Last Release](https://img.shields.io/github/release-date/sampreet/qom?style=flat-square&label=Last%20Release)](https://github.com/sampreet/qom/releases/tag/v1.0.1)
 [![Open Issues](https://img.shields.io/github/issues-raw/sampreet/qom?style=flat-square)](https://github.com/sampreet/qom/issues?q=is%3Aopen+is%3Aissue)
 [![Closed Issues](https://img.shields.io/github/issues-closed-raw/sampreet/qom?style=flat-square)](https://github.com/sampreet/qom/issues?q=is%3Aissue+is%3Aclosed)
 
@@ -29,12 +29,12 @@ Backed by numerical libraries like NumPy and SciPy, and featuring the highly cus
 | ![Stability](./docs/images/00_00_sz.png) | ![Correlations](./docs/images/00_01_en.png) |
 | Runtimes for the calculation of dynamical stability of the steady state using the Routh-Hurwitz criteria. | Runtimes for the calculation of average entanglement from the dynamical values of modes and correlations. |
 
-### Up Next!
+* Faster Monte-Carlo quantum trajectories solver for low-dimensional Hilbert spaces.
 
 | Monte-Carlo Quantum Trajectories | 
 |---|
 | ![Stability](./docs/images/00_02_mcqt.png) |
-| Comparison of runtimes for the Jaynes-Cummings Hamiltonian. |
+| Comparison of runtimes for the Jaynes-Cummings Hamiltonian with Hilbert space dimension of 10. |
 
 ## Examples
 
@@ -63,7 +63,7 @@ Backed by numerical libraries like NumPy and SciPy, and featuring the highly cus
 | ![Wigner](./docs/images/05_00_wigner.gif) | ![Soliton](./docs/images/05_01_soliton.gif) |
 | Wigner distribution depicting the evolution of mechanical squeezing in a modulated optomechanical system. | Soliton propagation in an array of optomechanical systems at different phase lags between the input solitons. |
 
-A set of notebooks and scripts to demonstrate the usage of the toolbox can be found [here](https://github.com/sampreet/qom-examples).
+A set of notebooks and scripts to demonstrate the usage of the toolbox can be found in the [examples repository](https://github.com/sampreet/qom-examples).
 
 ## Installation
 
@@ -86,7 +86,9 @@ conda install matplotlib numpy scipy sympy seaborn
 
 ***Note: To run the GUI modules, `pyqt` should be installed separately.***
 
-Once the dependencies are installed, the toolbox can be installed via PyPI (last release: v0.9.0) or locally (latest version: v1.0.0).
+Once the dependencies are installed, the toolbox can be installed via PyPI or locally.
+
+The documentation of the latest release is available [here](https://sampreet.github.io/qom-docs).
 
 ### Installing via PyPI
 
@@ -96,18 +98,14 @@ To install the last release via the Python Package Index, execute:
 pip install -i https://test.pypi.org/simple/ qom
 ```
 
-The corresponding documentation is available [here](https://sampreet.github.io/qom-docs/v0.9.0).
-
 ### Installing Locally
 
 To install the latest version locally, download the repository as `.zip` and extract the contents.
-Now, execute the following from *outside* the top-level directory, `ROOT_DIR`, inside which `setup.py` is located (refer to the file structure [here](./CONTRIBUTING.md)):
+Now, execute the following from *outside* the top-level directory, `ROOT_DIR`, inside which `setup.py` is located (refer to the [file structure](./CONTRIBUTING.md)):
 
 ```bash
 pip install -e ROOT_DIR
 ```
-
-The corresponding documentation is available [here](https://sampreet.github.io/qom-docs).
 
 ## Basic Usage
 
@@ -222,4 +220,4 @@ Also, make sure you adhere to the [code of conduct](./CODE_OF_CONDUCT.md).
 
 ## Citing
 
-Please cite [S. Kalita and A. K. Sarma, *The QOM Toolbox: An object-oriented Python framework for cavity optomechanical systems*, Proceedings of Eighth International Congress on Information and Communication Technology **3**, Springer Singapore (2023)](./CITATION.bib) if you use our work in your research.
+Please cite [S. Kalita and A. K. Sarma, *The QOM Toolbox: An Object-oriented Python Framework for Cavity Optomechanical Systems*, Proceedings of Eighth International Congress on Information and Communication Technology, Lecture Notes in Networks and Systems, Volume 694, 581-590, Springer Nature Singapore (2023)](./CITATION.bib) if you use our work in your research.

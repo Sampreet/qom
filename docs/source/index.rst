@@ -1,7 +1,7 @@
 .. Quantum Optomechanics Toolbox documentation master file, created by
    sphinx-quickstart on Fri Dec 4 15:06:12 2020.
 
-Welcome to the ``qom-v1.0.0`` Documentation!
+Welcome to the ``qom-v1.0.1`` Documentation!
 ============================================
 
 The Quantum Optomechanics Toolbox (packaged as ``qom``) is a wrapper-styled, scalable toolbox featuring multiple modules for the calculation of stationary as well as dynamical properties of many-body quantum optomechanical systems.
@@ -32,8 +32,7 @@ What's New in v1.0!
    * - Runtimes for the calculation of dynamical stability of the steady state using the Routh-Hurwitz criteria.
      - Runtimes for the calculation of average entanglement from the dynamical values of modes and correlations.
 
-Up Next!
---------
+* Faster Monte-Carlo quantum trajectories solver for low-dimensional Hilbert spaces.
 
 .. list-table::
    :widths: 100
@@ -41,7 +40,7 @@ Up Next!
 
    * - Monte-Carlo Quantum Trajectories
    * - .. image:: ../images/00_02_mcqt.png
-   * - Comparison of runtimes for the Jaynes-Cummings Hamiltonian.
+   * - Comparison of runtimes for the Jaynes-Cummings Hamiltonian with Hilbert space dimension of 10.
 
 Examples
 --------
@@ -101,7 +100,7 @@ Examples
    * - Wigner distribution depicting the evolution of mechanical squeezing in a modulated optomechanical system.
      - Soliton propagation in an array of optomechanical systems at different phase lags between the input solitons.
 
-A set of notebooks and scripts to demonstrate the usage of the toolbox can be found `here <https://github.com/sampreet/qom-examples>`_.
+A set of notebooks and scripts to demonstrate the usage of the toolbox can be found in the `examples repository <https://github.com/sampreet/qom-examples>`_.
 
 Installation
 ============
@@ -126,7 +125,9 @@ These libraries can be installed using:
 
 .. note:: To run the GUI modules, ``pyqt`` should be installed separately.
 
-Once the dependencies are installed, the toolbox can be installed via PyPI (last release: v0.9.0) or locally (latest version: v1.0.0).
+Once the dependencies are installed, the toolbox can be installed via PyPI or locally.
+
+The documentation of the latest release is available `here <https://sampreet.github.io/qom-docs>`_.
 
 Installing via PyPI
 -------------------
@@ -137,19 +138,15 @@ To install the packages via the Python Package Index (PyPI), execute:
 
    pip install -i https://test.pypi.org/simple/ qom
 
-The corresponding documentation is available `here <https://sampreet.github.io/qom-docs/v0.9.0>`_.
-
 Installing Locally
 ------------------
 
 To install the package locally, download `the repository <https://github.com/sampreet/qom>`_ as ``.zip`` and extract the contents.
-Now, execute the following from *outside* the top-level directory, ``ROOT_DIR``, inside which ``setup.py`` is located (refer to the file structure `here <https://github.com/sampreet/qom/blob/master/CONTRIBUTING.md>`_):
+Now, execute the following from *outside* the top-level directory, ``ROOT_DIR``, inside which ``setup.py`` is located (refer to the `file structure <https://github.com/sampreet/qom/blob/master/CONTRIBUTING.md>`_):
 
 .. code-block:: bash
 
    pip install -e ROOT_DIR
-
-The corresponding documentation is available `here <https://sampreet.github.io/qom-docs>`_.
 
 Citing
 ======

@@ -6,13 +6,12 @@
 __name__ = 'qom.loopers.base'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2020-12-21"
-__updated__ = "2023-07-12"
+__updated__ = "2023-10-04"
 
 # dependencies
 from decimal import Decimal
 from typing import Union
 import copy
-import logging
 import numpy as np
 import time
 
@@ -95,8 +94,6 @@ class BaseLooper():
         self.func = func
         self.parallel = parallel
         self.p_index = p_index
-        self.time = time.time()
-        self.p_start = p_start if p_start is not None else self.time
 
         # set parameters
         self.set_params(params)
@@ -118,11 +115,11 @@ class BaseLooper():
 
         # set updater
         self.updater = Updater(
-            logger=logging.getLogger('qom.loopers.' + self.name),
+            name='qom.loopers.' + self.name,
             cb_update=cb_update,
             parallel=parallel,
             p_index=p_index,
-            p_start=self.p_start
+            p_start=p_start if p_start is not None else time.time()
         )
         # display initialization
         self.updater.update_info(
@@ -168,7 +165,10 @@ class BaseLooper():
         _val = _axis.get('val', None)
         # convert to numpy array
         if type(_val) is list:
-            _val = np.array(_val, dtype=np.float_)
+            if type(_val[0]) is int:
+                _val = np.array(_val, dtype=np.int32)
+            elif type(_val[0]) is float:
+                _val = np.array(_val, dtype=np.float_)
         # update values
         if type(_val) is np.ndarray:
             # validate values

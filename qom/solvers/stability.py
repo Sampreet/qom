@@ -12,10 +12,9 @@ References
 __name__ = 'qom.solvers.stability'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2020-12-03"
-__updated__ = "2023-07-12"
+__updated__ = "2023-08-13"
 
 # dependencies
-import logging
 import numpy as np
 import sympy as sp
 
@@ -71,7 +70,7 @@ class RHCSolver():
 
         # set updater
         self.updater = Updater(
-            logger=logging.getLogger('qom.solvers.RHCSolver'),
+            name='qom.solvers.RHCSolver',
             cb_update=cb_update
         )
 
@@ -267,7 +266,7 @@ def get_counts_from_eigenvalues(As=None, Coeffs=None, params:dict={}, cb_update=
 
     # set updater
     updater = Updater(
-        logger=logging.getLogger(__name__),
+        name=__name__,
         cb_update=cb_update
     )
 
