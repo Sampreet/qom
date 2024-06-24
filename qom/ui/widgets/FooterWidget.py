@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.FooterWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-08-30'
+__updated__ = '2023-10-28'
 
 # dependencies
 from PyQt5 import QtCore, QtWidgets
@@ -65,7 +65,7 @@ class FooterWidget(BaseWidget):
         self.layout.addWidget(self.le_status)
         # initialize center blank label
         self.lbl_center = QtWidgets.QLabel('')
-        self.lbl_center.setFixedSize(padding / 2, height)
+        self.lbl_center.setFixedSize(int(padding / 2), height)
         self.layout.addWidget(self.lbl_center)
         # initialize progress bar
         self.pb = QtWidgets.QProgressBar()
@@ -128,7 +128,7 @@ class FooterWidget(BaseWidget):
 
         # update status
         if status is not None:
-            parts = str(status).split(': ')
+            parts = str(status.replace('-', '')).split(': ')
             status = parts[0]
             self.lbl_status.setText(str(status))
             value = ''

@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.2 - 2024/06/23 - 00 - GUI Hotfix
+* String support in axis values in `qom.loopers.base.BaseLooper` class.
+* Updated `qom.solvers` package:
+    * Added `required_params` in `deterministic` module.
+    * Minor fixes to `measure` and `stability` modules.
+    * Separate functions for operators and coefficients in `stochastic.MCQTSolver` class.
+* Fixed `qom.ui.widgets` modules.
+* Add Pauli operators in `qom.misc` module.
+* Updated `CITATION` and `README`.
+
 ## v1.0.1 - 2023/10/04 - 00 - MCQT Solver and Two-mode Wigner
 * Minor fixes to `qom.solvers.deterministic` module.
 * Updated `qom.solvers.measure` module:

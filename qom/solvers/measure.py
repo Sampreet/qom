@@ -26,7 +26,7 @@ References
 __name__ = 'qom.solvers.measure'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2021-01-04"
-__updated__ = "2023-08-13"
+__updated__ = "2024-06-21"
 
 # dependencies
 from typing import Union
@@ -915,14 +915,14 @@ def get_Wigner_distributions_single_mode(Corrs, params, cb_update=None):
         Quadrature quadrature correlations with shape ``(dim, 2 * num_modes, 2 * num_modes)``.
     params : dict
         Parameters of the solver. Available options are:
-        ================    ====================================================
-        key                 value
-        ================    ====================================================
-        'show_progress'     (*bool*) option to display the progress of the solver. Default is ``False``.
-        'indices'           (*list* or *tuple*) indices of the modes as a list. Default is ``[0]``.
-        'wigner_xs'         (*list*) X-axis values.
-        'wigner_ys'         (*list*) Y-axis values.
-        ================    ====================================================
+            ================    ====================================================
+            key                 value
+            ================    ====================================================
+            'show_progress'     (*bool*) option to display the progress of the solver. Default is ``False``.
+            'indices'           (*list* or *tuple*) indices of the modes as a list. Default is ``[0]``.
+            'wigner_xs'         (*list*) X-axis values.
+            'wigner_ys'         (*list*) Y-axis values.
+            ================    ====================================================
     cb_update : callable, optional
         Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
     
@@ -1016,14 +1016,14 @@ def get_Wigner_distributions_two_mode(Corrs, params, cb_update=None):
         Quadrature quadrature correlations with shape ``(dim, 2 * num_modes, 2 * num_modes)``.
     params : dict
         Parameters of the solver. Available options are:
-        ================    ====================================================
-        key                 value
-        ================    ====================================================
-        'show_progress'     (*bool*) option to display the progress of the solver. Default is ``False``.
-        'indices'           (*list* or *tuple*) list of indices of the modes and their quadratures as tuples or lists. Default is ``[(0, 0), (1, 0)]``.
-        'wigner_xs'         (*list*) X-axis values.
-        'wigner_ys'         (*list*) Y-axis values.
-        ================    ====================================================
+            ================    ====================================================
+            key                 value
+            ================    ====================================================
+            'show_progress'     (*bool*) option to display the progress of the solver. Default is ``False``.
+            'indices'           (*list* or *tuple*) list of indices of the modes and their quadratures as tuples or lists. Default is ``[(0, 0), (1, 0)]``.
+            'wigner_xs'         (*list*) X-axis values.
+            'wigner_ys'         (*list*) Y-axis values.
+            ================    ====================================================
     cb_update : callable, optional
         Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
     

@@ -1,11 +1,16 @@
 .. Quantum Optomechanics Toolbox documentation master file, created by
    sphinx-quickstart on Fri Dec 4 15:06:12 2020.
 
-Welcome to the ``qom-v1.0.1`` Documentation!
+Welcome to the ``qom-v1.0.2`` Documentation!
 ============================================
 
-The Quantum Optomechanics Toolbox (packaged as ``qom``) is a wrapper-styled, scalable toolbox featuring multiple modules for the calculation of stationary as well as dynamical properties of many-body quantum optomechanical systems.
+The Quantum Optomechanics Toolbox (packaged as ``qom``) is a wrapper-styled, scalable toolbox featuring multiple modules for the calculation of stationary as well as dynamical properties of linearized quantum optomechanical systems.
 Backed by numerical libraries like NumPy and SciPy, and featuring the highly customizable visualizations offered by Matplotlib and Seaborn APIs, the toolbox aims to serve as an easy-to-use alternative to writing code explicitly and avoiding repetitive exercises for presentable visuals.
+
+.. note::
+   The toolbox is not under active maintenance since 2023 and addition of newer features are not planned for the near future.
+   However, the current CPU-based modules fully support the simulation of linearized quantum optomechanical systems and their related analysis.
+   For the simulation of more general systems, ``QuTiP`` (``> v5.0``) provides a much faster interface.
 
 Key Features
 ------------
@@ -20,6 +25,7 @@ What's New in v1.0!
 * Non-linear Schrodinger equation solver with integration support.
 * Attractor detection and bifurcation for non-linear dynamical systems.
 * Huge performance boost with NumPy-based vectorization.
+* Faster Monte-Carlo quantum trajectories solver for low-dimensional Hilbert spaces (deprecated since ``qom-v1.0.2``).
 
 .. list-table::
    :widths: 50 50
@@ -31,16 +37,6 @@ What's New in v1.0!
      - .. image:: ../images/00_01_en.png
    * - Runtimes for the calculation of dynamical stability of the steady state using the Routh-Hurwitz criteria.
      - Runtimes for the calculation of average entanglement from the dynamical values of modes and correlations.
-
-* Faster Monte-Carlo quantum trajectories solver for low-dimensional Hilbert spaces.
-
-.. list-table::
-   :widths: 100
-   :header-rows: 1
-
-   * - Monte-Carlo Quantum Trajectories
-   * - .. image:: ../images/00_02_mcqt.png
-   * - Comparison of runtimes for the Jaynes-Cummings Hamiltonian with Hilbert space dimension of 10.
 
 Examples
 --------
@@ -60,12 +56,12 @@ Examples
    :widths: 50 50
    :header-rows: 1
 
-   * - Limit Cycle
-     - Chaos
-   * - .. image:: ../images/02_00_limit_cycle.gif
-     - .. image:: ../images/02_01_chaos.gif
-   * - Self-sustained oscillations in an optomechanical system.
-     - An optomechanical system in the chaotic regime.
+   * - Fixed Point
+     - Limit Cycle
+   * - .. image:: ../images/02_00_fixed_point.gif
+     - .. image:: ../images/02_01_limit_cycle.gif
+   * - An optomechanical system settling to a steady state.
+     - Self-sustained oscillations in an optomechanical system.
 
 .. list-table::
    :widths: 50 50
@@ -136,7 +132,7 @@ To install the packages via the Python Package Index (PyPI), execute:
 
 .. code-block:: bash
 
-   pip install -i https://test.pypi.org/simple/ qom
+   pip install git+https://github.com/sampreet/qom.git
 
 Installing Locally
 ------------------
@@ -165,6 +161,7 @@ Available Modules
    qom.ui
    qom.utils
    qom.io
+   qom.misc
 
 Indices and tables
 ==================

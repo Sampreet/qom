@@ -5,7 +5,7 @@ with open('README.md', 'r') as file_readme:
 
 setup(
     name='qom',
-    version='1.0.1',
+    version='1.0.2',
     author='Sampreet Kalita',
     author_email='sampreet.kalita@hotmail.com',
     desctiption='The Quantum Optomechanics Toolbox',
@@ -13,7 +13,7 @@ setup(
     long_description_content_type='text/markdown',
     keywords=['quantum', 'optomechanics', 'toolbox', 'python3'],
     url='https://github.com/sampreet/qom',
-    download_url='https://github.com/Sampreet/qom/archive/refs/tags/v1.0.1.tar.gz',
+    download_url='https://github.com/Sampreet/qom/archive/refs/tags/v1.0.2.tar.gz',
     packages=find_packages(),
     classifiers=[
         'Programming Language :: Python :: 3',

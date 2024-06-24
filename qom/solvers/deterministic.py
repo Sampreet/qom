@@ -6,7 +6,7 @@
 __name__ = 'qom.solvers.deterministic'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2021-01-04"
-__updated__ = "2023-08-13"
+__updated__ = "2024-06-23"
 
 # dependencies
 import copy
@@ -88,6 +88,8 @@ class HLESolver():
         'indices': [0]
     }
     """dict : Default parameters of the solver."""
+    required_params = ['t_min', 't_max', 't_dim']
+    """list : Required parameters of the solver."""
 
     def __init__(self, system, params:dict, cb_update=None):
         """Class constructor for HLESolver."""
@@ -584,6 +586,8 @@ class SSHLESolver():
         'use_system_method': True
     }
     """dict : Default parameters of the solver."""
+    required_params = []
+    """list : Required parameters of the solver."""
 
     def __init__(self, system, params:dict, cb_update=None):
         """Class constructor for SSESolver."""
@@ -829,7 +833,14 @@ class LLESolver():
     system : :class:`qom.systems.*`
         Instance of the system. Requires predefined system methods for certain solver methods.
     params : dict
-        Parameters for the solver. Refer to **Notes** below for all available options.
+        Parameters for the solver. Refer to **Notes** below for all available options. Required options are:
+            ========    ====================================================
+            key         value
+            ========    ====================================================
+            't_min'     (*float*) minimum time at which the method starts.
+            't_max'     (*float*) maximum time at which the method stops.
+            't_dim'     (*int*) number of values from ``'t_max'`` to ``'t_min'``, both inclusive.
+            ========    ====================================================
     cb_update : callable, optional
         Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
 
@@ -860,6 +871,8 @@ class LLESolver():
         'indices': [0]
     }
     """dict : Default parameters of the solver."""
+    required_params = ['t_min', 't_max', 't_dim']
+    """list : Required parameters of the solver."""
 
     def __init__(self, system, params:dict, cb_update=None):
         """Class constructor for LLESolver."""
@@ -1027,7 +1040,14 @@ class NLSESolver():
     system : :class:`qom.systems.*`
         Instance of the system. Requires predefined system methods for certain solver methods.
     params : dict
-        Parameters for the solver. Refer to **Notes** below for all available options.
+        Parameters for the solver. Refer to **Notes** below for all available options.Required options are:
+            ========    ====================================================
+            key         value
+            ========    ====================================================
+            't_min'     (*float*) minimum time at which the method starts.
+            't_max'     (*float*) maximum time at which the method stops.
+            't_dim'     (*int*) number of values from ``'t_max'`` to ``'t_min'``, both inclusive.
+            ========    ====================================================
     cb_update : callable, optional
         Callback function to update status and progress, formatted as ``cb_update(status, progress, reset)``, where ``status`` is a string, ``progress`` is a float and ``reset`` is a boolean.
 
@@ -1072,6 +1092,8 @@ class NLSESolver():
         'indices': [0]
     }
     """dict : Default parameters of the solver."""
+    required_params = ['t_min', 't_max', 't_dim']
+    """list : Required parameters of the solver."""
 
     def __init__(self, system, params:dict, cb_update=None):
         """Class constructor for LLESolver."""

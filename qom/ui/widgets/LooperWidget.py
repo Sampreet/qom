@@ -6,18 +6,15 @@
 __name__    = 'qom.ui.widgets.LooperWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-08-19'
-__updated__ = '2022-10-12'
+__updated__ = '2024-06-23'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
-import importlib
 import logging
-import numpy as np
-import os
 
 # qom modules
 from ...loopers import XLooper, XYLooper, XYZLooper
-from ...utils.looper import default_looper_func_names, get_looper_func
+from ...utils.loopers import wrap_looper, run_loopers_in_parallel
 from .BaseWidget import BaseWidget
 
 # module logger
@@ -45,12 +42,12 @@ class LooperWidget(BaseWidget):
         super().__init__(parent)
 
         # set attributes
-        self.loopers = [XLooper, XYLooper, XYZLooper]
+        self.LooperClass = None
+        self.LooperClasses = [XLooper, XYLooper, XYZLooper]
         self.solver_widget = solver_widget
         self.system_widget = system_widget
         self.plotter_widget = plotter_widget
         self.param_widgets = list()
-        self.looper = None
 
         # initialize layout
         self.__init_layout()
@@ -72,80 +69,86 @@ class LooperWidget(BaseWidget):
         self.layout.setContentsMargins(0, 0, padding, 0)
 
         # initialize function label
-        self.lbl_func = QtWidgets.QLabel('Function:')
-        self.lbl_func.setFixedSize(width / 4, row_height) 
-        self.lbl_func.setFont(QtGui.QFont('Segoe UI', pointSize=12, italic=True))
-        self.layout.addWidget(self.lbl_func, 0, 0, 1, 1, alignment=QtCore.Qt.AlignLeft)
-        # initialize looper name
-        self.lbl_name = QtWidgets.QLabel('Select a looper to begin')
-        self.lbl_name.setFixedSize(width * 3 / 4 + 0.25 * padding, row_height)
+        self.lbl_name = QtWidgets.QLabel('Select Looper')
+        self.lbl_name.setFixedSize(int(width / 4), row_height) 
         self.lbl_name.setFont(QtGui.QFont('Segoe UI', pointSize=12, italic=True))
-        self.lbl_name.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.layout.addWidget(self.lbl_name, 0, 1, 1, 3, alignment=QtCore.Qt.AlignRight)
+        self.lbl_name.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.layout.addWidget(self.lbl_name, 0, 0, 1, 1, alignment=QtCore.Qt.AlignLeft)
+        # initialize type label
+        self.lbl_func = QtWidgets.QLabel('Function:')
+        self.lbl_func.setFixedSize(int(width / 2), row_height) 
+        self.lbl_func.setFont(QtGui.QFont('Segoe UI', pointSize=10, italic=False))
+        self.layout.addWidget(self.lbl_func, 0, 1, 1, 2, alignment=QtCore.Qt.AlignLeft)
+        # initialize wrap check box
+        self.chbx_parallel = QtWidgets.QCheckBox('Multiprocess')
+        self.chbx_parallel.setFixedSize(int(width / 4), row_height)
+        self.chbx_parallel.setDisabled(True)
+        self.layout.addWidget(self.chbx_parallel, 0, 3, 1, 1, alignment=QtCore.Qt.AlignLeft)
+        # initialize wrap check box
+        self.chbx_solver = QtWidgets.QCheckBox('Use Solver')
+        self.chbx_solver.setFixedSize(int(width / 4), row_height)
+        self.chbx_solver.stateChanged.connect(self.toggle_solver)
+        self.chbx_solver.setDisabled(True)
+        self.layout.addWidget(self.chbx_solver, 1, 0, 1, 1, alignment=QtCore.Qt.AlignLeft)
         # initialize function combo box
         self.cmbx_func = QtWidgets.QComboBox()
-        self.cmbx_func.setFixedSize(width / 2 - 1.5 * padding, row_height)
+        self.cmbx_func.setFixedSize(int(width / 2 - 1.5 * padding), row_height)
         self.cmbx_func.currentTextChanged.connect(self.set_curr_func)
         self.cmbx_func.setDisabled(True)
-        self.layout.addWidget(self.cmbx_func, 1, 0, 1, 2, alignment=QtCore.Qt.AlignRight)
-        # initialize wrap check box
-        self.chbx_wrap = QtWidgets.QCheckBox('Wrap')
-        self.chbx_wrap.setFixedSize(width / 4, row_height)
-        self.chbx_wrap.stateChanged.connect(self.toggle_wrap)
-        self.chbx_wrap.setDisabled(True)
-        self.layout.addWidget(self.chbx_wrap, 1, 2, 1, 1, alignment=QtCore.Qt.AlignLeft)
+        self.layout.addWidget(self.cmbx_func, 1, 1, 1, 2, alignment=QtCore.Qt.AlignRight)
         # initialize plot check box
         self.chbx_plot = QtWidgets.QCheckBox('Plot')
-        self.chbx_plot.setFixedSize(width / 4, row_height)
+        self.chbx_plot.setFixedSize(int(width / 4), row_height)
         self.chbx_plot.setDisabled(True)
         self.layout.addWidget(self.chbx_plot, 1, 3, 1, 1, alignment=QtCore.Qt.AlignLeft)
+        # initialize wrap check box
+        self.chbx_save = QtWidgets.QCheckBox('Save Data')
+        self.chbx_save.setFixedSize(int(width / 4), row_height)
+        self.chbx_save.stateChanged.connect(self.toggle_save)
+        self.chbx_save.setDisabled(True)
+        self.layout.addWidget(self.chbx_save, 2, 0, 1, 1, alignment=QtCore.Qt.AlignLeft)
         # initialize cache path line edit
         self.le_path = QtWidgets.QLineEdit('')
-        self.le_path.setFixedSize(width / 2 - 1.5 * padding, row_height)
+        self.le_path.setPlaceholderText('file_path_prefix')
+        self.le_path.setFixedSize(int(width / 2 - 1.5 * padding), row_height)
         self.le_path.setDisabled(True)
-        self.layout.addWidget(self.le_path, 2, 0, 1, 2, alignment=QtCore.Qt.AlignRight)
-        # initialize mode combo box
-        self.cmbx_mode = QtWidgets.QComboBox()
-        self.cmbx_mode.setFixedSize(width / 4 - 1.25 * padding, row_height)
-        self.cmbx_mode.addItems(['serial', 'multithread'])
-        self.cmbx_mode.setDisabled(True)
-        self.layout.addWidget(self.cmbx_mode, 2, 2, 1, 1, alignment=QtCore.Qt.AlignRight)
+        self.layout.addWidget(self.le_path, 2, 1, 1, 2, alignment=QtCore.Qt.AlignRight)
         # initialize loop button
         self.btn_loop = QtWidgets.QPushButton('Loop')
-        self.btn_loop.setFixedSize(width / 4 - 1.25 * padding, row_height)
+        self.btn_loop.setFixedSize(int(width / 4 - 1.25 * padding), row_height)
         self.btn_loop.clicked.connect(self.loop)
         self.btn_loop.setDisabled(True)
         self.layout.addWidget(self.btn_loop, 2, 3, 1, 1, alignment=QtCore.Qt.AlignRight)
         # initialize variable label
         self.lbl_var = QtWidgets.QLabel('var')
-        self.lbl_var.setFixedSize(width / 4 - 1.25 * padding, row_height)
+        self.lbl_var.setFixedSize(int(width / 4), row_height)
         self.lbl_var.setFont(QtGui.QFont('Segoe UI', pointSize=10, italic=False))
         self.layout.addWidget(self.lbl_var, 3, 0, 1, 1, alignment=QtCore.Qt.AlignLeft)
         # initialize minimum value label
         self.lbl_min = QtWidgets.QLabel('min')
-        self.lbl_min.setFixedSize(width / 4 - 1.25 * padding, row_height)
+        self.lbl_min.setFixedSize(int(width / 4), row_height)
         self.lbl_min.setFont(QtGui.QFont('Segoe UI', pointSize=10, italic=False))
         self.layout.addWidget(self.lbl_min, 3, 1, 1, 1, alignment=QtCore.Qt.AlignLeft)
         # initialize maximum value label
         self.lbl_max = QtWidgets.QLabel('max')
-        self.lbl_max.setFixedSize(width / 4 - 1.25 * padding, row_height)
+        self.lbl_max.setFixedSize(int(width / 4), row_height)
         self.lbl_max.setFont(QtGui.QFont('Segoe UI', pointSize=10, italic=False))
         self.layout.addWidget(self.lbl_max, 3, 2, 1, 1, alignment=QtCore.Qt.AlignLeft)
         # initialize dimension label
         self.lbl_dim = QtWidgets.QLabel('dim')
-        self.lbl_dim.setFixedSize(width / 4 - 1.25 * padding, row_height)
+        self.lbl_dim.setFixedSize(int(width / 4), row_height)
         self.lbl_dim.setFont(QtGui.QFont('Segoe UI', pointSize=10, italic=False))
         self.layout.addWidget(self.lbl_dim, 3, 3, 1, 1, alignment=QtCore.Qt.AlignLeft)
 
         # initialize most useful parameters
-        axes_prefix = ['x_', 'y_', 'z_']
-        keys = ['var', 'min', 'max', 'dim']
+        prefixes = ['x_', 'y_', 'z_']
+        suffixes = ['var', 'min', 'max', 'dim']
         for row in range(axes_rows):
             for col in range(4):
                 # initialize each widget
                 widget = QtWidgets.QLineEdit('')
-                widget.setPlaceholderText(str(axes_prefix[row]) + str(keys[col]))
-                widget.setFixedSize(width / 4 - 1.25 * padding, row_height)
+                widget.setPlaceholderText(str(prefixes[row]) + str(suffixes[col]))
+                widget.setFixedSize(int(width / 4 - 1.25 * padding), row_height)
                 widget.setDisabled(True)
                 # update widget list
                 self.param_widgets.append(widget)
@@ -174,8 +177,8 @@ class LooperWidget(BaseWidget):
         codes = list()
 
         # iterate through available loopers
-        for looper in self.loopers:
-            codes.append(looper.code)
+        for LooperClass in self.LooperClasses:
+            codes.append(LooperClass.name)
 
         return codes
 
@@ -185,40 +188,63 @@ class LooperWidget(BaseWidget):
         # disable loop button
         self.btn_loop.setDisabled(True)
 
+        # handle no system found
+        if self.system_widget.SystemClass is None:
+            # update status
+            self.parent.update(status='No system found')
+            return
+
         # handle no function found
         if self.cmbx_func.currentText() == 'NA':
             # update status
             self.parent.update(status='No function found')
             return
+        
+        # looper parameters
+        params = dict()
+        params['show_progress'] = True
+        params['file_path_prefix'] = self.le_path.text() if self.chbx_save.isChecked() and self.le_path.text() != '' else None
         # extract axes parameters from widgets
-        looper_params = dict()
         axes = ['X', 'Y', 'Z']
         keys = ['var', 'min', 'max', 'dim']
-        for i in range(self.loopers.index(self.looper) + 1):
-            looper_params[axes[i]] = {}
+        for i in range(self.LooperClasses.index(self.LooperClass) + 1):
+            params[axes[i]] = {}
             for j in range(4):
-                looper_params[axes[i]][keys[j]] = self.param_widgets[i * 4 + j].text()
+                params[axes[i]][keys[j]] = self.param_widgets[i * 4 + j].text()
 
-        # get file path to save/load data
-        path_text = self.le_path.text()
-        file_path = path_text if path_text != '' else None
+        # function to loop
+        global func
+        if self.chbx_solver.isChecked():
+            def func(system_params):
+                system = self.system_widget.SystemClass(
+                    params=system_params
+                )
+                solver = self.solver_widget.SolverClass(
+                    params=self.solver_widget.get_params(),
+                    system=system
+                )
+                return solver.solve()
+        else:
+            def func(system_params):
+                system = self.system_widget.SystemClass(
+                    params=system_params
+                )
+                _, _, c = system.get_ivc()
+                return getattr(system, 'get_' + self.cmbx_func.currentText())(
+                    c=c
+                )
 
-        # get all parameters
-        params = {
-            'looper': looper_params,
-            'solver': self.solver_widget.get_params(),
-            'system': self.system_widget.get_params(),
-            'plotter': self.plotter_widget.get_params()
-        }
-        
-        # get function
-        func = get_looper_func(SystemClass=self.system_widget.system, solver_params=params['solver'], func_code=self.cmbx_func.currentText())
-
-        # initialize looper
-        looper = self.looper(func=func, params=params, cb_update=self.parent.update)
-
-        # run looper on main thread
-        looper.wrap(file_path=file_path, plot=self.chbx_plot.isChecked())
+        # wrap looper
+        looper_func = run_loopers_in_parallel if self.chbx_parallel.isChecked() else wrap_looper
+        looper = looper_func(
+            looper_name=self.LooperClass.name,
+            func=func,
+            params=params,
+            params_system=self.system_widget.get_params(),
+            plot=self.chbx_plot.isChecked(),
+            params_plotter=self.plotter_widget.get_params() if self.chbx_plot.isChecked() else None,
+            cb_update=self.parent.update
+        )
 
         # enable loop button
         self.btn_loop.setEnabled(True)
@@ -241,40 +267,10 @@ class LooperWidget(BaseWidget):
         self.btn_loop.setEnabled(True)
         
         # if system is selected
-        if self.system_widget.system is not None:
-            # initialize system
-            system = self.system_widget.system(params={}, cb_update=None)
-
-            # set cache path
-            cache_dir = 'data/' + system.code
-            self.le_path.setText(cache_dir + '/'+ (value if value != 'NA' else 'V'))
-
-            # searching function
-            found = lambda name, dim: sum([0 if name.find(e) == -1 else 1 for e in expr[:dim + 1]]) == dim + 1 and sum([0 if name.find(e) == -1 else 1 for e in expr]) == dim + 1
-            # if template directory exists
-            if os.path.isdir('gui_templates'):
-                # search templates
-                for template_name in os.listdir('gui_templates'):
-                    # if template found
-                    if system is not None and template_name.find(system.code) != -1 and found(template_name, self.loopers.index(self.looper) + 1):
-                        # import template
-                        template = importlib.import_module('gui_templates.' + template_name[:-3])
-                        # if template contains parameters
-                        if template.__dict__.get('params', None) is not None:
-                            # extract parameters
-                            params = template.__dict__['params']
-                            # set looper parameters
-                            if params.get('looper', None) is not None:
-                                [[self.param_widgets[i * 4 + j].setText(str(params['looper'][axes[i]][keys[j]])) if keys[j] in params['looper'][axes[i]] else None for j in range(4)] for i in range(self.loopers.index(self.looper) + 1)]
-                            # set system parameters
-                            if self.system_widget.system is not None:
-                                self.system_widget.set_params(params.get('system', {}))
-                            # set solver parameters
-                            if self.solver_widget.solver is not None:
-                                self.solver_widget.set_params(params.get('solver', {}))
-                            # set plotter parameters
-                            if self.plotter_widget.plotter is not None:
-                                self.plotter_widget.set_params(params.get('plotter', {}))
+        if self.system_widget.SystemClass is not None:
+            # set data path
+            data_dir = 'data/' + self.system_widget.SystemClass.__name__
+            self.le_path.setText(data_dir + '/'+ (value if value != 'NA' else 'V'))
 
         # update footer
         self.parent.update(status='Ready', progress=None, reset=True)
@@ -291,9 +287,12 @@ class LooperWidget(BaseWidget):
         # enable all widgets
         for idx in range(self.layout.count()):
             self.layout.itemAt(idx).widget().setEnabled(True)
+        self.chbx_parallel.setDisabled(True)    # not supported on GUI
+        self.toggle_save()
+        self.toggle_solver()
 
         # update looper
-        self.looper = self.loopers[pos]
+        self.LooperClass = self.LooperClasses[pos]
 
         # update parameter widgets
         axes = ['x', 'y', 'z']
@@ -306,7 +305,7 @@ class LooperWidget(BaseWidget):
         cmbx_items = ['NA'] if self.system_widget.cmbx_func.count() == 0 or self.system_widget.cmbx_func.currentText() == 'NA' else [self.system_widget.cmbx_func.itemText(i) for i in range(self.system_widget.cmbx_func.count())]
 
         # update widget
-        self.lbl_name.setText(str(pos + 1) + 'D Looper')
+        self.lbl_name.setText(self.LooperClass.desc)
         self.cmbx_func.clear()
         self.cmbx_func.addItems(cmbx_items)
 
@@ -336,16 +335,10 @@ class LooperWidget(BaseWidget):
             # styles
             self.setStyleSheet(self.get_stylesheet('widget_dark'))
 
-    def toggle_wrap(self):
-        """Method to set up wrapper functions."""
+    def toggle_solver(self):
+        """Method to toggle solver functions."""
+        self.cmbx_func.setDisabled(True if self.chbx_solver.isChecked() else False)
 
-        # if checked, add wrapper functions
-        if self.chbx_wrap.isChecked() and self.system_widget.system is not None:
-            self.cmbx_func.addItems([key for key in default_looper_func_names])
-        
-        # else remove wrapper functions
-        else:
-            num_items = self.cmbx_func.count()
-            for idx in range(num_items):
-                if self.cmbx_func.itemText(num_items - idx - 1) in default_looper_func_names:
-                    self.cmbx_func.removeItem(num_items - idx - 1)
+    def toggle_save(self):
+        """Method to toggle save."""
+        self.le_path.setDisabled(False if self.chbx_save.isChecked() else True)

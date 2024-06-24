@@ -6,7 +6,7 @@
 __name__ = 'qom.loopers.base'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2020-12-21"
-__updated__ = "2023-10-04"
+__updated__ = "2023-10-28"
 
 # dependencies
 from decimal import Decimal
@@ -169,6 +169,8 @@ class BaseLooper():
                 _val = np.array(_val, dtype=np.int32)
             elif type(_val[0]) is float:
                 _val = np.array(_val, dtype=np.float_)
+            else:
+                _val = np.array(_val)
         # update values
         if type(_val) is np.ndarray:
             # validate values

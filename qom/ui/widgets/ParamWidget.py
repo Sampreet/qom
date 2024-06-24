@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.ParamWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-08-30'
+__updated__ = '2023-10-28'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -87,14 +87,14 @@ class ParamWidget(BaseWidget):
 
         # initialize key label
         self.lbl_key = QtWidgets.QLabel('')
-        self.lbl_key.setFixedSize(width, row_height)
+        self.lbl_key.setFixedSize(int(width), row_height)
         self.lbl_key.setFont(QtGui.QFont('Segoe UI', pointSize=10, italic=False))
         layout.addWidget(self.lbl_key, 0, 0, 1, 1, alignment=QtCore.Qt.AlignLeft)
         # initialize value widget
         self.w_val = QtWidgets.QComboBox() if val_type is list else QtWidgets.QLineEdit()
-        self.w_val.setFixedSize(width - padding, row_height)
+        self.w_val.setFixedSize(int(width - padding), row_height)
         layout.addWidget(self.w_val, 1, 0, 1, 1, alignment=QtCore.Qt.AlignRight)
 
         # update main layout
-        self.setFixedSize(width, 2 * row_height)
+        self.setFixedSize(int(width), 2 * row_height)
         self.setLayout(layout)

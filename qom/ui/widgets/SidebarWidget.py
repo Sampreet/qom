@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.widgets.SidebarWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-01-21'
-__updated__ = '2021-08-30'
+__updated__ = '2023-10-28'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -104,11 +104,12 @@ class SidebarWidget(BaseWidget):
         # initialize UI elements
         # list
         self.list = QtWidgets.QListWidget()
+        self.list.setFont(QtGui.QFont('Segoe UI', pointSize=10, italic=False))
         self.list.setFixedSize(list_width - 32, sidebar_height)
         self.list.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         # list label
         self.lbl_list = RotatedLabel(text=self.name, pos=self.pos)
-        self.lbl_list.setFont(QtGui.QFont('Segoe UI', pointSize=10, italic=True))
+        self.lbl_list.setFont(QtGui.QFont('Segoe UI', pointSize=12, italic=True))
         self.lbl_list.setFixedSize(32, sidebar_height)
         self.lbl_list.setAlignment(QtCore.Qt.AlignCenter)
         # arrow button

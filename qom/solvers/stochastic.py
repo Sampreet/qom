@@ -6,7 +6,7 @@
 __name__ = 'qom.solvers.stochastic'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2023-08-13"
-__updated__ = "2023-09-14"
+__updated__ = "2024-06-21"
 
 # dependencies
 from copy import deepcopy
@@ -184,10 +184,16 @@ class MCQTSolver():
         # ODE function
         def func_ode(t, v, c):
             # get effective Hamiltonian
-            H_eff = H_0_eff if self.is_H_constant else (H_0_eff + self.system.get_H_t(
-                c=c,
-                t=t
-            ))
+            H_eff = H_0_eff
+            if not self.is_H_constant:
+                coeffs = self.system.get_coeffs_H_t(
+                    t=t,
+                    c=self.c
+                )
+                ops = self.system.get_ops_H_t(
+                    c=self.c
+                )
+                H_eff = H_0_eff + sum([coeffs[l].item() * ops[l] for l in range(len(ops))])
 
             return -1.0j * np.dot(H_eff, np.reshape(v, (size_0, int(v.shape[0] / size_0)))).ravel()
         

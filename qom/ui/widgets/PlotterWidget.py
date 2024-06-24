@@ -6,17 +6,17 @@
 __name__    = 'qom.ui.widgets.PlotterWidget'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2021-08-20'
-__updated__ = '2021-09-01'
+__updated__ = '2024-06-23'
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets
 import logging
-import numpy as np
+import re
 
 # qom modules
+from ..plotters.base import BaseAxis
 from ..plotters import MPLPlotter
 from .BaseWidget import BaseWidget
-from .ParamWidget import ParamWidget
 
 # module logger
 logger = logging.getLogger(__name__)
@@ -37,9 +37,9 @@ class PlotterWidget(BaseWidget):
         super().__init__(parent)
 
         # set attributes
-        self.plotters = [MPLPlotter]
-        self.param_widgets = list()
-        self.plotter = None
+        self.PlotterClass = None
+        self.PlotterClasses = [MPLPlotter]
+        self.widget_params = dict()
 
         # initialize layout
         self.__init_layout()
@@ -60,38 +60,72 @@ class PlotterWidget(BaseWidget):
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0, 0, padding, 0)
 
+        # initialize plotter name
+        self.lbl_name = QtWidgets.QLabel('Select Plotter')
+        self.lbl_name.setFixedSize(int(width / 4), row_height)
+        self.lbl_name.setFont(QtGui.QFont('Segoe UI', pointSize=12, italic=True))
+        self.lbl_name.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.layout.addWidget(self.lbl_name, 0, 0, 1, 1, alignment=QtCore.Qt.AlignLeft)
         # initialize type label
         self.lbl_type = QtWidgets.QLabel('Type:')
-        self.lbl_type.setFixedSize(width / 4, row_height) 
-        self.lbl_type.setFont(QtGui.QFont('Segoe UI', pointSize=12, italic=True))
-        self.layout.addWidget(self.lbl_type, 0, 0, 1, 1, alignment=QtCore.Qt.AlignLeft)
-        # initialize plotter name
-        self.lbl_name = QtWidgets.QLabel('Select a plotter to begin')
-        self.lbl_name.setFixedSize(width * 3 / 4 + 0.25 * padding, row_height)
-        self.lbl_name.setFont(QtGui.QFont('Segoe UI', pointSize=12, italic=True))
-        self.lbl_name.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.layout.addWidget(self.lbl_name, 0, 1, 1, 3, alignment=QtCore.Qt.AlignRight)
-        # initialize type combo box
-        self.cmbx_type = QtWidgets.QComboBox()
-        self.cmbx_type.setFixedSize(width / 2 - 1.5 * padding, row_height)
-        self.cmbx_type.setDisabled(True)
-        self.cmbx_type.currentTextChanged.connect(self.set_curr_type)
-        self.layout.addWidget(self.cmbx_type, 1, 0, 1, 2, alignment=QtCore.Qt.AlignRight)
+        self.lbl_type.setFixedSize(int(width / 2), row_height) 
+        self.lbl_type.setFont(QtGui.QFont('Segoe UI', pointSize=10, italic=False))
+        self.layout.addWidget(self.lbl_type, 0, 1, 1, 2, alignment=QtCore.Qt.AlignLeft)
         # initialize colorbar check box
         self.chbx_cbar = QtWidgets.QCheckBox('Colorbar')
-        self.chbx_cbar.setFixedSize(width / 4, row_height)
+        self.chbx_cbar.setFixedSize(int(width / 4), row_height)
         self.chbx_cbar.setDisabled(True)
-        self.layout.addWidget(self.chbx_cbar, 1, 2, 1, 1, alignment=QtCore.Qt.AlignLeft)
+        self.layout.addWidget(self.chbx_cbar, 0, 3, 1, 1, alignment=QtCore.Qt.AlignLeft)
+        # initialize type combo box
+        self.cmbx_dim = QtWidgets.QComboBox()
+        self.cmbx_dim.setFixedSize(int(width / 4 - 1.25 * padding), row_height)
+        self.cmbx_dim.addItems(['1D Plot', '2D Plot', '3D Plot'])
+        self.cmbx_dim.setDisabled(True)
+        self.cmbx_dim.currentTextChanged.connect(self.set_curr_dim)
+        self.layout.addWidget(self.cmbx_dim, 1, 0, 1, 1, alignment=QtCore.Qt.AlignRight)
+        # initialize type combo box
+        self.cmbx_type = QtWidgets.QComboBox()
+        self.cmbx_type.setFixedSize(int(width / 2 - 1.5 * padding), row_height)
+        self.cmbx_type.setDisabled(True)
+        self.cmbx_type.currentTextChanged.connect(self.set_curr_type)
+        self.layout.addWidget(self.cmbx_type, 1, 1, 1, 2, alignment=QtCore.Qt.AlignRight)
         # initialize legend check box
         self.chbx_legend = QtWidgets.QCheckBox('Legend')
-        self.chbx_legend.setFixedSize(width / 4, row_height)
+        self.chbx_legend.setFixedSize(int(width / 4), row_height)
         self.chbx_legend.setDisabled(True)
         self.layout.addWidget(self.chbx_legend, 1, 3, 1, 1, alignment=QtCore.Qt.AlignLeft)
+        # initialize key label
+        self.lbl_key = QtWidgets.QLabel('key')
+        self.lbl_key.setFixedSize(int(width / 4), row_height)
+        self.lbl_key.setFont(QtGui.QFont('Segoe UI', pointSize=10, italic=False))
+        self.layout.addWidget(self.lbl_key, 2, 0, 1, 1, alignment=QtCore.Qt.AlignLeft)
+        # initialize value label
+        self.lbl_key = QtWidgets.QLabel('value')
+        self.lbl_key.setFixedSize(int(width / 4), row_height)
+        self.lbl_key.setFont(QtGui.QFont('Segoe UI', pointSize=10, italic=False))
+        self.layout.addWidget(self.lbl_key, 2, 1, 1, 1, alignment=QtCore.Qt.AlignLeft)
+        # initialize extra label
+        self.lbl_extra = QtWidgets.QLabel('Extra Parameters:')
+        self.lbl_extra.setFixedSize(int(width / 2), row_height) 
+        self.lbl_extra.setFont(QtGui.QFont('Segoe UI', pointSize=10, italic=False))
+        self.layout.addWidget(self.lbl_extra, 2, 2, 1, 2, alignment=QtCore.Qt.AlignLeft)
+        # initialize type combo box
+        self.cmbx_key = QtWidgets.QComboBox()
+        self.cmbx_key.setFixedSize(int(width / 4 - 1.25 * padding), row_height)
+        self.cmbx_key.currentTextChanged.connect(self.set_value)
+        self.cmbx_key.setDisabled(True)
+        self.layout.addWidget(self.cmbx_key, 3, 0, 1, 1, alignment=QtCore.Qt.AlignRight)
+        # plotter parameters
+        self.le_value = QtWidgets.QLineEdit('')
+        self.le_value.setFixedSize(int(width / 4 - 1.25 * padding), row_height)
+        self.le_value.textChanged.connect(self.update_value)
+        self.le_value.setDisabled(True)
+        self.layout.addWidget(self.le_value, 3, 1, 1, 1, alignment=QtCore.Qt.AlignRight)
         # plotter parameters
         self.te_params = QtWidgets.QTextEdit('')
-        self.te_params.setFixedSize(width / 2 - 1.5 * padding, row_height * 4)
-        self.layout.addWidget(self.te_params, 2, 2, 4, 2, alignment=QtCore.Qt.AlignRight)
+        self.te_params.setFixedSize(int(width / 2 - 1.5 * padding), row_height * 3)
         self.te_params.setDisabled(True)
+        self.layout.addWidget(self.te_params, 3, 2, 3, 2, alignment=QtCore.Qt.AlignRight)
 
         # update main layout
         self.move(width, offset + 4)
@@ -116,8 +150,8 @@ class PlotterWidget(BaseWidget):
         codes = list()
 
         # iterate through available plotters
-        for plotter in self.plotters:
-            codes.append(plotter.code)
+        for PlotterClass in self.PlotterClasses:
+            codes.append(PlotterClass.name)
 
         return codes
     
@@ -139,9 +173,9 @@ class PlotterWidget(BaseWidget):
         params['show_cbar'] = self.chbx_cbar.isChecked()
         # get legend check box
         params['show_legend'] = self.chbx_legend.isChecked()
-        # evaluate parameter widgets
-        for widget in self.param_widgets:
-            params[widget.key] = widget.val
+        # combo box params
+        for key in self.widget_params:
+            params[key] = self.widget_params[key]
         # evaulate parameter text edit
         te_params = eval(self.te_params.toPlainText()) if self.te_params.toPlainText() != '' else {}
         for key in te_params:
@@ -161,43 +195,30 @@ class PlotterWidget(BaseWidget):
         # enable all widgets
         for idx in range(self.layout.count()):
             self.layout.itemAt(idx).widget().setEnabled(True)
-
-        # frequently used parameters
-        width = 640
-        padding = 32
             
         # update plotter
-        self.plotter = self.plotters[pos]
-
-        # clear widgets
-        for widget in self.param_widgets:
-            self.layout.removeWidget(widget)
-            widget.deleteLater()
-            
-        # reset list
-        self.param_widgets = list()
-
-        # update parameter widgets
-        widget_col = 0
-        for param in self.plotter.ui_params:
-            # new widget
-            val = self.plotter.ui_params[param]
-            widget = ParamWidget(parent=self, width=(width - padding) / 4, val_type=type(val))
-            widget.key = param
-            if type(val) is list:
-                widget.w_val.addItems(self.plotter.ui_params[param])
-            else: 
-                widget.val = self.plotter.ui_params[param]
-            self.layout.addWidget(widget, 2 + int(widget_col / 2) * 2, int(widget_col % 2), 2, 1, alignment=QtCore.Qt.AlignRight)
-            # update widget list
-            self.param_widgets.append(widget)
-            # update count
-            widget_col += 1
+        self.PlotterClass = self.PlotterClasses[pos]
 
         # update widget
-        self.lbl_name.setText(str(self.plotter.name))
+        self.lbl_name.setText(self.PlotterClass.name)
+        self.set_curr_dim(self.cmbx_dim.currentText())
+
+    def set_curr_dim(self, value):
+        """Method to update widgets when combo box selection changes.
+        
+        Parameters
+        ----------
+        value : str
+            New text of the combo box.
+        """
+
         self.cmbx_type.clear()
-        self.cmbx_type.addItems(self.plotter.types_1D + self.plotter.types_2D + self.plotter.types_3D)
+        if '3D' in value:
+            self.cmbx_type.addItems(self.PlotterClass.types_3D)
+        elif '2D' in value:
+            self.cmbx_type.addItems(self.PlotterClass.types_2D)
+        else:
+            self.cmbx_type.addItems(self.PlotterClass.types_1D)
 
     def set_curr_type(self, value):
         """Method to update widgets when combo box selection changes.
@@ -208,14 +229,13 @@ class PlotterWidget(BaseWidget):
             New text of the combo box.
         """
 
-        # clear parameter text edit
-        self.te_params.setText('')
-
         # initialize parameters
         params = dict()
-        for key in self.plotter.required_params.get(value, []):
-            # set ui defaults
-            params[key] = self.plotter.ui_defaults[key]
+        for key in self.PlotterClass.required_params.get(value, []):
+            if key[0:2] in ['x_', 'y_', 'z_', 'v_']:
+                params[key] = BaseAxis.axis_defaults[key[2:]]
+            else:
+                params[key] = self.PlotterClass.plotter_defaults.get(key, '')
 
         # set parameters
         self.set_params(params)
@@ -236,24 +256,25 @@ class PlotterWidget(BaseWidget):
         self.chbx_cbar.setChecked(params.get('show_cbar', self.chbx_cbar.isChecked()))
         # set legend check box
         self.chbx_legend.setChecked(params.get('show_legend', self.chbx_legend.isChecked()))
-
-        # set parameter widgets
-        used_keys = ['type', 'show_cbar', 'show_legend']
-        for widget in self.param_widgets:
-            used_keys.append(widget.key)
-            if widget.key in params:
-                widget.val = params[widget.key]
-        # get current parameters
-        te_params = self.get_params()
-        # remove used keys
-        for key in used_keys:
-            te_params.pop(key, None)
-        # update extra parameters
+        
+        # set widget params
+        self.cmbx_key.clear()
+        self.widget_params = dict()
+        keys = list()
         for key in params:
-            if key not in used_keys:
-                te_params[key] = params[key]
+            if key not in ['type', 'show_cbar', 'show_legend']:
+                self.widget_params[key] = params[key]
+                keys.append(key)
+        self.cmbx_key.addItems(keys)
         # set parameter text edit
-        self.te_params.setText(str(te_params))
+        self.te_params.setText('')
+
+    def set_value(self, key):
+        self.le_value.setText(str(self.widget_params[key]) if key != '' else '')
+
+    def update_value(self):
+        val = self.le_value.text()
+        self.widget_params[self.cmbx_key.currentText()] = eval(val) if re.match('\-*\d+\.*e*\-*\d*', val) is not None else val
 
     def set_theme(self, theme=None):
         """Method to update the theme.

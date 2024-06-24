@@ -6,9 +6,10 @@
 __name__    = 'qom.misc'
 __authors__ = ['Sampreet Kalita']
 __created__ = '2023-08-13'
-__updated__ = '2023-09-14'
+__updated__ = '2024-06-21'
 
 # dependencies
+from copy import deepcopy
 import numpy as np
 import scipy.sparse as sp
 
@@ -77,6 +78,54 @@ def op_identity(N):
     # return identity operator
     return sp.csr_matrix((data, indices, indptr), shape=(N, N)).toarray()
 
+def op_sigma_x():
+    """Function to obtain the Pauli-X operator.
+
+    Parameters
+    ----------
+    A : numpy.ndarray
+        Operator for which the Hermitian conjugate is to be obtained.
+
+    Returns
+    ----------
+    op : numpy.ndarray
+        Pauli-X operator.
+    """
+
+    return np.array([[0, 1], [1, 0]], dtype=np.complex_)
+
+def op_sigma_y():
+    """Function to obtain the Pauli-Y operator.
+
+    Parameters
+    ----------
+    A : numpy.ndarray
+        Operator for which the Hermitian conjugate is to be obtained.
+
+    Returns
+    ----------
+    op : numpy.ndarray
+        Pauli-Y operator.
+    """
+
+    return np.array([[0, -1j], [1j, 0]], dtype=np.complex_)
+
+def op_sigma_z():
+    """Function to obtain the Pauli-Z operator.
+
+    Parameters
+    ----------
+    A : numpy.ndarray
+        Operator for which the Hermitian conjugate is to be obtained.
+
+    Returns
+    ----------
+    op : numpy.ndarray
+        Pauli-Z operator.
+    """
+
+    return np.array([[1, 0], [0, -1]], dtype=np.complex_)
+
 def dagger(A):
     """Function to obtain the Hermitian conjugate of an operator.
 
@@ -92,7 +141,7 @@ def dagger(A):
     """
 
     # return conjugate transpose
-    return np.conjugate(A.T)
+    return deepcopy(np.conjugate(A.T))
 
 def expect(A, psi):
     """Function to obtain the expectation value of an operator.

@@ -12,7 +12,7 @@ References
 __name__ = 'qom.solvers.stability'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2020-12-03"
-__updated__ = "2023-08-13"
+__updated__ = "2024-06-23"
 
 # dependencies
 import numpy as np
@@ -55,6 +55,8 @@ class RHCSolver():
         'show_progress': False
     }
     """dict : Default parameters of the solver."""
+    required_params = []
+    """list : Required parameters of the solver."""
 
     def __init__(self, As=None, Coeffs=None, params:dict={}, cb_update=None):
         """Class constructor for RHCSolver."""
@@ -167,7 +169,7 @@ class RHCSolver():
         Returns
         -------
         Indices : numpy.ndarray
-            Indices where the sequence changes sign as ``0``s and ``1``s for each drift matrix.
+            Indices where the sequence changes sign, as ``0`` and ``1`` for each drift matrix.
         """
 
         # if drift matrices are given

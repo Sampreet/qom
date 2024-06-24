@@ -1,6 +1,6 @@
 # The Quantum Optomechanics Toolbox
 
-![Latest Version](https://img.shields.io/badge/version-1.0.1-red?style=for-the-badge)
+![Latest Version](https://img.shields.io/badge/version-1.0.2-red?style=for-the-badge)
 [![Last Commit](https://img.shields.io/github/last-commit/sampreet/qom?style=for-the-badge)](https://github.com/sampreet/qom/blob/master/CHANGELOG.md)
 
 [![Last Release](https://img.shields.io/github/release-date/sampreet/qom?style=flat-square&label=Last%20Release)](https://github.com/sampreet/qom/releases/tag/v1.0.1)
@@ -23,18 +23,12 @@ Backed by numerical libraries like NumPy and SciPy, and featuring the highly cus
 * Non-linear Schrodinger equation solver with integration support.
 * Attractor detection and bifurcation for non-linear dynamical systems.
 * Huge performance boost with NumPy-based vectorization.
+* Faster Monte-Carlo quantum trajectories solver for low-dimensional Hilbert spaces (deprecated since `qom-v1.0.2`).
 
 | Dynamical Stability | Quantum Correlations | 
 |---|---|
 | ![Stability](./docs/images/00_00_sz.png) | ![Correlations](./docs/images/00_01_en.png) |
 | Runtimes for the calculation of dynamical stability of the steady state using the Routh-Hurwitz criteria. | Runtimes for the calculation of average entanglement from the dynamical values of modes and correlations. |
-
-* Faster Monte-Carlo quantum trajectories solver for low-dimensional Hilbert spaces.
-
-| Monte-Carlo Quantum Trajectories | 
-|---|
-| ![Stability](./docs/images/00_02_mcqt.png) |
-| Comparison of runtimes for the Jaynes-Cummings Hamiltonian with Hilbert space dimension of 10. |
 
 ## Examples
 
@@ -43,10 +37,10 @@ Backed by numerical libraries like NumPy and SciPy, and featuring the highly cus
 | ![Classical](./docs/images/01_00_classical.gif) | ![Quantum](./docs/images/01_01_quantum.gif) |
 | The classical mean values of the optical and mechanical modes are obtained using the rate equations of the modes. | The variances of the quantum fluctuation quadratures are obtained using the rate equation for the correlation matrix. |
 
-| Limit Cycle | Chaos | 
+| Fixed Point | Limit Cycle | 
 |---|---|
-| ![Limit Cycle](./docs/images/02_00_limit_cycle.gif) | ![Chaos](./docs/images/02_01_chaos.gif) |
-| Self-sustained oscillations in an optomechanical system. | An optomechanical system in the chaotic regime. |
+| ![Fixed Point](./docs/images/02_00_fixed_point.gif) | ![Limit Cycle](./docs/images/02_01_limit_cycle.gif) |
+| An optomechanical system settling to a steady state. | Self-sustained oscillations in an optomechanical system. |
 
 | Dynamical Stability | Optical Bistability |
 |---|---|
@@ -95,7 +89,7 @@ The documentation of the latest release is available [here](https://sampreet.git
 To install the last release via the Python Package Index, execute: 
 
 ```bash
-pip install -i https://test.pypi.org/simple/ qom
+pip install git+https://github.com/sampreet/qom.git
 ```
 
 ### Installing Locally
