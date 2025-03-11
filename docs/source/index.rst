@@ -96,7 +96,7 @@ Examples
      - Soliton propagation in an array of optomechanical systems at different phase lags between the input solitons.
 
 A set of notebooks and scripts to demonstrate the usage of the toolbox can be found in the `examples repository <https://github.com/sampreet/qom-examples>`_.
-Research papers solved using the toolbox can be found in the `papers repository<https://github.com/sampreet/qom-papers>`_.
+Research papers solved using the toolbox can be found in the `papers repository <https://github.com/sampreet/qom-papers>`_.
 
 Installation
 ============
@@ -149,17 +149,21 @@ Citing
 
 Please cite `S. Kalita and A. K. Sarma, *The QOM Toolbox: An object-oriented Python framework for cavity optomechanical systems*, Proceedings of Eighth International Congress on Information and Communication Technology **3**, Springer Singapore (2023) <https://github.com/sampreet/qom/blob/master/CITATION.bib>`_ if you use our work in your research.
 
-Available Modules
+Available Methods
 =================
 
 .. toctree::
-   :maxdepth: 3
-   
+   :maxdepth: 2
+
    qom.loopers
    qom.solvers
    qom.systems
    qom.ui
    qom.utils
+
+.. toctree::
+   :maxdepth: 1
+
    qom.io
    qom.misc
 

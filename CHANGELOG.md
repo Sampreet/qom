@@ -1,7 +1,10 @@
 # Changelog
 
+## v1.1.0 - 2025/03/11 - 01 - Minor Fixes to Docs
+* Minor fixes to `docs` and `README`.
+
 ## v1.1.0 - 2025/03/11 - 00 - Bump NumPy Version
-* Updated all modules to support for NumPy 2.x.x.
+* Updated all modules to support NumPy 2.x.x.
 * Added deprecation warning to `qom.solvers.stochastic.MCQTSolver` class.
 * Updated `requirements` and `setup`.
 * Updated documentation and `README`.
