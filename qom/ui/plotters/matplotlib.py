@@ -19,6 +19,7 @@ from .base import BasePlotter
 
 # TODO: Add segmented color bar for contourf plots.
 # TODO: Add custom legend for scatter.
+# TODO: Find workaround for contour plot updates.
 
 class MPLPlotter(BasePlotter):
     """Class to handle matplotlib plots.
@@ -530,17 +531,17 @@ class MPLPlotter(BasePlotter):
 
         # contour and contourf plots
         if 'contour' in _type:
-            # remove QuadContourSet PathCollection
-            for pc in self.plots.collections:
-                pc.remove()
+            _cmap = self.plots.get_cmap()
             _xs, _ys = np.meshgrid(self.axes['X'].val, self.axes['Y'].val)
+            # remove QuadContourSet
+            self.plots.remove()
 
             # contour plot
             if _type == 'contour':
-                self.plots = _mpl_axes.contour(_xs, _ys, vs, levels=self.params['bins'], cmap=self.plots.get_cmap())
+                self.plots = _mpl_axes.contour(_xs, _ys, vs, levels=self.params['bins'], cmap=_cmap)
             # contourf plot
             if _type == 'contourf':
-                self.plots = _mpl_axes.contourf(_xs, _ys, vs, levels=self.params['bins'], cmap=self.plots.get_cmap())
+                self.plots = _mpl_axes.contourf(_xs, _ys, vs, levels=self.params['bins'], cmap=_cmap)
 
         # pcolormesh plot
         if _type == 'pcolormesh':

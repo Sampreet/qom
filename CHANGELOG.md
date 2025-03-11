@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.1.0 - 2025/03/11 - 02 - Minor Fixes to Plotters
+* Minor fixes to `qom.ui.plotters.matplotlib` module and `README`.
+
 ## v1.1.0 - 2025/03/11 - 01 - Minor Fixes to Docs
 * Minor fixes to `docs` and `README`.
 
