@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.base'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2020-10-06"
-__updated__ = "2023-08-13"
+__updated__ = "2025-03-08"
 
 # dependencies
 from decimal import Decimal
@@ -523,7 +523,7 @@ class BaseAxis():
             # validate and initialize values
             else:
                 assert 'min' in params and 'max' in params, "Key '{}' should contain keys 'min' and 'max' to define axis range".format(axis)
-                self.val = self._init_array(np.float_(params['min']), np.float_(params['max']), int(params.get('dim', 101)), str(params.get('scale', 'linear')))
+                self.val = self._init_array(np.float64(params['min']), np.float64(params['max']), int(params.get('dim', 101)), str(params.get('scale', 'linear')))
 
             # update range
             _min = 0 if type(self.val[0]) is str else np.min(self.val)

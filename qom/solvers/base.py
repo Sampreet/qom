@@ -6,7 +6,7 @@
 __name__ = 'qom.solvers.base'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2023-07-04"
-__updated__ = "2023-08-13"
+__updated__ = "2025-03-08"
 
 # dependencies
 from decimal import Decimal
@@ -35,8 +35,8 @@ def get_all_times(params):
     """
 
     # extract frequently used variables
-    t_min = np.float_(params['t_min'])
-    t_max = np.float_(params['t_max'])
+    t_min = np.float64(params['t_min'])
+    t_max = np.float64(params['t_max'])
     t_dim = int(params['t_dim'])
 
     # calculate times
@@ -80,8 +80,8 @@ def validate_Modes_Corrs(Modes=None, Corrs=None, is_modes_required:bool=False, i
     assert Corrs is not None if is_corrs_required else True, "Missing required parameter ``Corrs``"
 
     # handle list
-    Modes  = np.array(Modes, dtype=np.complex_) if Modes is not None and type(Modes) is list else Modes
-    Corrs  = np.array(Corrs, dtype=np.float_) if Corrs is not None and type(Corrs) is list else Corrs
+    Modes  = np.array(Modes, dtype=np.complex128) if Modes is not None and type(Modes) is list else Modes
+    Corrs  = np.array(Corrs, dtype=np.float64) if Corrs is not None and type(Corrs) is list else Corrs
 
     # validate shapes
     assert len(Modes.shape) == 2 if Modes is not None else True, "``Modes`` should be of shape ``(dim, num_modes)``"
@@ -116,7 +116,7 @@ def validate_As_Coeffs(As=None, Coeffs=None):
         # validate drift matrix
         assert isinstance(As, Union[list, np.ndarray].__args__), "``As`` should be of type ``list`` or ``numpy.ndarray``"
         # convert to numpy array
-        As = np.array(As, dtype=np.float_) if type(As) is list else As
+        As = np.array(As, dtype=np.float64) if type(As) is list else As
         # validate shape
         assert len(As.shape) == 3 and As.shape[1] == As.shape[2], "``As`` should be of shape ``(dim_0, 2 * num_modes, 2 * num_modes)``"
     # if coefficients are given
@@ -124,7 +124,7 @@ def validate_As_Coeffs(As=None, Coeffs=None):
         # validate coefficients
         assert isinstance(Coeffs, Union[list, np.ndarray].__args__), "``Coeffs`` should be of type ``list`` or ``numpy.ndarray``"
         # convert to numpy array
-        Coeffs = np.array(Coeffs, dtype=np.float_) if type(Coeffs) is list else Coeffs
+        Coeffs = np.array(Coeffs, dtype=np.float64) if type(Coeffs) is list else Coeffs
         # validate shape
         assert len(Coeffs.shape) == 2, "``Coeffs`` should be of shape ``(dim_0, 2 * num_modes + 1)``"
 

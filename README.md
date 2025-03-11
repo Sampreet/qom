@@ -1,9 +1,9 @@
 # The Quantum Optomechanics Toolbox
 
-![Latest Version](https://img.shields.io/badge/version-1.0.2-red?style=for-the-badge)
+![Latest Version](https://img.shields.io/badge/version-1.1.0-red?style=for-the-badge)
 [![Last Commit](https://img.shields.io/github/last-commit/sampreet/qom?style=for-the-badge)](https://github.com/sampreet/qom/blob/master/CHANGELOG.md)
 
-[![Last Release](https://img.shields.io/github/release-date/sampreet/qom?style=flat-square&label=Last%20Release)](https://github.com/sampreet/qom/releases/tag/v1.0.1)
+[![Last Release](https://img.shields.io/github/release-date/sampreet/qom?style=flat-square&label=Last%20Release)](https://github.com/sampreet/qom/releases/tag/v1.1.0)
 [![Open Issues](https://img.shields.io/github/issues-raw/sampreet/qom?style=flat-square)](https://github.com/sampreet/qom/issues?q=is%3Aopen+is%3Aissue)
 [![Closed Issues](https://img.shields.io/github/issues-closed-raw/sampreet/qom?style=flat-square)](https://github.com/sampreet/qom/issues?q=is%3Aissue+is%3Aclosed)
 
@@ -12,18 +12,22 @@
 The Quantum Optomechanics Toolbox (packaged as `qom`) is a wrapper-styled, scalable toolbox featuring multiple modules for the calculation of stationary as well as dynamical properties of many-body quantum optomechanical systems.
 Backed by numerical libraries like NumPy and SciPy, and featuring the highly customizable visualizations offered by Matplotlib and Seaborn APIs, the toolbox aims to serve as an easy-to-use alternative to writing code explicitly and avoiding repetitive exercises for presentable visuals.
 
+> **Note**  
+> The toolbox is not under active maintenance since 2023 and addition of newer features are not planned for the near future.
+> However, the current CPU-based modules fully support the simulation of linearized quantum optomechanical systems and their related analysis.
+> For the simulation of more general systems, ``QuTiP`` (``> v5.0``) provides a much faster interface.
+
 ### Key Features!
 
 * Run automatically-managed loops in parallel and pool results.
 * Solve for stability and classical/quantum signatures seamlessly.
 * Configure plots across plotting libraries with a common syntax.
 
-### What's New in v1.0!
+### What's New in v1.x!
 
 * Non-linear Schrodinger equation solver with integration support.
 * Attractor detection and bifurcation for non-linear dynamical systems.
 * Huge performance boost with NumPy-based vectorization.
-* Faster Monte-Carlo quantum trajectories solver for low-dimensional Hilbert spaces (deprecated since `qom-v1.0.2`).
 
 | Dynamical Stability | Quantum Correlations | 
 |---|---|
@@ -58,6 +62,7 @@ Backed by numerical libraries like NumPy and SciPy, and featuring the highly cus
 | Wigner distribution depicting the evolution of mechanical squeezing in a modulated optomechanical system. | Soliton propagation in an array of optomechanical systems at different phase lags between the input solitons. |
 
 A set of notebooks and scripts to demonstrate the usage of the toolbox can be found in the [examples repository](https://github.com/sampreet/qom-examples).
+Research papers solved using the toolbox can be found in the [papers repository](https://github.com/sampreet/qom-papers).
 
 ## Installation
 
@@ -71,20 +76,20 @@ conda create -n qom python
 conda activate qom
 ```
 
-The toolbox primarily relies on `numpy` (for fast numerical algebra), `scipy` (for numerical methods), `sympy` (for symbolic algebra), `seaborn` (for color palettes) and `matplotlib` (for plotting results).
+The toolbox primarily relies on `numpy` (for fast numerical algebra), `scipy` (for numerical methods), `sympy` (for symbolic algebra), `matplotlib` (for plotting results) and `seaborn` (for color palettes).
 These libraries can be installed using:
 
 ```bash
-conda install matplotlib numpy scipy sympy seaborn
+conda install numpy scipy sympy matplotlib seaborn "pyqt<6.0.0"
 ```
 
-***Note: To run the GUI modules, `pyqt` should be installed separately.***
+***Note: PyQt5 is only required to run the GUI modules and can skipped.***
 
-Once the dependencies are installed, the toolbox can be installed via PyPI or locally.
+Once the dependencies are installed, the toolbox can be installed via GitHub or locally.
 
 The documentation of the latest release is available [here](https://sampreet.github.io/qom-docs).
 
-### Installing via PyPI
+### Installing via GitHub
 
 To install the last release via the Python Package Index, execute: 
 

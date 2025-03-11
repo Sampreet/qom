@@ -4,9 +4,9 @@
 """GUI module for systems and scripts."""
 
 __name__    = 'qom.ui.gui'
-__authors__ = ['Sampreet Kalita']
-__created__ = '2021-01-19'
-__updated__ = '2021-08-26'
+__authors__ = ["Sampreet Kalita"]
+__created__ = "2021-01-19"
+__updated__ = "2025-03-08"
 
 # dependencies
 from PyQt5 import QtCore, QtWidgets

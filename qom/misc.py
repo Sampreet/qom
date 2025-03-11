@@ -4,9 +4,9 @@
 """Module containing different operators."""
 
 __name__    = 'qom.misc'
-__authors__ = ['Sampreet Kalita']
-__created__ = '2023-08-13'
-__updated__ = '2024-06-21'
+__authors__ = ["Sampreet Kalita"]
+__created__ = "2023-08-13"
+__updated__ = "2025-03-11"
 
 # dependencies
 from copy import deepcopy
@@ -28,11 +28,11 @@ def op_annihilation(N):
     """
 
     # data
-    data = np.sqrt(np.arange(1, N, dtype=np.complex_))
+    data = np.sqrt(np.arange(1, N, dtype=np.complex128))
     # column indices
-    indices = np.arange(1, N, dtype=np.int_)
+    indices = np.arange(1, N, dtype=np.int32)
     # pointers to column indices
-    indptr = np.arange(N + 1, dtype=np.int_)
+    indptr = np.arange(N + 1, dtype=np.int32)
     indptr[-1] = N - 1
     # return annihilation operator
     return sp.csr_matrix((data, indices, indptr), shape=(N, N)).toarray()
@@ -69,11 +69,11 @@ def op_identity(N):
     """
 
     # data
-    data = np.ones(N, dtype=np.complex_)
+    data = np.ones(N, dtype=np.complex128)
     # column indices
-    indices = np.arange(0, N, dtype=np.int_)
+    indices = np.arange(0, N, dtype=np.int32)
     # pointers to column indices
-    indptr = np.arange(N + 1, dtype=np.int_)
+    indptr = np.arange(N + 1, dtype=np.int32)
     indptr[-1] = N
     # return identity operator
     return sp.csr_matrix((data, indices, indptr), shape=(N, N)).toarray()
@@ -92,7 +92,7 @@ def op_sigma_x():
         Pauli-X operator.
     """
 
-    return np.array([[0, 1], [1, 0]], dtype=np.complex_)
+    return np.array([[0, 1], [1, 0]], dtype=np.complex128)
 
 def op_sigma_y():
     """Function to obtain the Pauli-Y operator.
@@ -108,7 +108,7 @@ def op_sigma_y():
         Pauli-Y operator.
     """
 
-    return np.array([[0, -1j], [1j, 0]], dtype=np.complex_)
+    return np.array([[0, -1j], [1j, 0]], dtype=np.complex128)
 
 def op_sigma_z():
     """Function to obtain the Pauli-Z operator.
@@ -124,7 +124,7 @@ def op_sigma_z():
         Pauli-Z operator.
     """
 
-    return np.array([[1, 0], [0, -1]], dtype=np.complex_)
+    return np.array([[1, 0], [0, -1]], dtype=np.complex128)
 
 def dagger(A):
     """Function to obtain the Hermitian conjugate of an operator.
@@ -187,11 +187,11 @@ def state_fock(N, n):
     assert N > n, "Hilbert space dimension insufficient"
 
     # data
-    data = np.array([1], dtype=np.complex_)
+    data = np.array([1], dtype=np.complex128)
     # row indices
-    indices = np.array([n], dtype=np.int_)
+    indices = np.array([n], dtype=np.int32)
     # pointers to row indices
-    indptr = np.array([0, 1], dtype=np.int_)
+    indptr = np.array([0, 1], dtype=np.int32)
     # return fock state
     return sp.csc_matrix((data, indices, indptr), shape=(N, 1)).toarray()
 

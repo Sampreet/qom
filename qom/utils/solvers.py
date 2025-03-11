@@ -6,7 +6,7 @@
 __name__ = 'qom.utils.solvers'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2023-06-21"
-__updated__ = "2023-09-14"
+__updated__ = "2025-03-11"
 
 # dependencies
 import concurrent.futures as cf
@@ -205,11 +205,11 @@ def get_func_stability_zone(SystemClass, params:dict={}, steady_state:bool=True,
         if steady_state:
             return np.array([get_stability_zone(
                 counts=counts
-            )], dtype=np.int_)
+            )], dtype=np.int32)
         else:
             return np.array([get_stability_zone(
                 counts=[count]
-            ) for count in counts], dtype=np.int_)
+            ) for count in counts], dtype=np.int32)
 
     return get_sz
 

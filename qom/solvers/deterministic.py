@@ -6,7 +6,7 @@
 __name__ = 'qom.solvers.deterministic'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2021-01-04"
-__updated__ = "2024-06-23"
+__updated__ = "2025-03-08"
 
 # dependencies
 import copy
@@ -173,9 +173,9 @@ class HLESolver():
 
         # format initial values to real
         if iv_modes is None or len(iv_modes) == 0:
-            iv = np.zeros(2 * self.system.num_modes, dtype=np.float_)
+            iv = np.zeros(2 * self.system.num_modes, dtype=np.float64)
         else:
-            iv = np.concatenate((np.real(iv_modes), np.imag(iv_modes)), dtype=np.float_)
+            iv = np.concatenate((np.real(iv_modes), np.imag(iv_modes)), dtype=np.float64)
             
         # handle null
         if iv_corrs is None or (type(iv_corrs) is not list and type(iv_corrs) is not np.ndarray):
@@ -186,7 +186,7 @@ class HLESolver():
 
         # update initial values with correlations
         if not decoupled:
-            iv = np.concatenate((iv, iv_corrs.ravel()), dtype=np.float_)
+            iv = np.concatenate((iv, iv_corrs.ravel()), dtype=np.float64)
 
         # initialize ODE solver
         ode_solver = ODESolver(
@@ -204,7 +204,7 @@ class HLESolver():
         # handle double functions (feedback support)
         if decoupled:
             # update modes
-            Modes_real = np.float_(vs)
+            Modes_real = np.float64(vs)
 
             # display completion
             if show_progress:
@@ -213,7 +213,7 @@ class HLESolver():
                 )
 
             # update initial values and constants
-            c_corrs = np.concatenate((c, iv), dtype=np.float_)
+            c_corrs = np.concatenate((c, iv), dtype=np.float64)
             
             # function for variable constants 
             def func_c(i):
@@ -242,7 +242,7 @@ class HLESolver():
                 cb_update=self.updater.cb_update
             )
             # solve ODE
-            Corrs_flat = np.float_(ode_solver.solve(
+            Corrs_flat = np.float64(ode_solver.solve(
                 T=self.T,
                 iv=iv_corrs.flatten(),
                 c=c_corrs,
@@ -252,7 +252,7 @@ class HLESolver():
             # update results
             self.results= {
                 'T': self.T,
-                'V': np.concatenate((Modes_real, Corrs_flat), axis=1, dtype=np.float_)
+                'V': np.concatenate((Modes_real, Corrs_flat), axis=1, dtype=np.float64)
             }
             
             # display completion
@@ -264,7 +264,7 @@ class HLESolver():
             # update results
             self.results= {
                 'T': self.T,
-                'V': np.float_(vs)
+                'V': np.float64(vs)
             }
 
             # display completion
@@ -651,11 +651,11 @@ class SSHLESolver():
         if self.params['use_system_method'] and getattr(self.system, 'get_modes_steady_state', None) is not None:
             self.Modes = np.array(self.system.get_modes_steady_state(
                 c=c
-            ), dtype=np.complex_)
+            ), dtype=np.complex128)
         # if modes are to be calculated
         elif getattr(self.system, 'get_mode_rates', None) is not None and iv_modes is not None and len(iv_modes) > 0:
             # get real-valued modes
-            iv_modes_real = np.concatenate((np.real(iv_modes), np.imag(iv_modes)), dtype=np.float_)
+            iv_modes_real = np.concatenate((np.real(iv_modes), np.imag(iv_modes)), dtype=np.float64)
             # solve for modes
             modes_real = so.fsolve(
                 func=self.system.get_mode_rates_real,
@@ -665,7 +665,7 @@ class SSHLESolver():
             modes = modes_real[:self.system.num_modes] + 1.0j * modes_real[self.system.num_modes:]
 
             # set result
-            self.Modes = np.array([modes], dtype=np.complex_)
+            self.Modes = np.array([modes], dtype=np.complex128)
 
         # if correlations are required
         if self.system.A is not None and self.system.D is not None:
@@ -673,9 +673,9 @@ class SSHLESolver():
             _dim = len(self.Modes) if self.Modes is not None else 1
             
             # initialize matrices
-            self.As     = np.zeros((_dim, ) + self.system.dim_corrs, dtype=np.float_)
-            self.Ds     = np.zeros((_dim, ) + self.system.dim_corrs, dtype=np.float_)
-            self.Corrs  = np.zeros((_dim, ) + self.system.dim_corrs, dtype=np.float_)
+            self.As     = np.zeros((_dim, ) + self.system.dim_corrs, dtype=np.float64)
+            self.Ds     = np.zeros((_dim, ) + self.system.dim_corrs, dtype=np.float64)
+            self.Corrs  = np.zeros((_dim, ) + self.system.dim_corrs, dtype=np.float64)
 
             # solver for each set of modes
             for i in range(_dim):
@@ -938,7 +938,7 @@ class LLESolver():
     
         # initialize variables
         modes, _, c = self.system.get_ivc()
-        Modes = np.zeros((t_dim, self.system.num_modes), dtype=np.complex_)
+        Modes = np.zeros((t_dim, self.system.num_modes), dtype=np.complex128)
         Modes[0] = modes
         N = int(self.system.num_modes / 2)
         omegas = 2.0 * np.pi * np.linspace(- 1.0, 1.0 - 2.0 / N, N) / 2.0
@@ -1165,7 +1165,7 @@ class NLSESolver():
 
         # initialize variables
         modes, _, c = self.system.get_ivc()
-        Modes = np.zeros((t_dim, self.system.num_modes), dtype=np.complex_)
+        Modes = np.zeros((t_dim, self.system.num_modes), dtype=np.complex128)
         Modes[0] = modes
         N = int(self.system.num_modes / 2)
         omegas = 2.0 * np.pi * np.linspace(- 1.0, 1.0 - 2.0 / N, N) / 2.0
@@ -1230,7 +1230,7 @@ class NLSESolver():
                         )
 
                         # return real-valued beta rates
-                        return np.concatenate((np.real(beta_rates), np.imag(beta_rates)), dtype=np.float_)
+                        return np.concatenate((np.real(beta_rates), np.imag(beta_rates)), dtype=np.float64)
                     
                     # initialize solver
                     solver = ODESolver(
@@ -1244,7 +1244,7 @@ class NLSESolver():
                     # get real-valued betas
                     v = solver.solve(
                         T=[self.T[i], self.T[i] + t_ss],
-                        iv=np.concatenate((np.real(modes[1::2]), np.imag(modes[1::2])), dtype=np.float_),
+                        iv=np.concatenate((np.real(modes[1::2]), np.imag(modes[1::2])), dtype=np.float64),
                         c=c,
                         func_c=None
                     )[-1]

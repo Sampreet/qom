@@ -4,9 +4,9 @@
 """Class to create a custom header."""
 
 __name__    = 'qom.ui.widgets.HeaderWidget'
-__authors__ = ['Sampreet Kalita']
-__created__ = '2021-01-21'
-__updated__ = '2021-08-30'
+__authors__ = ["Sampreet Kalita"]
+__created__ = "2021-01-21"
+__updated__ = "2025-03-08"
 
 # dependencies
 from PyQt5 import QtCore, QtWidgets

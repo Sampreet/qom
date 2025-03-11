@@ -12,7 +12,7 @@ References
 __name__ = 'qom.solvers.stability'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2020-12-03"
-__updated__ = "2024-06-23"
+__updated__ = "2025-03-11"
 
 # dependencies
 import numpy as np
@@ -111,7 +111,7 @@ class RHCSolver():
         _dim = (self.As.shape[0], self.As.shape[1] + 1)
 
         # initialize coefficients
-        Coeffs = np.zeros(_dim, dtype=np.float_)
+        Coeffs = np.zeros(_dim, dtype=np.float64)
 
         # calculate coefficients
         for i in range(_dim[0]):
@@ -136,9 +136,9 @@ class RHCSolver():
             # # set coefficients
             # _temp               = 0
             # for o in range(_n):
-            #     Coeffs[i, o]= np.float_(_expr_char.coeff(_lamb**(_n - o)))
+            #     Coeffs[i, o]= np.float64(_expr_char.coeff(_lamb**(_n - o)))
             #     _temp       += Coeffs[i, o] * _lamb**(_n - o)
-            # Coeffs[i, _n]   = np.float_(_expr_char - _temp)
+            # Coeffs[i, _n]   = np.float64(_expr_char - _temp)
 
             # update coefficients
             Coeffs[i, :] = sp.Matrix(self.As[i]).charpoly().all_coeffs()
@@ -182,8 +182,8 @@ class RHCSolver():
         _n = _dim[1] - 1
 
         # initialize variables
-        Indices = np.zeros(_dim, dtype=np.int_)
-        sequence = np.zeros(_dim[1], dtype=np.float_)
+        Indices = np.zeros(_dim, dtype=np.int32)
+        sequence = np.zeros(_dim[1], dtype=np.float64)
 
         # calculate coefficients
         for k in range(_dim[0]):
@@ -197,7 +197,7 @@ class RHCSolver():
                 )
 
             # get M
-            _M = np.zeros((_n, _n), dtype=np.float_)
+            _M = np.zeros((_n, _n), dtype=np.float64)
             # handle 1-based indexing used in Ref. [1]
             for i in range(_n):
                 for j in range(_n):
@@ -277,12 +277,12 @@ def get_counts_from_eigenvalues(As=None, Coeffs=None, params:dict={}, cb_update=
         _eigs, _ = np.linalg.eig(As)
     # if coefficients are given
     else:
-        _eigs = np.zeros((len(Coeffs), len(Coeffs[0]) - 1), dtype=np.complex_)
+        _eigs = np.zeros((len(Coeffs), len(Coeffs[0]) - 1), dtype=np.complex128)
         for i in range(len(Coeffs)):
             _eigs[i] = np.roots(Coeffs[i])
 
     # flag eigenvalues with positive real parts
-    Indices = np.zeros_like(_eigs, dtype=np.int_)
+    Indices = np.zeros_like(_eigs, dtype=np.int32)
     _condition = np.real(_eigs) > 0.0
     Indices[_condition] = 1
 

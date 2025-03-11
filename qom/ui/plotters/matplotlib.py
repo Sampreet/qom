@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.matplotlib'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2020-10-03"
-__updated__ = "2023-09-13"
+__updated__ = "2025-03-11"
 
 # dependencies
 from matplotlib.colors import LinearSegmentedColormap, Normalize
@@ -217,7 +217,7 @@ class MPLPlotter(BasePlotter):
         _xs, _ys = np.meshgrid(self.axes['X'].val, self.axes['Y'].val)
         _zeros = np.zeros((self.axes['Y'].dim, self.axes['X'].dim))
         _nan =  np.zeros((self.axes['Y'].dim, self.axes['X'].dim))
-        _nan[:] = np.NaN
+        _nan[:] = np.nan
 
         # contour plot
         if _type == 'contour':
@@ -910,7 +910,7 @@ class MPLPlotter(BasePlotter):
         # extract frequently used variables
         _type = self.params['type']
         _dtypes_arrays = [list, np.ndarray]
-        _dtypes_complex = [complex, np.complex64, np.complex128, np.complex_]
+        _dtypes_complex = [complex, np.complex64, np.complex128]
 
         # handle complex values
         if type(vs[0]) in _dtypes_complex or (type(vs[0]) in _dtypes_arrays and type(vs[0][0]) in _dtypes_complex):

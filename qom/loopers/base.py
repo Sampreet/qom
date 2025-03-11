@@ -6,7 +6,7 @@
 __name__ = 'qom.loopers.base'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2020-12-21"
-__updated__ = "2023-10-28"
+__updated__ = "2025-03-11"
 
 # dependencies
 from decimal import Decimal
@@ -168,7 +168,7 @@ class BaseLooper():
             if type(_val[0]) is int:
                 _val = np.array(_val, dtype=np.int32)
             elif type(_val[0]) is float:
-                _val = np.array(_val, dtype=np.float_)
+                _val = np.array(_val, dtype=np.float64)
             else:
                 _val = np.array(_val)
         # update values
@@ -181,14 +181,14 @@ class BaseLooper():
             assert 'min' in _axis and 'max' in _axis, "Key ``'{}'`` should contain keys ``'min'`` and ``'max'`` to define axis range".format(axis)
 
             # extract dimension
-            _min = np.float_(_axis['min'])
-            _max = np.float_(_axis['max'])
+            _min = np.float64(_axis['min'])
+            _max = np.float64(_axis['max'])
             _dim = int(_axis.get('dim', 101))
             _scale = str(_axis.get('scale', 'linear'))
 
             # handle single value
             if _dim == 1:
-                _val = np.array([_min], dtype=np.float_)
+                _val = np.array([_min], dtype=np.float64)
 
             # set values
             else:
@@ -326,7 +326,7 @@ class BaseLooper():
             for i in range(len(vals)):
                 count = len(vals[i]) if len(vals[i]) > count else count
                 dtype = type(vals[i][0]) if len(vals[i]) > 0 and dtype is None else dtype
-            vs = np.empty((len(vals), count), dtype=np.float_ if dtype is None else dtype)
+            vs = np.empty((len(vals), count), dtype=np.float64 if dtype is None else dtype)
             # update info
             self.updater.update_info(
                 status="-" * (12 - len(self.name) - len(str(count))) + "Reshaping with NaN values (BaseLooper): New Length = {}".format(count)
@@ -334,7 +334,7 @@ class BaseLooper():
             # update extra entries to NaN
             for i in range(len(vals)):
                 vs[i, :len(vals[i])] = vals[i]
-                vs[i, len(vals[i]):] = np.NaN
+                vs[i, len(vals[i]):] = np.nan
             # convert to lists
             vs = vs.tolist()
 

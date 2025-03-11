@@ -6,7 +6,7 @@
 __name__ = 'qom.solvers.differential'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2021-01-04"
-__updated__ = "2023-08-15"
+__updated__ = "2025-03-08"
 
 # dependencies
 import numpy as np
@@ -163,7 +163,7 @@ class ODESolver():
             self.integrator.set_f_params(c if c is not None else np.empty(0))
 
             # initialize values
-            vs = np.zeros((len(T), len(iv)), dtype=np.complex_ if 'zvode' in ode_method else np.float_)
+            vs = np.zeros((len(T), len(iv)), dtype=np.complex128 if 'zvode' in ode_method else np.float64)
             vs[0] = iv
 
             # for each time step, calculate the integration values

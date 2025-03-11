@@ -1,7 +1,7 @@
 .. Quantum Optomechanics Toolbox documentation master file, created by
    sphinx-quickstart on Fri Dec 4 15:06:12 2020.
 
-Welcome to the ``qom-v1.0.2`` Documentation!
+Welcome to the ``qom-v1.1.0`` Documentation!
 ============================================
 
 The Quantum Optomechanics Toolbox (packaged as ``qom``) is a wrapper-styled, scalable toolbox featuring multiple modules for the calculation of stationary as well as dynamical properties of linearized quantum optomechanical systems.
@@ -19,13 +19,12 @@ Key Features
 * Solve for stability and classical/quantum signatures seamlessly.
 * Configure plots across plotting libraries with a common syntax.
 
-What's New in v1.0!
+What's New in v1.x!
 -------------------
 
 * Non-linear Schrodinger equation solver with integration support.
 * Attractor detection and bifurcation for non-linear dynamical systems.
 * Huge performance boost with NumPy-based vectorization.
-* Faster Monte-Carlo quantum trajectories solver for low-dimensional Hilbert spaces (deprecated since ``qom-v1.0.2``).
 
 .. list-table::
    :widths: 50 50
@@ -97,6 +96,7 @@ Examples
      - Soliton propagation in an array of optomechanical systems at different phase lags between the input solitons.
 
 A set of notebooks and scripts to demonstrate the usage of the toolbox can be found in the `examples repository <https://github.com/sampreet/qom-examples>`_.
+Research papers solved using the toolbox can be found in the `papers repository<https://github.com/sampreet/qom-papers>`_.
 
 Installation
 ============
@@ -112,21 +112,21 @@ Once ``Anaconda`` is set up, create and activate a new ``conda`` environment usi
    conda create -n qom python
    conda activate qom
 
-The toolbox primarily relies on ``numpy`` (for fast numerical algebra), ``scipy`` (for numerical methods), ``sympy`` (for symbolic algebra), ``seaborn`` (for color palettes) and ``matplotlib`` (for plotting results).
+The toolbox primarily relies on ``numpy`` (for fast numerical algebra), ``scipy`` (for numerical methods), ``sympy`` (for symbolic algebra), ``matplotlib`` (for plotting results) and ``seaborn`` (for color palettes).
 These libraries can be installed using:
 
 .. code-block:: bash
 
-   conda install matplotlib numpy scipy sympy seaborn
+   conda install matplotlib numpy scipy sympy seaborn "pyqt<6.0.0"
 
-.. note:: To run the GUI modules, ``pyqt`` should be installed separately.
+.. note:: PyQt5 is only required to run the GUI modules and can skipped..
 
-Once the dependencies are installed, the toolbox can be installed via PyPI or locally.
+Once the dependencies are installed, the toolbox can be installed via GitHub or locally.
 
 The documentation of the latest release is available `here <https://sampreet.github.io/qom-docs>`_.
 
-Installing via PyPI
--------------------
+Installing via GitHub
+---------------------
 
 To install the packages via the Python Package Index (PyPI), execute: 
 

@@ -12,7 +12,7 @@ References
 __name__ = 'qom.systems.base'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2020-12-04"
-__updated__ = "2023-09-14"
+__updated__ = "2025-03-08"
 
 # dependencies
 import numpy as np
@@ -85,12 +85,12 @@ class BaseSystem():
         self.init_A_D()
 
         # initialize buffer variables
-        self.mode_rates_real = np.zeros(2 * self.num_modes, dtype=np.float_)
-        self.matmul_0 = np.empty(self.dim_corrs, dtype=np.float_)
-        self.matmul_1 = np.empty(self.dim_corrs, dtype=np.float_)
-        self.sum_0 = np.empty(self.dim_corrs, dtype=np.float_)
-        self.sum_1 = np.empty(self.dim_corrs, dtype=np.float_)
-        self.v_rates = np.empty(2 * self.num_modes + self.num_corrs, dtype=np.float_)
+        self.mode_rates_real = np.zeros(2 * self.num_modes, dtype=np.float64)
+        self.matmul_0 = np.empty(self.dim_corrs, dtype=np.float64)
+        self.matmul_1 = np.empty(self.dim_corrs, dtype=np.float64)
+        self.sum_0 = np.empty(self.dim_corrs, dtype=np.float64)
+        self.sum_1 = np.empty(self.dim_corrs, dtype=np.float64)
+        self.v_rates = np.empty(2 * self.num_modes + self.num_corrs, dtype=np.float64)
 
         # set updater
         self.updater = Updater(
@@ -118,21 +118,21 @@ class BaseSystem():
         # handle missing function
         assert getattr(self, 'get_ivc', None) is not None, "Missing required system method ``get_ivc``"
 
+        # initialize matrices
+        self.A = np.zeros(self.dim_corrs, dtype=np.float64)
+        self.D = np.zeros(self.dim_corrs, dtype=np.float64)
+
         # frequently used variables
         iv_modes, iv_corrs, c = self.get_ivc()
 
         # handle null modes
-        iv_modes = np.zeros(self.num_modes, dtype=np.complex_) if iv_modes is None else iv_modes
+        iv_modes = np.zeros(self.num_modes, dtype=np.complex128) if iv_modes is None else iv_modes
 
         # handle null controls/constants
         c = np.empty(0) if c is None else c
         # handle lists
         assert type(c) is list or type(c) is np.ndarray, "Derived constants and controls should be either lists or NumPy arrays or ``None``"
         c = np.array(c) if type(c) is list else c
-
-        # initialize matrices
-        self.A = np.zeros(self.dim_corrs, dtype=np.float_)
-        self.D = np.zeros(self.dim_corrs, dtype=np.float_)
 
         # update drift matrix
         self.A = self.get_A(

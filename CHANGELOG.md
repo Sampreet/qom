@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.0 - 2025/03/11 - 00 - Bump NumPy Version
+* Updated all modules to support for NumPy 2.x.x.
+* Added deprecation warning to `qom.solvers.stochastic.MCQTSolver` class.
+* Updated `requirements` and `setup`.
+* Updated documentation and `README`.
+
 ## v1.0.2 - 2024/06/23 - 00 - GUI Hotfix
 * String support in axis values in `qom.loopers.base.BaseLooper` class.
 * Updated `qom.solvers` package:

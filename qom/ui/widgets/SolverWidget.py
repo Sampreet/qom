@@ -4,9 +4,9 @@
 """Class to create a widget for the solvers."""
 
 __name__    = 'qom.ui.widgets.SolverWidget'
-__authors__ = ['Sampreet Kalita']
-__created__ = '2021-01-21'
-__updated__ = '2024-06-23'
+__authors__ = ["Sampreet Kalita"]
+__created__ = "2021-01-21"
+__updated__ = "2025-03-08"
 
 # dependencies
 from PyQt5 import QtCore, QtGui, QtWidgets

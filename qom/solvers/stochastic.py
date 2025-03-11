@@ -6,7 +6,7 @@
 __name__ = 'qom.solvers.stochastic'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2023-08-13"
-__updated__ = "2024-06-21"
+__updated__ = "2025-03-11"
 
 # dependencies
 from copy import deepcopy
@@ -124,6 +124,11 @@ class MCQTSolver():
             p_start=self.p_start
         )
 
+        # display deprecation warning
+        self.updater.update_info(
+            status="-" * 16 + "Warning: Solver Deprecated in QOM 1.0.2"
+        )
+
     def set_params(self, params):
         """Method to set the solver parameters.
         
@@ -177,9 +182,9 @@ class MCQTSolver():
 
         # initialize variables
         psis = np.repeat(iv_psi, repeats=self.num_trajs, axis=1)
-        trajs = np.zeros((t_dim, size_e, self.num_trajs), dtype=np.float_)
-        Phis_jump = np.zeros((size_c, size_0, self.num_trajs), dtype=np.complex_)
-        phi_norms = np.zeros((size_c, self.num_trajs), dtype=np.float_)
+        trajs = np.zeros((t_dim, size_e, self.num_trajs), dtype=np.float64)
+        Phis_jump = np.zeros((size_c, size_0, self.num_trajs), dtype=np.complex128)
+        phi_norms = np.zeros((size_c, self.num_trajs), dtype=np.float64)
 
         # ODE function
         def func_ode(t, v, c):
@@ -228,7 +233,7 @@ class MCQTSolver():
             # cumulative sums
             p_cumsums = np.cumsum(phi_norms, axis=0)
             # check first true value of breaking condition and reduce one index
-            phi_indices = np.argmax(np.int_((epsilons[i][1] <= p_cumsums)), axis=0) - 1
+            phi_indices = np.argmax(np.int32((epsilons[i][1] <= p_cumsums)), axis=0) - 1
             # set negatives to 0 as they always fulfil breaking condition
             phi_indices[phi_indices < 0] = 0
             
