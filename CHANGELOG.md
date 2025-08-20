@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.1.0 - 2025/08/20 - 00 - Update Plotters
+* Added option for grid and legend columns to `qom.ui.plotters.matplotlib` module.
+
 ## v1.1.0 - 2025/03/11 - 02 - Minor Fixes to Plotters
 * Minor fixes to `qom.ui.plotters.matplotlib` module and `README`.
 

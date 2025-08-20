@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.base'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2020-10-06"
-__updated__ = "2025-03-08"
+__updated__ = "2025-07-14"
 
 # dependencies
 from decimal import Decimal
@@ -53,9 +53,11 @@ class BasePlotter():
             'colors'                    (*list*) colors of the 1D plots. If not provided, the palette colors are used.
             'component'                 (*str*) component of complex value. Options are ``'real'`` or ``'imag'``. Default is ``'real'``.
             'font_math'                 (*str*) math renderer for fonts. Options are ``'dejavusans'``, ``'dejavuserif'``, ``'cm'``, ``'stix'`` and ``'stixsans'``. Default is ``'cm'``.
+            'grid'                      (*bool*) option to add gridlines. Default is ``False``.
             'height'                    (*float*) height of the plot. Default is ``5.0``.
             'legend_labels'             (*list*) labels of the legend. If a twin axis exists, the legend is not displayed.
             'legend_location'           (*bool*) location of the legend. Options are ``'best'``, ``'center'``, ``'center left'``, ``'center right'``, ``'lower center'``, ``'lower left'``, ``'lower right'``, ``'right'``, ``'upper center'``, ``'upper left'`` and ``'upper right'``. Default is ``'best'``.
+            'legend_ncol'              (*int*) number of columns in the legend. Default is ``1``.
             'legend_range'              (*list* or *tuple*) range of plots to use for the legend as a two-element list or tuple. Default is ``[0, -1]``.
             'palette'                   (*str*) color palette of the plot. Refer to ``default_palettes`` attribute for available options. Default is ``'RdBu_r'``.
             'show_cbar'                 (*bool*) option to show the color bar. Default is ``False``.
@@ -212,9 +214,11 @@ class BasePlotter():
         'font_style': 'normal',
         'font_variant': 'normal',
         'font_weight': 500,
+        'grid': False,
         'height': 5.0,
         'legend_labels': list(),
         'legend_location': 'best',
+        'legend_ncol': 1,
         'legend_range': [0, -1],
         'palette': 'RdBu_r',
         'show_cbar': False,
@@ -305,11 +309,13 @@ class BasePlotter():
                     font_dict_type='title'
                 ),
             },
+            'grid': params.get('grid', self.plotter_defaults['grid']),
             'height': params.get('height', self.plotter_defaults['height']),
             'legend': {
                 'show': params.get('show_legend', self.plotter_defaults['show_legend']),
                 'labels': params.get('legend_labels', self.plotter_defaults['legend_labels']),
                 'location': params.get('legend_location', self.plotter_defaults['legend_location']),
+                'ncol': params.get('legend_ncol', self.plotter_defaults['legend_ncol']),
                 'range': params.get('legend_range', self.plotter_defaults['legend_range'])
             },
             'palette': _palette,

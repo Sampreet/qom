@@ -6,7 +6,7 @@
 __name__    = 'qom.ui.plotters.matplotlib'
 __authors__ = ["Sampreet Kalita"]
 __created__ = "2020-10-03"
-__updated__ = "2025-03-11"
+__updated__ = "2025-07-14"
 
 # dependencies
 from matplotlib.colors import LinearSegmentedColormap, Normalize
@@ -74,6 +74,11 @@ class MPLPlotter(BasePlotter):
 
         # update fonts
         plt.rcParams['mathtext.fontset'] = self.params['font_math']
+
+        # grid settings
+        plt.rcParams['axes.grid'] = self.params['grid']
+        plt.rcParams['grid.alpha'] = 0.5
+        plt.rcParams['grid.linewidth'] = 0.5
 
         # initialize figure
         _fig = plt.figure()
@@ -200,7 +205,7 @@ class MPLPlotter(BasePlotter):
                 self.params['legend']['labels'] = [(self.axes['Y'].name + ' = ' + str(val) + ' ' + self.axes['Y'].unit) if self.axes['Y'].name != '' else (str(val) + ' ' + self.axes['Y'].unit) for val in self.axes['Y'].val]
             # add legend
             if dim > 0:
-                _l = plt.legend(handles=self.plots[self.params['legend']['range'][0]:dim if self.params['legend']['range'][1] == -1 else self.params['legend']['range'][1]], labels=self.params['legend']['labels'][:dim], loc=self.params['legend']['location'], frameon=False)  
+                _l = plt.legend(handles=self.plots[self.params['legend']['range'][0]:dim if self.params['legend']['range'][1] == -1 else self.params['legend']['range'][1]], labels=self.params['legend']['labels'][:dim], loc=self.params['legend']['location'], ncol=self.params['legend']['ncol'], frameon=False)  
                 plt.setp(_l.texts, fontproperties=self._get_font_props(self.params['font_dicts']['legend']))
 
     def _init_2D(self):
