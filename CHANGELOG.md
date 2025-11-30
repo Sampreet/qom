@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.1.0 - 2025/11/30 - 00 - Update 3D Plots and Colorbar
+* Added option for opacity (alphas) in line and scatter plots in 3D axes.
+* Added minor ticks for colorbars.
+* Updated `README`.
+
 ## v1.1.0 - 2025/08/20 - 00 - Update Plotters
 * Added option for grid and legend columns to `qom.ui.plotters.matplotlib` module.
 

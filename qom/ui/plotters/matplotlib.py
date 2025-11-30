@@ -85,7 +85,7 @@ class MPLPlotter(BasePlotter):
         self.mpl_spec = _fig.add_gridspec(ncols=3, nrows=3, width_ratios=[1, 8, 1], height_ratios=[1, 8, 1])
         # initialize and validate colorbar
         self.cbar = None
-        if self.params['cbar']['show'] and _type not in self.types_1D:
+        if self.params['cbar']['show']:
             if _cbar_position not in self.cbar_positions:
                 _cbar_position = 'right'
             gs = self.cbar_positions_toggled[_cbar_position](self.mpl_spec)
@@ -187,16 +187,16 @@ class MPLPlotter(BasePlotter):
         _type = self.params['type']
         _mpl_axes = plt.gca() if ax_twin is None else ax_twin
         _dim = len(self.plots)
-        _colors, _sizes, _styles = self._get_colors_sizes_styles(dim)
+        _alphas, _colors, _sizes, _styles = self._get_alphas_colors_sizes_styles(dim)
 
         # line plots
         if 'line' in _type:
             # plots
-            self.plots += [_mpl_axes.plot(list(), list(), color=_colors[i], linestyle=_styles[i], linewidth=_sizes[i])[0] for i in range(_dim, dim)]
+            self.plots += [_mpl_axes.plot(list(), list(), color=_colors[i], linestyle=_styles[i], linewidth=_sizes[i], alpha=_alphas[i])[0] for i in range(_dim, dim)]
 
         # scatter plots
         elif 'scatter' in _type:
-            self.plots += [_mpl_axes.scatter(list(), list(), c=_colors[i], s=_sizes[i], marker=_styles[i]) for i in range(_dim, dim)]
+            self.plots += [_mpl_axes.scatter(list(), list(), c=_colors[i], s=_sizes[i], marker=_styles[i], alpha=_alphas[i]) for i in range(_dim, dim)]
 
         # legend
         if self.params['legend']['show'] and ax_twin is None:
@@ -286,19 +286,19 @@ class MPLPlotter(BasePlotter):
         # line plot
         if 'line' in _type:
             dim = self.axes['Y'].dim
-            _colors, _sizes, _styles = self._get_colors_sizes_styles(dim)
-            self.plots += [_mpl_axes.plot(_xs[i], _ys[i], _zeros[i], color=_colors[i], linestyle=_styles[i], linewidth=_sizes[i])[0] for i in range(len(self.plots), dim)]
+            _alphas, _colors, _sizes, _styles = self._get_alphas_colors_sizes_styles(dim)
+            self.plots += [_mpl_axes.plot(_xs[i], _ys[i], _zeros[i], color=_colors[i], linestyle=_styles[i], linewidth=_sizes[i], alpha=_alphas[i])[0] for i in range(len(self.plots), dim)]
         # scatter plot
         if 'scatter' in _type:
             dim = self.axes['Y'].dim
-            _colors, _sizes, _styles = self._get_colors_sizes_styles(dim)
-            self.plots += [_mpl_axes.scatter(_xs[i], _ys[i], _zeros[i], c=_colors[i], s=_sizes[i], marker=_styles[i]) for i in range(len(self.plots), dim)]
+            _alphas, _colors, _sizes, _styles = self._get_alphas_colors_sizes_styles(dim)
+            self.plots += [_mpl_axes.scatter(_xs[i], _ys[i], _zeros[i], c=_colors[i], s=_sizes[i], marker=_styles[i], alpha=_alphas[i]) for i in range(len(self.plots), dim)]
         # surface plot
         if 'surface' in _type:
             self.plots = _mpl_axes.plot_surface(_xs, _ys, _zeros, rstride=1, cstride=1, cmap=_cmap)
 
-    def _get_colors_sizes_styles(self, dim):
-        """Method to obtain the colors, sizes and styles for 1D plots.
+    def _get_alphas_colors_sizes_styles(self, dim):
+        """Method to obtain the alphas, colors, sizes and styles for 1D plots.
         
         Parameters
         ----------
@@ -307,6 +307,8 @@ class MPLPlotter(BasePlotter):
 
         Returns
         -------
+        alphas : list
+            Alpha values for each plot.
         colors : list
             Colors for each plot.
         sizes : list
@@ -317,9 +319,14 @@ class MPLPlotter(BasePlotter):
 
         # extract frequently used variables
         _type = self.params['type']
+        _alphas = self.params['alphas']
         _colors = self.params['colors']
         _sizes = self.params['sizes']
         _styles = self.params['styles']
+
+        # udpate alphas
+        if _alphas is None or (type(_alphas) is list and (len(_alphas) == 0 or len(_alphas) < dim)):
+            _alphas = [1.0 for _ in range(dim)]
 
         # udpate colors from palette if dimension mismatch or none
         if _colors is None or (type(_colors) is list and (len(_colors) == 0 or len(_colors) < dim)):
@@ -342,7 +349,7 @@ class MPLPlotter(BasePlotter):
         if _styles is None or (type(_styles) is list and (len(_styles) == 0 or len(_styles) < dim)):
             _styles = [BasePlotter.default_linestyles[i % len(BasePlotter.default_linestyles)] if 'line' in _type else BasePlotter.default_markers[i % len(BasePlotter.default_markers)] for i in range(dim)]
 
-        return _colors, _sizes, _styles
+        return _alphas, _colors, _sizes, _styles
 
     def _resize_plot(self, width:float=4.8, height:float=4.8):
         """Method to resize the plot.
@@ -614,7 +621,7 @@ class MPLPlotter(BasePlotter):
         # density plot
         if 'density' in _type:
             _cmap = LinearSegmentedColormap.from_list(self.params['palette'], self.palette_colors)
-            _, _sizes, _styles = self._get_colors_sizes_styles(1)
+            _, _, _sizes, _styles = self._get_alphas_colors_sizes_styles(1)
             self.plots += [_mpl_axes.scatter(xs, ys, zs, c=vs, cmap=_cmap, s=_sizes[0], marker=_styles[0], alpha=0.5)]
         else:
             # update ticks and ticklabels
@@ -819,6 +826,7 @@ class MPLPlotter(BasePlotter):
         _orientation = 'vertical' if _cbar_position == 'right' or _cbar_position == 'left' else 'horizontal'
         _font_dicts = self.params['font_dicts']
         _ticks = self.params['cbar']['ticks']
+        _ticks_minor = self.params['cbar']['ticks_minor']
         if _ticks is not None:
             _norm = Normalize(vmin=np.min(_ticks), vmax=np.max(_ticks))
         else:
@@ -853,6 +861,8 @@ class MPLPlotter(BasePlotter):
 
         # ticks
         self.cbar.set_ticks(_ticks)
+        if _ticks_minor:
+            self.cbar.set_ticks(_ticks_minor, minor=True)
         self.cbar.ax.tick_params(axis='x', which='major', pad=12)
         self.cbar.ax.tick_params(axis='y', which='major', pad=12)
 

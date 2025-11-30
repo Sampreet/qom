@@ -68,7 +68,7 @@ Research papers solved using the toolbox can be found in the [papers repository]
 
 ### Dependencies
 
-[The Quantum Optomechanics Toolbox](https://github.com/sampreet/qom) requires `Python 3.8+`, preferably installed via the [Anaconda distribution](https://www.anaconda.com/download).
+[The Quantum Optomechanics Toolbox](https://github.com/sampreet/qom) requires `Python 3.8+`, preferably installed via the [Anaconda distribution](https://www.anaconda.com/download) or the [MiniForge installer for conda-forge](https://conda-forge.org/download/).
 Once `Anaconda` is set up, create and activate a new `conda` environment using:
 
 ```bash

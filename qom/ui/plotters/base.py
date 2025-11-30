@@ -42,11 +42,13 @@ class BasePlotter():
             ========================    ====================================================
             key                         value
             ========================    ====================================================
+            'alphas'                    (*list*) alpha values for 1D plots. If not provided, a default value of ``1.0`` is used for each plot.
             'annotations'               (*list*) annotation dictionaries for the plot. Refer to **Notes** below for currently supported keys.
             'bins'                      (*int*) number of colors for the plot. Default is ``11``.
             'cbar_position'             (*str*) position of the color bar. Options are ``'top'``, ``'right'``, ``'bottom'`` and ``'left'``. Default is ``'right'``.
             'cbar_tick_labels'          (*list*) tick labels of the color bar.
             'cbar_ticks'                (*list*) ticks of the color bar.
+            'cbar_ticks_minor'          (*list*) minor ticks of the color bar.
             'cbar_title'                (*str*) title of the color bar. Default is ``''``.
             'cbar_x_label'              (*str*) X-axis label of the color bar. Default is ``''``.
             'cbar_y_label'              (*str*) Y-axis label of the color bar. Default is ``''``.
@@ -196,11 +198,13 @@ class BasePlotter():
 
     # default parameters of the plotter
     plotter_defaults = {
+        'alphas': None,
         'annotations': list(),
         'bins': 11,
         'cbar_position': 'right',
         'cbar_tick_labels': None,
         'cbar_ticks': None,
+        'cbar_ticks_minor': None,
         'cbar_title': '',
         'cbar_x_label': '',
         'cbar_y_label': '',
@@ -277,6 +281,7 @@ class BasePlotter():
 
         # set params
         self.params = {
+            'alphas': params.get('alphas', self.plotter_defaults['alphas']),
             'annotations': params.get('annotations', self.plotter_defaults['annotations']),
             'bins': _bins,
             'cbar': {
@@ -286,6 +291,7 @@ class BasePlotter():
                 'x_label': params.get('cbar_x_label', self.plotter_defaults['cbar_x_label']),
                 'y_label': params.get('cbar_y_label', self.plotter_defaults['cbar_y_label']),
                 'ticks': params.get('cbar_ticks', self.plotter_defaults['cbar_ticks']),
+                'ticks_minor': params.get('cbar_ticks_minor', self.plotter_defaults['cbar_ticks_minor']),
                 'tick_labels': params.get('cbar_tick_labels', self.plotter_defaults['cbar_tick_labels'])
             },
             'colors': params.get('colors', self.plotter_defaults['colors']),
