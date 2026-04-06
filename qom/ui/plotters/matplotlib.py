@@ -205,7 +205,14 @@ class MPLPlotter(BasePlotter):
                 self.params['legend']['labels'] = [(self.axes['Y'].name + ' = ' + str(val) + ' ' + self.axes['Y'].unit) if self.axes['Y'].name != '' else (str(val) + ' ' + self.axes['Y'].unit) for val in self.axes['Y'].val]
             # add legend
             if dim > 0:
-                _l = plt.legend(handles=self.plots[self.params['legend']['range'][0]:dim if self.params['legend']['range'][1] == -1 else self.params['legend']['range'][1]], labels=self.params['legend']['labels'][:dim], loc=self.params['legend']['location'], ncol=self.params['legend']['ncol'], frameon=False)  
+                _l = plt.legend(
+                    handles=self.plots[self.params['legend']['range'][0]:dim if self.params['legend']['range'][1] == -1 else self.params['legend']['range'][1]],
+                    labels=self.params['legend']['labels'][:dim],
+                    loc=self.params['legend']['location'],
+                    ncol=self.params['legend']['ncol'],
+                    handlelength=self.params['legend']['length'],
+                    frameon=False,
+                )  
                 plt.setp(_l.texts, fontproperties=self._get_font_props(self.params['font_dicts']['legend']))
 
     def _init_2D(self):

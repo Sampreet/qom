@@ -58,6 +58,7 @@ class BasePlotter():
             'grid'                      (*bool*) option to add gridlines. Default is ``False``.
             'height'                    (*float*) height of the plot. Default is ``5.0``.
             'legend_labels'             (*list*) labels of the legend. If a twin axis exists, the legend is not displayed.
+            'legend_length'             (*int*) length of the legend. Default is ``2``.
             'legend_location'           (*bool*) location of the legend. Options are ``'best'``, ``'center'``, ``'center left'``, ``'center right'``, ``'lower center'``, ``'lower left'``, ``'lower right'``, ``'right'``, ``'upper center'``, ``'upper left'`` and ``'upper right'``. Default is ``'best'``.
             'legend_ncol'              (*int*) number of columns in the legend. Default is ``1``.
             'legend_range'              (*list* or *tuple*) range of plots to use for the legend as a two-element list or tuple. Default is ``[0, -1]``.
@@ -221,6 +222,7 @@ class BasePlotter():
         'grid': False,
         'height': 5.0,
         'legend_labels': list(),
+        'legend_length': 2.0,
         'legend_location': 'best',
         'legend_ncol': 1,
         'legend_range': [0, -1],
@@ -320,6 +322,7 @@ class BasePlotter():
             'legend': {
                 'show': params.get('show_legend', self.plotter_defaults['show_legend']),
                 'labels': params.get('legend_labels', self.plotter_defaults['legend_labels']),
+                'length': params.get('legend_length', self.plotter_defaults['legend_length']),
                 'location': params.get('legend_location', self.plotter_defaults['legend_location']),
                 'ncol': params.get('legend_ncol', self.plotter_defaults['legend_ncol']),
                 'range': params.get('legend_range', self.plotter_defaults['legend_range'])
